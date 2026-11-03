@@ -15,6 +15,7 @@ Projetos/
 - Estrutura pronta: front-end e API conversando, banco modelado (proposta), testes e CI. Ainda não há nenhuma tela ou regra do MVP.
 - A construção começa em 16/11/2026 (sprint 1: telas principais e estrutura). Arquitetura e tecnologias entram no Plano de Projeto v1.1, em 13/11/2026.
 - Ainda **a definir**: fornecedor de IA, cálculo da nota, hospedagem e regras de branches (Matheus, com apoio do mentor José Alves).
+- Passo a passo da construção, semana a semana: [`docs/passo-a-passo-mvp.md`](docs/passo-a-passo-mvp.md).
 
 ## Tecnologias
 
@@ -81,6 +82,7 @@ Antes de abrir uma PR, rode `npm run lint`, `npm run format` e `npm test`. O CI 
 | `docker-compose.yml`               | PostgreSQL local                                           |
 | `.env.example`                     | Modelo das variáveis de ambiente (copie para `.env`)       |
 | `.github/workflows/ci.yml`         | CI                                                         |
+| `docs/passo-a-passo-mvp.md`        | Passo a passo da construção do MVP                         |
 | `.github/pull_request_template.md` | Checklist que aparece em toda pull request nova            |
 | `CLAUDE.md`                        | Regras de trabalho do Claude Code neste repositório        |
 | `.claude/agents/`                  | Agente `emagvalid-dev` (apoio ao desenvolvimento)          |
