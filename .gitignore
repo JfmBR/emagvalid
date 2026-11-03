@@ -1,0 +1,31 @@
+# Dependências e build
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Segredos e variáveis de ambiente (o .env.example entra no git)
+.env
+.env.*
+!.env.example
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema e editores
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Configurações locais do Claude Code (permissões desta máquina)
+.claude/settings.local.json
