@@ -5,6 +5,9 @@ build/
 coverage/
 *.tsbuildinfo
 
+# Cliente do Prisma (gerado por npm run db:generate)
+apps/api/generated/
+
 # Segredos e variáveis de ambiente (o .env.example entra no git)
 .env
 .env.*

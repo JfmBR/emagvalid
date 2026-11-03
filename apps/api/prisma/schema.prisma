@@ -1,0 +1,66 @@
+// PROPOSTA INICIAL do banco, a revisar no Plano de Projeto v1.1 (13/11/2026).
+// Cobre os requisitos de prioridade alta: conta (RF01), avaliação por URL (RF02),
+// falhas com requisito, local e prioridade (RF04), nota (RF05), orientação da IA
+// revisada pelo auditor (RF07, RF10, RF11) e histórico (RF14).
+// Requisitos em ../emagvalid-docs/docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id         String      @id @default(uuid())
+  nome       String
+  email      String      @unique
+  senhaHash  String // nunca a senha em texto (RNF04)
+  criadoEm   DateTime    @default(now())
+  avaliacoes Avaliacao[]
+
+  @@map("usuarios")
+}
+
+enum StatusAvaliacao {
+  NA_FILA
+  ANALISANDO
+  CONCLUIDA
+  ERRO
+}
+
+model Avaliacao {
+  id          String          @id @default(uuid())
+  usuarioId   String
+  usuario     Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  url         String
+  status      StatusAvaliacao @default(NA_FILA)
+  nota        Int? // 0 a 100; cálculo a definir (TAP)
+  mensagemErro String?
+  criadaEm    DateTime        @default(now())
+  concluidaEm DateTime?
+  falhas      Falha[]
+
+  @@index([usuarioId, criadaEm])
+  @@map("avaliacoes")
+}
+
+model Falha {
+  id                 String    @id @default(uuid())
+  avaliacaoId        String
+  avaliacao          Avaliacao @relation(fields: [avaliacaoId], references: [id], onDelete: Cascade)
+  requisitoEmag      String // identificação do requisito do eMAG 3.1 (RF04, RF08)
+  descricao          String
+  prioridade         String // escala a definir
+  seletor            String // local exato na página (RF04)
+  trecho             String?
+  revisaoHumana      Boolean   @default(false) // exige revisão humana (RF09)
+  orientacaoIa       String? // texto gerado pela IA (RF07)
+  orientacaoFinal    String? // texto revisado ou editado pelo auditor (RF10, RF11)
+  orientacaoAprovada Boolean   @default(false)
+
+  @@index([avaliacaoId])
+  @@map("falhas")
+}
