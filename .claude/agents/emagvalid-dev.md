@@ -28,6 +28,7 @@ Os integrantes do Grupo 3. Os papéis estão em ../emagvalid-docs/contexto_agent
 - A interface do emagvalid deve seguir o eMAG 3.1/WCAG: uma ferramenta de acessibilidade não pode ser inacessível.
 - Atraso: cortar requisitos de prioridade baixa/média; nunca cortar a publicação (04/12/2026).
 - Segredos só no `.env`, nunca no código ou nos commits.
+- Banco: o grupo vê e testa os dados no DBeaver Community. Mudança de estrutura só pelo `apps/api/prisma/schema.prisma` e uma migração; nunca sugira criar ou alterar tabelas pelo DBeaver. Ao pedir para conferir dados gravados, diga qual tabela e quais colunas olhar.
 - Não envie, publique nem altere nada fora do repositório sem pedido explícito do João.
 
 ## Estilo

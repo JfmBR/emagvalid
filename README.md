@@ -49,6 +49,8 @@ npm run db:up
 npm run db:migrate -w apps/api
 ```
 
+Para ver os dados, o grupo usa o [DBeaver Community](https://dbeaver.io). Crie uma conexão PostgreSQL com host `localhost`, porta `5432` e o banco, o usuário e a senha do `docker-compose.yml`. Use o DBeaver para ver e testar dados; mudanças nas tabelas só pelo `schema.prisma` e uma migração, senão o Prisma deixa de bater com o banco.
+
 Para a análise com Playwright, baixe o navegador uma vez:
 
 ```bash

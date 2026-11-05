@@ -103,6 +103,7 @@ O Plano v1.1 (13/11) pede arquitetura e tecnologias. Leve estas decisões ao men
 - [ ] **Hospedagem:** precisa rodar o Chromium do Playwright (ver sugestões)
 - [ ] **Esquema do banco:** revisar `apps/api/prisma/schema.prisma` com o que o Passo 1 mostrou
 - [ ] Bibliotecas novas que vão ser precisas (ver sugestões)
+- [ ] Ferramentas de apoio, que não vão para o produto: `concurrently` (sobe API e front-end juntos com `npm run dev`) e DBeaver Community (ver e testar os dados do banco, local e na nuvem)
 
 **Terminou quando:** as decisões estão escritas na seção "Arquitetura e tecnologias" do Plano v1.1.
 
@@ -112,6 +113,7 @@ Publicar cedo evita a surpresa de descobrir na última semana que algo não roda
 
 - [ ] Criar um `Dockerfile` que monta a API, inclui o Chromium e serve o front-end pronto
 - [ ] Criar o banco na nuvem e configurar `DATABASE_URL` na hospedagem
+- [ ] Conectar o DBeaver ao banco da nuvem e conferir que as tabelas foram criadas. Os dados de conexão ficam no painel do provedor; a senha não entra no repositório
 - [ ] Publicar e abrir o endereço público: deve aparecer "API conectada."
 - [ ] Rodar o script do Passo 1 **no servidor** para ver se o Chromium funciona lá
 
@@ -140,6 +142,7 @@ Requisitos: RF01, RF09 (aviso da Tela 1), RNF03, RNF04, RNF05.
 - [ ] Tela 1 · Inicial: os dois blocos ("O que o emagvalid faz" e "O que continua com você") e o aviso fixo
 - [ ] Tela 2 · Cadastro e login: 3 campos, "mostrar senha", regra de 8 caracteres, mensagens de erro do protótipo
 - [ ] Página curta de privacidade: que dados guardamos e o que vai para a IA (RNF05)
+- [ ] Conectar o DBeaver ao banco local (ver `README.md`, "Como rodar") e conferir em `usuarios` que a conta foi gravada com a senha em hash, nunca em texto
 
 **Terminou quando:** dá para criar conta, sair e entrar de novo, só com teclado.
 
@@ -153,6 +156,7 @@ Requisitos: RF02, RF03, RF04, RF17, RNF06. **Checkpoint 19/11.**
 - [ ] Tela 3: campo da URL com exemplo e ajuda curta ("Uma página pública por vez…")
 - [ ] Tela 4: progresso em 3 passos, perguntando à API a cada 2 s; 4b (URL inválida) e 4c (demorou demais)
 - [ ] Tempo máximo da análise (sugestão: 60 s) para não travar
+- [ ] Conferir no DBeaver as linhas de `avaliacoes` e `falhas` de uma análise real
 
 **Terminou quando:** você digita uma URL real e as falhas ficam salvas no banco.
 
