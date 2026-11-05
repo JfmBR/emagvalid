@@ -7,7 +7,7 @@
     "apps/web"
   ],
   "scripts": {
-    "dev": "npm run dev --workspaces --if-present",
+    "dev": "concurrently -k -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
     "dev:api": "npm run dev -w apps/api",
     "dev:web": "npm run dev -w apps/web",
     "build": "npm run build --workspaces --if-present",
@@ -20,6 +20,7 @@
     "db:down": "docker compose down"
   },
   "devDependencies": {
+    "concurrently": "^10.0.6",
     "oxlint": "^1.91.0",
     "prettier": "^3.9.10"
   },

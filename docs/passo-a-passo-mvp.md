@@ -64,11 +64,15 @@ Os passos 0 a 4 começam **antes** da construção oficial (16/11) de propósito
 
 ## Passo 0 · Preparar o ambiente (03–04/11)
 
-- [ ] Instalar o [VS Code](https://code.visualstudio.com) e o [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [ ] Instalar o leitor de tela [NVDA](https://www.nvaccess.org) para testar as telas
-- [ ] Rodar o projeto: `npm install`, `cp .env.example .env`, `npm run db:up`, `npm run db:migrate -w apps/api`, `npm run dev`
-- [ ] Abrir http://localhost:5173 e ver "API conectada."
-- [ ] Baixar o navegador do Playwright: `npx playwright install chromium`
+- [x] Instalar o [VS Code](https://code.visualstudio.com) e o Docker:
+  - **Windows e Mac:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+  - **Linux (Debian 13):** `sudo apt install docker.io docker-compose` e depois `sudo usermod -aG docker $USER`; saia e entre de novo na sessão e teste com `docker run hello-world`
+- [x] Instalar um leitor de tela para testar as telas:
+  - **Windows:** [NVDA](https://www.nvaccess.org)
+  - **Linux:** [Orca](https://orca.gnome.org), que já vem no GNOME (liga e desliga com `Super+Alt+S`). Se não estiver instalado: `sudo apt install orca`. Teste no Firefox, que é o navegador que funciona melhor com o Orca
+- [x] Rodar o projeto: `npm install`, `cp .env.example .env`, `npm run db:up`, `npm run db:migrate -w apps/api`, `npm run dev`
+- [x] Abrir http://localhost:5173 e ver "API conectada."
+- [x] Baixar o navegador do Playwright: `npx playwright install chromium`
 - [ ] Fazer o "Quick Start" e o "Tutorial: Tic-Tac-Toe" de [react.dev](https://react.dev/learn)
 
 **Terminou quando:** o projeto roda no seu computador com o banco ligado.
@@ -99,6 +103,7 @@ O Plano v1.1 (13/11) pede arquitetura e tecnologias. Leve estas decisões ao men
 - [ ] **Hospedagem:** precisa rodar o Chromium do Playwright (ver sugestões)
 - [ ] **Esquema do banco:** revisar `apps/api/prisma/schema.prisma` com o que o Passo 1 mostrou
 - [ ] Bibliotecas novas que vão ser precisas (ver sugestões)
+- [ ] Ferramentas de apoio, que não vão para o produto: `concurrently` (sobe API e front-end juntos com `npm run dev`) e DBeaver Community (ver e testar os dados do banco, local e na nuvem)
 
 **Terminou quando:** as decisões estão escritas na seção "Arquitetura e tecnologias" do Plano v1.1.
 
@@ -108,6 +113,7 @@ Publicar cedo evita a surpresa de descobrir na última semana que algo não roda
 
 - [ ] Criar um `Dockerfile` que monta a API, inclui o Chromium e serve o front-end pronto
 - [ ] Criar o banco na nuvem e configurar `DATABASE_URL` na hospedagem
+- [ ] Conectar o DBeaver ao banco da nuvem e conferir que as tabelas foram criadas. Os dados de conexão ficam no painel do provedor; a senha não entra no repositório
 - [ ] Publicar e abrir o endereço público: deve aparecer "API conectada."
 - [ ] Rodar o script do Passo 1 **no servidor** para ver se o Chromium funciona lá
 
@@ -120,7 +126,7 @@ Publicar cedo evita a surpresa de descobrir na última semana que algo não roda
 - [ ] Instalar as rotas de página (sugestão: React Router) para as 8 telas
 - [ ] Criar os componentes do protótipo em `apps/web/src/componentes/`: `Botao` (primário e secundário, 44 px), `Campo` (rótulo visível, ajuda e erro), `Selo` (prioridade e origem, com texto e cor), `Aviso`, `Layout` (cabeçalho, "Pular para o conteúdo", `main`)
 - [ ] Copiar cores e tipografia do protótipo para `index.css`
-- [ ] Testar cada componente com teclado e NVDA
+- [ ] Testar cada componente com teclado e leitor de tela (NVDA no Windows, Orca no Linux)
 
 **Terminou quando:** os componentes estão prontos e iguais aos do protótipo.
 
@@ -136,6 +142,7 @@ Requisitos: RF01, RF09 (aviso da Tela 1), RNF03, RNF04, RNF05.
 - [ ] Tela 1 · Inicial: os dois blocos ("O que o emagvalid faz" e "O que continua com você") e o aviso fixo
 - [ ] Tela 2 · Cadastro e login: 3 campos, "mostrar senha", regra de 8 caracteres, mensagens de erro do protótipo
 - [ ] Página curta de privacidade: que dados guardamos e o que vai para a IA (RNF05)
+- [ ] Conectar o DBeaver ao banco local (ver `README.md`, "Como rodar") e conferir em `usuarios` que a conta foi gravada com a senha em hash, nunca em texto
 
 **Terminou quando:** dá para criar conta, sair e entrar de novo, só com teclado.
 
@@ -149,6 +156,7 @@ Requisitos: RF02, RF03, RF04, RF17, RNF06. **Checkpoint 19/11.**
 - [ ] Tela 3: campo da URL com exemplo e ajuda curta ("Uma página pública por vez…")
 - [ ] Tela 4: progresso em 3 passos, perguntando à API a cada 2 s; 4b (URL inválida) e 4c (demorou demais)
 - [ ] Tempo máximo da análise (sugestão: 60 s) para não travar
+- [ ] Conferir no DBeaver as linhas de `avaliacoes` e `falhas` de uma análise real
 
 **Terminou quando:** você digita uma URL real e as falhas ficam salvas no banco.
 
@@ -206,7 +214,7 @@ Requisitos: RF16, RF17.
 Requisitos: RNF01, RNF02, RNF07, RNF08. **MVP em produção em 04/12.**
 
 - [ ] Passar o próprio emagvalid em todas as telas dele (a ferramenta não pode ser inacessível)
-- [ ] Teste completo com teclado e NVDA, tela por tela
+- [ ] Teste completo com teclado e leitor de tela, tela por tela (NVDA no Windows, Orca no Linux). Se o desenvolvimento for só no Linux, faça ao menos uma rodada com o NVDA num Windows antes de 04/12: os leitores leem a mesma página de jeitos diferentes, e o NVDA é o que a persona usa
 - [ ] Luis Otavio: testes do fluxo e checklist de aceite; teste de usabilidade com uma pessoa de fora do grupo
 - [ ] Publicar a versão final e conferir o fluxo inteiro no endereço público
 - [ ] README atualizado (como rodar, como publicar, limites conhecidos)
