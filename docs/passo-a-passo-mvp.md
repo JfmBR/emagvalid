@@ -64,13 +64,15 @@ Os passos 0 a 4 começam **antes** da construção oficial (16/11) de propósito
 
 ## Passo 0 · Preparar o ambiente (03–04/11)
 
-- [ ] Instalar o [VS Code](https://code.visualstudio.com) e o [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [ ] Instalar um leitor de tela para testar as telas:
+- [x] Instalar o [VS Code](https://code.visualstudio.com) e o Docker:
+  - **Windows e Mac:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+  - **Linux (Debian 13):** `sudo apt install docker.io docker-compose` e depois `sudo usermod -aG docker $USER`; saia e entre de novo na sessão e teste com `docker run hello-world`
+- [x] Instalar um leitor de tela para testar as telas:
   - **Windows:** [NVDA](https://www.nvaccess.org)
   - **Linux:** [Orca](https://orca.gnome.org), que já vem no GNOME (liga e desliga com `Super+Alt+S`). Se não estiver instalado: `sudo apt install orca`. Teste no Firefox, que é o navegador que funciona melhor com o Orca
-- [ ] Rodar o projeto: `npm install`, `cp .env.example .env`, `npm run db:up`, `npm run db:migrate -w apps/api`, `npm run dev`
-- [ ] Abrir http://localhost:5173 e ver "API conectada."
-- [ ] Baixar o navegador do Playwright: `npx playwright install chromium`
+- [x] Rodar o projeto: `npm install`, `cp .env.example .env`, `npm run db:up`, `npm run db:migrate -w apps/api`, `npm run dev`
+- [x] Abrir http://localhost:5173 e ver "API conectada."
+- [x] Baixar o navegador do Playwright: `npx playwright install chromium`
 - [ ] Fazer o "Quick Start" e o "Tutorial: Tic-Tac-Toe" de [react.dev](https://react.dev/learn)
 
 **Terminou quando:** o projeto roda no seu computador com o banco ligado.
