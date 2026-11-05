@@ -32,7 +32,7 @@ O esquema do banco é uma **proposta inicial** para os requisitos de prioridade 
 
 ## Como rodar
 
-Pré-requisitos: [Node.js 26](https://nodejs.org) e, para o banco, [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+Pré-requisitos: [Node.js 26](https://nodejs.org) e, para o banco, [Docker Desktop](https://www.docker.com/products/docker-desktop/). Instalação passo a passo, com os links de download: [`docs/instalacao.md`](docs/instalacao.md).
 
 ```bash
 npm install
@@ -84,6 +84,7 @@ Antes de abrir uma PR, rode `npm run lint`, `npm run format` e `npm test`. O CI 
 | `docker-compose.yml`               | PostgreSQL local                                           |
 | `.env.example`                     | Modelo das variáveis de ambiente (copie para `.env`)       |
 | `.github/workflows/ci.yml`         | CI                                                         |
+| `docs/instalacao.md`               | Guia de instalação das ferramentas (Windows e Linux)       |
 | `docs/passo-a-passo-mvp.md`        | Passo a passo da construção do MVP                         |
 | `.github/pull_request_template.md` | Checklist que aparece em toda pull request nova            |
 | `CLAUDE.md`                        | Regras de trabalho do Claude Code neste repositório        |
