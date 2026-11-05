@@ -1,4 +1,4 @@
-# emagvalid (código) · Grupo 3 — instruções para o Claude Code
+# AcessaWeb (código) · Grupo 3 — instruções para o Claude Code
 
 Este repositório guarda o código do MVP. O contexto do projeto está no repositório de documentação, na pasta ao lado: comece por `../emagvalid-docs/contexto_agente/00-indice.md`. Se essa pasta não estiver acessível na sessão, peça ao João para adicioná-la. Agente: `.claude/agents/emagvalid-dev.md`.
 
@@ -11,13 +11,16 @@ Este repositório guarda o código do MVP. O contexto do projeto está no reposi
 
 - **Antes de qualquer alteração** em arquivos do repositório, rode `git status`. Se houver mudanças sem commit, faça um commit delas antes de começar, como ponto de restauração.
 - Mensagem do commit em pt-BR, dizendo o que ele contém.
-- Commit direto na `main` até o grupo definir as regras de branches (pendente: Matheus, com apoio do mentor José Alves). Não faça push sem pedido do João.
+- Nunca faça commit direto na `main`. Cada tarefa vai numa branch curta, criada a partir da `main`, com o prefixo `feat/`, `fix/` ou `docs/` e um nome em pt-BR (ex.: `feat/tela-de-login`). Regra do grupo de 05/11/2026 (`../emagvalid-docs/contexto_agente/07-pendencias-e-decisoes.md`, seção B, "Regras de branches e commits").
+- Não faça push sem pedido do João.
 - Ao terminar, diga o que ficou sem commit: isso entra no commit antes da próxima alteração.
 
-## Pull requests (regra do João, 29/10/2026)
+## Pull requests (regra do João, 29/10/2026; atualizada em 05/11/2026)
 
 - Ao abrir uma PR, dê `git pull` antes e preencha o checklist de `.github/pull_request_template.md`.
-- Se, ao conferir o checklist, nada precisar mudar e nada estiver errado, pode dar merge sem esperar o João. Se algum item falhar, corrija ou avise o João antes do merge.
+- A `main` é protegida no GitHub: a PR só entra com o check `verificar` do CI verde e a aprovação de outro integrante (Matheus Francisconi). O merge é sempre por squash, e a branch é apagada depois.
+- Se, ao conferir o checklist, nada precisar mudar e nada estiver errado, peça a revisão do Matheus; com a aprovação, pode dar merge sem esperar o João. Se algum item falhar, corrija ou avise o João antes do merge.
+- Não use o acesso de administrador para passar por cima da proteção da `main` sem pedido do João.
 
 ## Perguntas e pendências (regra do João, 29/10/2026)
 
