@@ -65,7 +65,9 @@ Os passos 0 a 4 começam **antes** da construção oficial (16/11) de propósito
 ## Passo 0 · Preparar o ambiente (03–04/11)
 
 - [ ] Instalar o [VS Code](https://code.visualstudio.com) e o [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [ ] Instalar o leitor de tela [NVDA](https://www.nvaccess.org) para testar as telas
+- [ ] Instalar um leitor de tela para testar as telas:
+  - **Windows:** [NVDA](https://www.nvaccess.org)
+  - **Linux:** [Orca](https://orca.gnome.org), que já vem no GNOME (liga e desliga com `Super+Alt+S`). Se não estiver instalado: `sudo apt install orca`. Teste no Firefox, que é o navegador que funciona melhor com o Orca
 - [ ] Rodar o projeto: `npm install`, `cp .env.example .env`, `npm run db:up`, `npm run db:migrate -w apps/api`, `npm run dev`
 - [ ] Abrir http://localhost:5173 e ver "API conectada."
 - [ ] Baixar o navegador do Playwright: `npx playwright install chromium`
@@ -120,7 +122,7 @@ Publicar cedo evita a surpresa de descobrir na última semana que algo não roda
 - [ ] Instalar as rotas de página (sugestão: React Router) para as 8 telas
 - [ ] Criar os componentes do protótipo em `apps/web/src/componentes/`: `Botao` (primário e secundário, 44 px), `Campo` (rótulo visível, ajuda e erro), `Selo` (prioridade e origem, com texto e cor), `Aviso`, `Layout` (cabeçalho, "Pular para o conteúdo", `main`)
 - [ ] Copiar cores e tipografia do protótipo para `index.css`
-- [ ] Testar cada componente com teclado e NVDA
+- [ ] Testar cada componente com teclado e leitor de tela (NVDA no Windows, Orca no Linux)
 
 **Terminou quando:** os componentes estão prontos e iguais aos do protótipo.
 
@@ -206,7 +208,7 @@ Requisitos: RF16, RF17.
 Requisitos: RNF01, RNF02, RNF07, RNF08. **MVP em produção em 04/12.**
 
 - [ ] Passar o próprio emagvalid em todas as telas dele (a ferramenta não pode ser inacessível)
-- [ ] Teste completo com teclado e NVDA, tela por tela
+- [ ] Teste completo com teclado e leitor de tela, tela por tela (NVDA no Windows, Orca no Linux). Se o desenvolvimento for só no Linux, faça ao menos uma rodada com o NVDA num Windows antes de 04/12: os leitores leem a mesma página de jeitos diferentes, e o NVDA é o que a persona usa
 - [ ] Luis Otavio: testes do fluxo e checklist de aceite; teste de usabilidade com uma pessoa de fora do grupo
 - [ ] Publicar a versão final e conferir o fluxo inteiro no endereço público
 - [ ] README atualizado (como rodar, como publicar, limites conhecidos)
