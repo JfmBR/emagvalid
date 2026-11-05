@@ -4,7 +4,7 @@
 
 ## Requisito ou tela
 
-<!-- Ex.: RF05 e RF06 (Tela 5 · Resultado). Requisitos em ../emagvalid-docs/docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md -->
+<!-- Ex.: RF05 e RF06 (Tela 5 · Resultado). Requisitos em ../emagvalid_docs/docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md -->
 
 ## Checklist
 

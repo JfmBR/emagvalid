@@ -1,17 +1,17 @@
 # AcessaWeb (código) · Grupo 3 — instruções para o Claude Code
 
-Este repositório guarda o código do MVP. O contexto do projeto está no repositório de documentação, na pasta ao lado: comece por `../emagvalid-docs/contexto_agente/00-indice.md`. Se essa pasta não estiver acessível na sessão, peça ao João para adicioná-la. Agente: `.claude/agents/emagvalid-dev.md`.
+Este repositório guarda o código do MVP. O contexto do projeto está no repositório de documentação, na pasta ao lado: comece por `../emagvalid_docs/contexto_agente/00-indice.md`. Se essa pasta não estiver acessível na sessão, peça ao João para adicioná-la. Agente: `.claude/agents/emagvalid-dev.md`.
 
 ## Documentação
 
-- Requisitos, telas e protótipo ficam só em `../emagvalid-docs/` (ver a tabela do `README.md`). Consulte lá; não copie para cá.
-- Não altere nada em `../emagvalid-docs/` a partir deste repositório. Se o código mostrar que um requisito precisa mudar, avise o João.
+- Requisitos, telas e protótipo ficam só em `../emagvalid_docs/` (ver a tabela do `README.md`). Consulte lá; não copie para cá.
+- Não altere nada em `../emagvalid_docs/` a partir deste repositório. Se o código mostrar que um requisito precisa mudar, avise o João.
 
 ## Commits (regra do João, 28/10/2026)
 
 - **Antes de qualquer alteração** em arquivos do repositório, rode `git status`. Se houver mudanças sem commit, faça um commit delas antes de começar, como ponto de restauração.
 - Mensagem do commit em pt-BR, dizendo o que ele contém.
-- Nunca faça commit direto na `main`. Cada tarefa vai numa branch curta, criada a partir da `main`, com o prefixo `feat/`, `fix/` ou `docs/` e um nome em pt-BR (ex.: `feat/tela-de-login`). Regra do grupo de 05/11/2026 (`../emagvalid-docs/contexto_agente/07-pendencias-e-decisoes.md`, seção B, "Regras de branches e commits").
+- Nunca faça commit direto na `main`. Cada tarefa vai numa branch curta, criada a partir da `main`, com o prefixo `feat/`, `fix/` ou `docs/` e um nome em pt-BR (ex.: `feat/tela-de-login`). Regra do grupo de 05/11/2026 (`../emagvalid_docs/contexto_agente/07-pendencias-e-decisoes.md`, seção B, "Regras de branches e commits").
 - Não faça push sem pedido do João.
 - Ao terminar, diga o que ficou sem commit: isso entra no commit antes da próxima alteração.
 
@@ -24,7 +24,7 @@ Este repositório guarda o código do MVP. O contexto do projeto está no reposi
 
 ## Perguntas e pendências (regra do João, 29/10/2026)
 
-- Ao apresentar ao João perguntas, pendências ou divergências, diga **de que arquivo e seção** saiu cada uma, com o caminho relativo e a seção ou a linha. Exemplo: `../emagvalid-docs/contexto_agente/07-pendencias-e-decisoes.md`, seção B.
+- Ao apresentar ao João perguntas, pendências ou divergências, diga **de que arquivo e seção** saiu cada uma, com o caminho relativo e a seção ou a linha. Exemplo: `../emagvalid_docs/contexto_agente/07-pendencias-e-decisoes.md`, seção B.
 - Vale também ao resumir o relatório de um agente: não perca os arquivos que ele citou.
 - Se a informação estiver em mais de um arquivo, liste todos. Se não estiver em nenhum, diga "não consta nos arquivos".
 

@@ -2,11 +2,11 @@
 
 Auditoria automatizada de acessibilidade pelo eMAG 3.1 (Trilha A — produto funcional).
 
-Este repositório guarda **só o código**. A documentação do projeto (TAP, Plano de Projeto, Persona, Jornada, requisitos e protótipo) fica no repositório [`emagvalid-docs`](https://github.com/JfmBR/emagvalid-docs), clonado numa pasta ao lado desta:
+Este repositório guarda **só o código**. A documentação do projeto (TAP, Plano de Projeto, Persona, Jornada, requisitos e protótipo) fica no repositório [`emagvalid-docs`](https://github.com/JfmBR/emagvalid-docs), clonado numa pasta ao lado desta com o nome `emagvalid_docs` (com sublinhado: `git clone git@github.com:JfmBR/emagvalid-docs.git emagvalid_docs`):
 
 ```
-Projetos/
-├── emagvalid-docs/   documentação
+projeto_integrador/
+├── emagvalid_docs/   documentação
 └── emagvalid/        código (este repositório)
 ```
 
@@ -14,7 +14,7 @@ Projetos/
 
 - Estrutura pronta: front-end e API conversando, banco modelado (proposta), testes e CI. Ainda não há nenhuma tela ou regra do MVP.
 - A construção começa em 16/11/2026 (sprint 1: telas principais e estrutura). Arquitetura e tecnologias entram no Plano de Projeto v1.1, em 13/11/2026.
-- Ainda **a definir**: fornecedor de IA, cálculo da nota, hospedagem e regras de branches (Matheus, com apoio do mentor José Alves).
+- Decidido em 05/11/2026 (Plano de Projeto v1): IA com o Google Gemini, nota com pesos por prioridade nas 29 recomendações do eMAG cobertas pelo axe-core, hospedagem no Render com o banco no Neon (planos gratuitos) e regras de branches (`main` protegida, PR com CI verde e revisão do Matheus, squash).
 - Passo a passo da construção, semana a semana: [`docs/passo-a-passo-mvp.md`](docs/passo-a-passo-mvp.md).
 
 ## Tecnologias
@@ -91,7 +91,7 @@ Antes de abrir uma PR, rode `npm run lint`, `npm run format` e `npm test`. O CI 
 
 ## Onde está cada coisa na documentação
 
-| Assunto                                   | Arquivo em `../emagvalid-docs/`                                     |
+| Assunto                                   | Arquivo em `../emagvalid_docs/`                                     |
 | ----------------------------------------- | ------------------------------------------------------------------- |
 | Visão geral do contexto (comece por aqui) | `contexto_agente/00-indice.md`                                      |
 | Escopo, objetivos e tecnologias previstas | `contexto_agente/01-projeto-emagvalid.md`                           |

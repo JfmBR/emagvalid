@@ -1,20 +1,22 @@
 # Passo a passo para construir o MVP
 
-Guia para o João construir o emagvalid do zero até a publicação, seguindo o Plano de Projeto v1.0 (rascunho de 01/11/2026). Escrito em 03/11/2026.
+Guia para o João construir o AcessaWeb do zero até a publicação, seguindo o Plano de Projeto v1 oficial (05/11/2026). Escrito em 03/11/2026 e atualizado em 05/11/2026 com as decisões de 05/11 (`../emagvalid_docs/contexto_agente/07-pendencias-e-decisoes.md`, seção D).
 
-Fontes (em `../emagvalid-docs/`):
+Fontes (em `../emagvalid_docs/`):
 
-- Plano: `docs/rascunhos/Plano_de_Projeto_v1.0_rascunho.md`
+- Plano: `docs/contexto_projeto/Plano de Projeto v1.docx` (texto literal em `contexto_agente/fontes/projeto/Plano_de_Projeto.md`)
 - Requisitos: `docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md`
+- Lista fechada do eMAG e nota: `docs/rascunhos/Cobertura_eMAG_axe-core.md`
 - Telas: `docs/rascunhos/Prototipo_30-10_telas_e_teste.md` e `docs/prototipo/prototipo_emagvalid.html`
 
 ## Como usar este guia
 
 - Siga os passos **na ordem**. Cada passo termina com algo que funciona e que você consegue mostrar.
-- Cada passo vira **um cartão no Trello** e **uma ou mais PRs** pequenas (uma tela ou uma regra por PR).
-- Em cada passo há um **pedido sugerido** para o Claude Code. Abra a sessão na pasta `emagvalid`, com `emagvalid-docs` adicionada.
+- Cada passo vira **um cartão no Trello** e **uma ou mais PRs** pequenas (uma tela ou uma regra por PR), numa branch curta (`feat/`, `fix/` ou `docs/`). A PR só entra com o CI verde e a revisão do Matheus, por squash.
+- Em cada passo há um **pedido sugerido** para o Claude Code. Abra a sessão na pasta `emagvalid`, com `emagvalid_docs` adicionada.
 - Marque `[x]` no que terminar e faça commit deste arquivo junto: assim ele mostra onde você está.
-- **Pronto** (definição do Plano, proposta): funciona no ambiente publicado, alguém revisou, o Luis Otavio testou e, se for tela, passou no teste com teclado e leitor de tela.
+- **Pronto** (definição do Plano v1): funciona no ambiente publicado, outro integrante revisou, o Luis Otavio testou e, se for tela, passou no teste com teclado e leitor de tela.
+- **Horas:** 10 h por semana suas; 3 h dos demais (Plano v1, Equipe). Passe ao grupo o que não é código.
 
 ## Como o MVP funciona (visão geral)
 
@@ -27,7 +29,7 @@ API cria a avaliação (status ANALISANDO) e responde na hora
    ├─ Playwright abre a página no Chromium
    ├─ axe-core verifica e devolve as violações
    ├─ tabela "regra do axe → requisito do eMAG" traduz cada violação
-   ├─ calcula a nota por seção do eMAG
+   ├─ calcula a nota (pesos das verificações aprovadas ÷ aplicáveis)
    └─ grava falhas e nota no banco (status CONCLUIDA ou ERRO)
    ▲
 Tela 4 pergunta a cada 2 s: GET /api/avaliacoes/:id
@@ -36,16 +38,16 @@ Tela 5 mostra nota, conta e falhas → Tela 6 orientação (texto padrão + IA)
    → Tela 7 prévia e PDF → Tela 8 histórico
 ```
 
-| Parte                  | Onde fica no código                                 | Requisitos                     |
-| ---------------------- | --------------------------------------------------- | ------------------------------ |
-| Conta e login          | `apps/api/src/rotas/auth.ts`, Telas 1 e 2           | RF01, RNF03, RNF04             |
-| Análise da página      | `apps/api/src/analise/`                             | RF02, RF03, RF04, RNF06        |
-| Tabela eMAG            | `apps/api/src/emag/requisitos.ts`                   | RF04, RF08                     |
-| Nota                   | `apps/api/src/analise/nota.ts`                      | RF05, RF06                     |
-| Orientações            | `apps/api/src/orientacoes/`                         | RF07, RF08, RF10, RF11         |
-| PDF                    | `apps/api/src/relatorio/`                           | RF12, RF13                     |
-| Histórico e comparação | `apps/api/src/rotas/avaliacoes.ts`, Tela 8          | RF14, RF15                     |
-| Telas                  | `apps/web/src/telas/` e `apps/web/src/componentes/` | RF09, RF16, RF17, RNF01, RNF02 |
+| Parte             | Onde fica no código                                 | Requisitos                     |
+| ----------------- | --------------------------------------------------- | ------------------------------ |
+| Conta e login     | `apps/api/src/rotas/auth.ts`, Telas 1 e 2           | RF01, RNF03, RNF04             |
+| Análise da página | `apps/api/src/analise/`                             | RF02, RF03, RF04, RNF06        |
+| Tabela eMAG       | `apps/api/src/emag/requisitos.ts`                   | RF04, RF08                     |
+| Nota              | `apps/api/src/analise/nota.ts`                      | RF05, RF06                     |
+| Orientações       | `apps/api/src/orientacoes/`                         | RF07, RF08, RF10, RF11         |
+| PDF               | `apps/api/src/relatorio/`                           | RF12, RF13                     |
+| Histórico         | `apps/api/src/rotas/avaliacoes.ts`, Tela 8          | RF14                           |
+| Telas             | `apps/web/src/telas/` e `apps/web/src/componentes/` | RF09, RF16, RF17, RNF01, RNF02 |
 
 ## Calendário
 
@@ -58,7 +60,7 @@ Tela 5 mostra nota, conta e falhas → Tela 6 orientação (texto padrão + IA)
 | 30/11–04/12 (sprint 3) | 9, 10, 11, 12 | **MVP em produção (04/12)**, Plano v1.2 e checklist de aceite           |
 | 07–11/12               | 13            | Correções finais e entrega final (11/12); prévia do pitch (09 ou 10/12) |
 
-Os passos 0 a 4 começam **antes** da construção oficial (16/11) de propósito: são as partes de maior risco (ver "Sugestões" no fim).
+Os passos 0 a 4 começam **antes** da construção oficial (16/11) de propósito: são as partes de maior risco (R4 do Plano v1: começar antes de 16/11 pela análise e pela publicação).
 
 ---
 
@@ -74,6 +76,8 @@ Os passos 0 a 4 começam **antes** da construção oficial (16/11) de propósito
 - [x] Abrir http://localhost:5173 e ver "API conectada."
 - [x] Baixar o navegador do Playwright: `npx playwright install chromium`
 - [ ] Fazer o "Quick Start" e o "Tutorial: Tic-Tac-Toe" de [react.dev](https://react.dev/learn)
+- [ ] Convidar o grupo para o repositório no GitHub e dar acesso de escrita ao Matheus. Sem isso, nenhuma PR tem a revisão que a proteção da `main` exige (`../emagvalid_docs/contexto_agente/07-pendencias-e-decisoes.md`, seção B, "Regras de branches")
+- [ ] Combinar com o grupo a dependência `concurrently`, que entrou na PR #1 sem ser combinada (mesma seção)
 
 **Terminou quando:** o projeto roda no seu computador com o banco ligado.
 
@@ -86,8 +90,8 @@ Os passos 0 a 4 começam **antes** da construção oficial (16/11) de propósito
 - [ ] Criar `apps/api/src/analise/analisar.ts`: abre a URL com Playwright, roda o axe-core e devolve as violações
 - [ ] Criar um script `npm run analisar -- <url>` que imprime o resultado no terminal
 - [ ] Testar em 3 a 5 páginas públicas reais (inclusive uma do governo)
-- [ ] Montar a **tabela de requisitos** em `apps/api/src/emag/requisitos.ts`: para cada requisito do eMAG 3.1 que o MVP cobre, o número, o nome oficial, a seção, o link para o texto oficial e as regras do axe-core que o verificam. Essa tabela é a "lista fechada" do RF08
-- [ ] Anotar quantos requisitos do eMAG o MVP cobre (decisão 7 dos requisitos)
+- [ ] Montar a **tabela de requisitos** em `apps/api/src/emag/requisitos.ts` a partir de `../emagvalid_docs/docs/rascunhos/Cobertura_eMAG_axe-core.md`: as 29 recomendações do eMAG 3.1 que o axe-core cobre no todo ou em parte, cada uma com número, nome oficial, seção, link para a seção oficial, regras do axe-core e prioridade (peso 3, 2 ou 1). Essa tabela é a "lista fechada" do RF08; as recomendações sem cobertura vão para a revisão humana (RF09)
+- [ ] Conferir o mapeamento e os pesos com o mentor José Alves e os nomes de 6.5 a 6.8 no PDF oficial do eMAG (`07`, seções B e E)
 
 **Terminou quando:** o script mostra, para uma URL real, as falhas já com o número e o nome do requisito do eMAG.
 
@@ -96,30 +100,36 @@ Os passos 0 a 4 começam **antes** da construção oficial (16/11) de propósito
 
 ## Passo 2 · Fechar as decisões para o Plano v1.1 (09–11/11)
 
-O Plano v1.1 (13/11) pede arquitetura e tecnologias. Leve estas decisões ao mentor (Rodrigo Pereira) e ao arquiteto (Fábio Rezente):
+O Plano v1.1 (13/11) pede arquitetura e tecnologias. O responsável pela v1.1 é o Matheus (Plano v1, Marcos de Entrega): passe a ele o que o código decidir e leve ao mentor (Rodrigo Pereira) e ao arquiteto (Fábio Rezente).
 
-- [ ] **Cálculo da nota:** sugestão no fim deste guia
-- [ ] **Fornecedor de IA** e quanto custa (afeta RF07, RF08 e RNF05)
-- [ ] **Hospedagem:** precisa rodar o Chromium do Playwright (ver sugestões)
+Já decidido em 05/11 (Plano v1, Arquitetura e tecnologias e legenda dos requisitos):
+
+- [x] **Cálculo da nota:** 100 × pesos das verificações aprovadas ÷ pesos das verificações aplicáveis, com peso alta 3, média 2 e baixa 1, nas 29 recomendações da lista fechada
+- [x] **IA:** Google Gemini, plano gratuito (afeta RF07, RF08 e RNF05)
+- [x] **Hospedagem:** Render (plano gratuito) para telas e API e PostgreSQL no Neon (plano gratuito)
+
+Ainda a fechar:
+
 - [ ] **Esquema do banco:** revisar `apps/api/prisma/schema.prisma` com o que o Passo 1 mostrou
-- [ ] Bibliotecas novas que vão ser precisas (ver sugestões)
+- [ ] Bibliotecas novas que vão ser precisas (ver sugestões), combinadas com o grupo
 - [ ] Ferramentas de apoio, que não vão para o produto: `concurrently` (sobe API e front-end juntos com `npm run dev`) e DBeaver Community (ver e testar os dados do banco, local e na nuvem)
 
-**Terminou quando:** as decisões estão escritas na seção "Arquitetura e tecnologias" do Plano v1.1.
+**Terminou quando:** o Matheus tem o que precisa para a seção "Arquitetura e tecnologias" do Plano v1.1.
 
 ## Passo 3 · Publicar o esqueleto (11–13/11)
 
 Publicar cedo evita a surpresa de descobrir na última semana que algo não roda no servidor (R7).
 
 - [ ] Criar um `Dockerfile` que monta a API, inclui o Chromium e serve o front-end pronto
-- [ ] Criar o banco na nuvem e configurar `DATABASE_URL` na hospedagem
+- [ ] Criar o banco no Neon e configurar `DATABASE_URL` no Render
 - [ ] Conectar o DBeaver ao banco da nuvem e conferir que as tabelas foram criadas. Os dados de conexão ficam no painel do provedor; a senha não entra no repositório
 - [ ] Publicar e abrir o endereço público: deve aparecer "API conectada."
 - [ ] Rodar o script do Passo 1 **no servidor** para ver se o Chromium funciona lá
+- [ ] Medir os limites do plano gratuito (R7 do Plano v1): o Chromium cabe na memória do Render? Quanto tempo o serviço leva para acordar depois de hibernar? Some isso aos 60 s do RNF06
 
-**Terminou quando:** o esqueleto está num endereço público e a análise roda no servidor.
+**Terminou quando:** o esqueleto está num endereço público e a análise roda no servidor dentro dos limites do plano gratuito.
 
-> Pedido sugerido: _"Prepare o projeto para publicar em [hospedagem escolhida]: Dockerfile com Chromium, API servindo o build do front-end e migrações do Prisma na publicação. Me guie no painel da hospedagem."_
+> Pedido sugerido: _"Prepare o projeto para publicar no Render (plano gratuito) com o banco no Neon: Dockerfile com Chromium, API servindo o build do front-end e migrações do Prisma na publicação. Me guie nos painéis."_
 
 ## Passo 4 · Base das telas (12–13/11)
 
@@ -130,7 +140,7 @@ Publicar cedo evita a surpresa de descobrir na última semana que algo não roda
 
 **Terminou quando:** os componentes estão prontos e iguais aos do protótipo.
 
-> Pedido sugerido: _"Crie os componentes Botao, Campo, Selo, Aviso e Layout seguindo o protótipo em ../emagvalid-docs/docs/prototipo/prototipo_emagvalid.html, acessíveis pelo eMAG 3.1, com um teste para cada."_
+> Pedido sugerido: _"Crie os componentes Botao, Campo, Selo, Aviso e Layout seguindo o protótipo em ../emagvalid_docs/docs/prototipo/prototipo_emagvalid.html, acessíveis pelo eMAG 3.1, com um teste para cada."_
 
 ## Passo 5 · Conta e login — Telas 1 e 2 (16–18/11)
 
@@ -139,9 +149,9 @@ Requisitos: RF01, RF09 (aviso da Tela 1), RNF03, RNF04, RNF05.
 - [ ] API: `POST /api/auth/cadastro`, `POST /api/auth/entrar`, `POST /api/auth/sair`, `GET /api/auth/eu`
 - [ ] Senha com hash (o `crypto.scrypt` do próprio Node basta); sessão em cookie `httpOnly`
 - [ ] Rotas de avaliação só para quem entrou
-- [ ] Tela 1 · Inicial: os dois blocos ("O que o emagvalid faz" e "O que continua com você") e o aviso fixo
+- [ ] Tela 1 · Inicial: os dois blocos ("O que o AcessaWeb faz" e "O que continua com você") e o aviso fixo
 - [ ] Tela 2 · Cadastro e login: 3 campos, "mostrar senha", regra de 8 caracteres, mensagens de erro do protótipo
-- [ ] Página curta de privacidade: que dados guardamos e o que vai para a IA (RNF05)
+- [ ] Página curta de privacidade: que dados guardamos e o que vai para a IA (RNF05: só o trecho da página pública com a falha, sem dado do usuário)
 - [ ] Conectar o DBeaver ao banco local (ver `README.md`, "Como rodar") e conferir em `usuarios` que a conta foi gravada com a senha em hash, nunca em texto
 
 **Terminou quando:** dá para criar conta, sair e entrar de novo, só com teclado.
@@ -155,7 +165,7 @@ Requisitos: RF02, RF03, RF04, RF17, RNF06. **Checkpoint 19/11.**
 - [ ] Gravar as falhas com requisito, seletor, trecho e prioridade
 - [ ] Tela 3: campo da URL com exemplo e ajuda curta ("Uma página pública por vez…")
 - [ ] Tela 4: progresso em 3 passos, perguntando à API a cada 2 s; 4b (URL inválida) e 4c (demorou demais)
-- [ ] Tempo máximo da análise (sugestão: 60 s) para não travar
+- [ ] Tempo máximo da análise: 60 s por página, já com as orientações (RNF06)
 - [ ] Conferir no DBeaver as linhas de `avaliacoes` e `falhas` de uma análise real
 
 **Terminou quando:** você digita uma URL real e as falhas ficam salvas no banco.
@@ -164,7 +174,7 @@ Requisitos: RF02, RF03, RF04, RF17, RNF06. **Checkpoint 19/11.**
 
 Requisitos: RF04, RF05, RF06, RF09.
 
-- [ ] `apps/api/src/analise/nota.ts` com a fórmula decidida no Passo 2, com testes
+- [ ] `apps/api/src/analise/nota.ts` com a fórmula decidida (Passo 2), com testes
 - [ ] Tela 5: nota, aviso "não é certificação", "Como chegamos a [nota]" (tabela por seção que abre e fecha), abas "Falhas automáticas" e "Revisão humana", cartões por requisito ordenados por prioridade
 - [ ] Lista de revisão humana fixa por requisito (o que a máquina não consegue julgar), com caixas de marcar
 - [ ] **Publicar** (primeira publicação do Plano, semana de 23/11)
@@ -176,8 +186,10 @@ Requisitos: RF04, RF05, RF06, RF09.
 Requisitos: RF07, RF08, RF10, RF11.
 
 - [ ] **Primeiro o texto padrão:** em `requisitos.ts`, para cada requisito, um "por que é falha" e um exemplo de correção escritos pelo grupo. Isso já funciona sem IA (contingência do R5)
-- [ ] **Depois a IA:** `apps/api/src/orientacoes/ia.ts` manda à IA a falha, o trecho e o requisito da lista fechada, e pede a resposta em formato fixo (JSON). Se a IA citar requisito fora da lista, descartar e usar o texto padrão
-- [ ] Chave da IA só no `.env` e na hospedagem; nunca no código
+- [ ] **Depois a IA (Google Gemini):** `apps/api/src/orientacoes/ia.ts` manda ao Gemini a falha, o trecho e o requisito da lista fechada, e pede a resposta em formato fixo (JSON). Se a IA citar requisito fora da lista, descartar e usar o texto padrão
+- [ ] Mandar à IA só o trecho da página pública com a falha, sem dado do usuário, e dizer isso na Tela 6 (RNF05)
+- [ ] Guardar as orientações já geradas para não chamar o Gemini de novo pela mesma falha: o plano gratuito limita as chamadas (R7)
+- [ ] Chave da IA só no `.env` e no Render; nunca no código
 - [ ] Tela 6: requisito com link oficial, ocorrência com local e trecho, bloco "Sugestão da IA — revise antes de usar", botões Aprovar, Editar e Descartar, navegação entre falhas
 - [ ] Gravar `orientacaoFinal` e `orientacaoAprovada`
 
@@ -195,11 +207,10 @@ Requisitos: RF12, RF13.
 
 ## Passo 10 · Histórico — Tela 8 (01–02/12)
 
-Requisitos: RF14 (e RF15, se der tempo).
+Requisitos: RF14. O RF15 (comparar duas avaliações da mesma URL) tem prioridade baixa e está fora do MVP desde 05/11.
 
 - [ ] API: `GET /api/avaliacoes` lista as avaliações do usuário, da mais nova para a mais antiga
 - [ ] Tela 8: tabela com data, página, nota e as ações Abrir, Baixar PDF e Avaliar de novo
-- [ ] RF15 (prioridade média): comparar duas avaliações da mesma URL — só se os passos anteriores estiverem prontos (ver divergência no fim)
 
 ## Passo 11 · Ajuda e mensagens de erro (02/12)
 
@@ -211,9 +222,10 @@ Requisitos: RF16, RF17.
 
 ## Passo 12 · Testes, acessibilidade e publicação do MVP (02–04/12)
 
-Requisitos: RNF01, RNF02, RNF07, RNF08. **MVP em produção em 04/12.**
+Requisitos: RNF01, RNF02, RNF07, RNF08, RNF09. **MVP em produção em 04/12.**
 
-- [ ] Passar o próprio emagvalid em todas as telas dele (a ferramenta não pode ser inacessível)
+- [ ] Passar o próprio AcessaWeb em todas as telas dele (a ferramenta não pode ser inacessível)
+- [ ] Testar o fluxo nos navegadores atuais de computador: Chrome, Firefox e Edge (RNF09)
 - [ ] Teste completo com teclado e leitor de tela, tela por tela (NVDA no Windows, Orca no Linux). Se o desenvolvimento for só no Linux, faça ao menos uma rodada com o NVDA num Windows antes de 04/12: os leitores leem a mesma página de jeitos diferentes, e o NVDA é o que a persona usa
 - [ ] Luis Otavio: testes do fluxo e checklist de aceite; teste de usabilidade com uma pessoa de fora do grupo
 - [ ] Publicar a versão final e conferir o fluxo inteiro no endereço público
@@ -224,26 +236,22 @@ Requisitos: RNF01, RNF02, RNF07, RNF08. **MVP em produção em 04/12.**
 ## Passo 13 · Correções e entrega final (07–11/12)
 
 - [ ] Corrigir o que os testes e a prévia do pitch apontarem
-- [ ] Registrar as lições aprendidas
-- [ ] Tornar o repositório público, se o programa pedir o código-fonte aberto
+- [ ] Gravar o vídeo de 1 minuto da demonstração, o plano B do pitch se o link ou o equipamento falhar (cartão "Plano B da demo em vídeo" no Trello)
+- [ ] Registrar as lições aprendidas (anote na retrospectiva de cada sexta; entram na versão final do Plano, 11/12)
 
 ---
 
 ## Se atrasar: o que cortar primeiro
 
-Do risco R2 do Plano: cortar primeiro **RF15** (comparação), **RF11** (editar orientação) e **RF16** (ajuda na tela). Nunca cortar a publicação nem a LGPD (RNF05). Se a IA travar, o texto padrão do Passo 8 segura o RF07.
+Dos riscos R2 e R4 do Plano v1: a prioridade baixa (RF15, RF18, RF19) já está fora do MVP. Se faltar tempo, cortar primeiro **RF11** (editar orientação) e **RF16** (ajuda na tela), e qualquer requisito de prioridade média só com o aval do mentor. Nunca cortar a publicação nem a LGPD (RNF05). Se a IA travar ou estourar o limite do plano gratuito, o texto padrão do Passo 8 segura o RF07.
 
-## Sugestões de melhoria (para conversarmos)
+## Sugestões de melhoria
 
-1. **Começar já, não em 16/11.** A análise (Passo 1) e a publicação (Passo 3) são as partes que mais podem dar errado. Descobrir isso em novembro dá tempo de reagir.
-2. **Fórmula da nota:** usar a do protótipo — verificações aprovadas ÷ verificações feitas, por seção do eMAG, com o total geral. O axe-core já informa o que passou e o que falhou, então a conta sai direto e é fácil de explicar (RF06).
-3. **Texto padrão antes da IA.** O MVP funciona mesmo que a IA atrase ou fique cara, e a IA só melhora um texto que já existe (R5).
-4. **Hospedagem que rode Docker.** O Playwright precisa do Chromium no servidor; hospedagens só de "funções" (serverless) costumam não servir. Opções a conferir no Passo 2: Render, Railway ou Fly.io, com banco gerenciado (do próprio provedor ou Neon). Confirmar os planos gratuitos antes de escolher.
-5. **PDF com o Playwright**, que já está instalado, em vez de outra biblioteca.
-6. **Bibliotecas novas a aprovar** (a regra do `CLAUDE.md` pede para perguntar): React Router (rotas das telas) e, opcionalmente, Zod (validar o que chega na API). O SDK do fornecedor de IA entra quando ele for escolhido.
-7. **Análise sem fila.** Rodar a análise em segundo plano no próprio processo da API e a tela perguntar o status a cada 2 s. Fila de tarefas é complexidade que o MVP não precisa.
-8. **Horas reais.** Construir tudo sozinho não cabe nas 2 h por semana do TAP. Vale definir suas horas e pedir ao grupo o que não é código: Luis Otavio nos testes, Luiz Felipe nos textos padrão por requisito, Leandro na documentação, Matheus na revisão das PRs.
+Decididas em 05/11 (Plano v1): começar antes de 16/11 pela análise e pela publicação (R4); nota com pesos 3, 2 e 1 nas 29 recomendações da lista fechada; hospedagem no Render com o banco no Neon; suas horas em 10 h por semana e as dos demais em 3 h. Continuam como sugestão:
 
-## Divergência para resolver
-
-- **RF15 (comparação entre avaliações):** o Plano coloca no MVP (`docs/rascunhos/Plano_de_Projeto_v1.0_rascunho.md`, "Objetivos e escopo", linha 35), mas o protótipo diz que está fora do TAP e não desenha o botão (`docs/rascunhos/Prototipo_30-10_telas_e_teste.md`, "Tela 8 · Histórico", linha 128). Este guia trata o RF15 como opcional até a decisão.
+1. **Texto padrão antes da IA.** O MVP funciona mesmo que a IA atrase ou fique cara, e a IA só melhora um texto que já existe (R5).
+2. **Docker no Render.** O Playwright precisa do Chromium no servidor, por isso a publicação usa um `Dockerfile` (Passo 3) e não uma hospedagem só de "funções" (serverless).
+3. **PDF com o Playwright**, que já está instalado, em vez de outra biblioteca.
+4. **Bibliotecas novas a aprovar** (a regra do `CLAUDE.md` pede para perguntar): React Router (rotas das telas), o SDK do Google Gemini e, opcionalmente, Zod (validar o que chega na API).
+5. **Análise sem fila.** Rodar a análise em segundo plano no próprio processo da API e a tela perguntar o status a cada 2 s. Fila de tarefas é complexidade que o MVP não precisa.
+6. **Dividir o que não é código.** Luis Otavio nos testes, Luiz Felipe nos textos padrão por requisito, Leandro na documentação e Matheus na revisão das PRs e no Plano v1.1.
