@@ -66,6 +66,8 @@ Os passos 0 a 4 começam **antes** da construção oficial (16/11) de propósito
 
 ## Passo 0 · Preparar o ambiente (03–04/11)
 
+Instalação detalhada, com os links de download: [`instalacao.md`](instalacao.md).
+
 - [x] Instalar o [VS Code](https://code.visualstudio.com) e o Docker:
   - **Windows e Mac:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
   - **Linux (Debian 13):** `sudo apt install docker.io docker-compose` e depois `sudo usermod -aG docker $USER`; saia e entre de novo na sessão e teste com `docker run hello-world`
