@@ -76,7 +76,7 @@ Instalação detalhada, com os links de download: [`instalacao.md`](instalacao.m
   - **Linux:** [Orca](https://orca.gnome.org), que já vem no GNOME (liga e desliga com `Super+Alt+S`). Se não estiver instalado: `sudo apt install orca`. Teste no Firefox, que é o navegador que funciona melhor com o Orca
 - [x] Rodar o projeto: `npm install`, `cp .env.example .env`, `npm run db:up`, `npm run db:migrate -w apps/api`, `npm run dev`
 - [x] Abrir http://localhost:5173 e ver "API conectada."
-- [x] Baixar o navegador do Playwright: `npx playwright install chromium`
+- [x] Baixar o navegador do Playwright: `npx playwright install chromium` (no Linux, `npx playwright install --with-deps chromium`)
 - [ ] Fazer o "Quick Start" e o "Tutorial: Tic-Tac-Toe" de [react.dev](https://react.dev/learn)
 - [ ] Convidar o grupo para o repositório no GitHub e dar acesso de escrita ao Matheus. Sem isso, nenhuma PR tem a revisão que a proteção da `main` exige (`../emagvalid_docs/contexto_agente/07-pendencias-e-decisoes.md`, seção B, "Regras de branches")
 - [ ] Combinar com o grupo a dependência `concurrently`, que entrou na PR #1 sem ser combinada (mesma seção)

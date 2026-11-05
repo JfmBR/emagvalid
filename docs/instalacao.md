@@ -3,7 +3,7 @@
 Tudo o que é preciso instalar para rodar o AcessaWeb no seu computador, do zero até a tela "API conectada.". Escrito em 05/11/2026; links e versões conferidos nos sites oficiais nessa data.
 
 - [Windows](#windows)
-- Linux: em preparação
+- [Linux (Debian 13 e Ubuntu 24.04)](#linux-debian-13-e-ubuntu-2404)
 
 ---
 
@@ -153,7 +153,7 @@ docker compose version
 
 O `node -v` deve começar com `v26`.
 
-### Problemas comuns
+### Problemas comuns no Windows
 
 | Mensagem                                                             | O que fazer                                                                                                                                                                   |
 | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -163,3 +163,183 @@ O `node -v` deve começar com `v26`.
 | `npm run db:migrate` diz que não alcança o banco em `localhost:5432` | O banco não está ligado (`npm run db:up`) ou outro PostgreSQL já usa a porta 5432                                                                                             |
 | Moveu ou renomeou a pasta do projeto e algo parou de funcionar       | Rode `npm install` de novo                                                                                                                                                    |
 | A tela mostra "API indisponível."                                    | Veja no terminal se a API subiu sem erro e se o `.env` existe na raiz de `emagvalid`                                                                                          |
+
+---
+
+## Linux (Debian 13 e Ubuntu 24.04)
+
+Escrito para o **Debian 13** (o Linux do João). Onde o **Ubuntu 24.04** é diferente, o guia avisa. Os comandos usam `apt` e `sudo`; outras distribuições precisam de ajustes.
+
+### Resumo
+
+| Ferramenta            | Para quê                               | Como instalar                                                                               |
+| --------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Git                   | Baixar os repositórios e fazer commits | `sudo apt install git` (passo 1)                                                            |
+| nvm + Node.js 26      | Rodar a API, o front-end e o `npm`     | [github.com/nvm-sh/nvm](https://github.com/nvm-sh/nvm) (passo 2)                            |
+| Docker e Compose      | Ligar o PostgreSQL local               | `sudo apt install docker.io docker-compose` (passo 3)                                       |
+| VS Code               | Editar o código                        | [code.visualstudio.com/download](https://code.visualstudio.com/download) (`.deb`)           |
+| DBeaver Community     | Ver e testar os dados do banco         | [dbeaver.io/download](https://dbeaver.io/download/) (`.deb`)                                |
+| Orca                  | Testar as telas com leitor de tela     | já vem no GNOME; senão, `sudo apt install orca` ([orca.gnome.org](https://orca.gnome.org/)) |
+| Chromium (Playwright) | Navegador que a análise usa            | `npx playwright install --with-deps chromium` (passo 8)                                     |
+
+Você também precisa de uma **conta no GitHub** com acesso aos repositórios `JfmBR/emagvalid` e `JfmBR/emagvalid-docs` (peça ao João).
+
+Antes de tudo, atualize a lista de pacotes:
+
+```bash
+sudo apt update
+```
+
+### 1. Git
+
+```bash
+sudo apt install git curl
+git config --global user.name "Seu Nome"
+git config --global user.email "seu-email@exemplo.com"
+```
+
+Use o mesmo e-mail da conta do GitHub. O `curl` é usado no passo 2.
+
+### 2. Node.js 26 com o nvm
+
+O `apt` do Debian e do Ubuntu traz um Node.js antigo. Use o **nvm**, que instala a versão que o projeto pede (o arquivo `.nvmrc` diz `26`):
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.41.0/install.sh | bash
+```
+
+Feche e abra o terminal e rode:
+
+```bash
+nvm install 26
+nvm alias default 26
+node -v
+```
+
+O `node -v` deve começar com `v26`. O `npm` vem junto. Dentro da pasta do projeto, `nvm use` lê o `.nvmrc` e troca para a versão certa. Se sair uma versão mais nova do nvm, o comando atualizado está em [github.com/nvm-sh/nvm](https://github.com/nvm-sh/nvm), seção "Installing and Updating".
+
+### 3. Docker e Compose
+
+No **Debian 13**:
+
+```bash
+sudo apt install docker.io docker-compose
+```
+
+No **Ubuntu 24.04**, o pacote do Compose tem outro nome:
+
+```bash
+sudo apt install docker.io docker-compose-v2
+```
+
+Os dois trazem o comando `docker compose` (com espaço), que o projeto usa em `npm run db:up`. Depois, para usar o Docker sem `sudo`:
+
+```bash
+sudo usermod -aG docker $USER
+```
+
+**Saia da sessão e entre de novo** (ou reinicie) e teste:
+
+```bash
+docker run hello-world
+docker compose version
+```
+
+Aqui não é preciso o Docker Desktop: o Docker roda como serviço e liga sozinho com o computador. Quem preferir a versão mais nova pode usar o repositório oficial do Docker ([docs.docker.com/engine/install/debian](https://docs.docker.com/engine/install/debian/)); não misture as duas formas.
+
+### 4. VS Code
+
+1. Baixe o `.deb` em [code.visualstudio.com/download](https://code.visualstudio.com/download).
+2. Instale pelo terminal, na pasta onde o arquivo foi salvo:
+
+```bash
+sudo apt install ./code_*.deb
+```
+
+3. Extensões recomendadas: **Prettier** (formatação), **Prisma** (esquema do banco) e **oxc** (lint).
+
+### 5. DBeaver Community
+
+1. Baixe o `.deb` da versão **Community** para Linux em [dbeaver.io/download](https://dbeaver.io/download/). O pacote já traz o Java.
+2. Instale pelo terminal, na pasta onde o arquivo foi salvo:
+
+```bash
+sudo apt install ./dbeaver-ce*.deb
+```
+
+3. A conexão com o banco local está no [`README.md`](../README.md), "Como rodar": PostgreSQL, host `localhost`, porta `5432` e o banco, o usuário e a senha do `docker-compose.yml`.
+4. Use o DBeaver só para ver e testar dados. Mudança nas tabelas é pelo `apps/api/prisma/schema.prisma` e uma migração.
+
+### 6. Orca (leitor de tela)
+
+1. No GNOME (padrão do Debian e do Ubuntu), o Orca já vem instalado: liga e desliga com `Super+Alt+S`.
+2. Se não estiver instalado:
+
+```bash
+sudo apt install orca
+```
+
+3. Teste no **Firefox**, que é o navegador que funciona melhor com o Orca.
+4. A persona do projeto usa o **NVDA**, que só existe no Windows. Antes de 04/12, faça ao menos uma rodada de testes com o NVDA num Windows (Passo 12 do [passo a passo](passo-a-passo-mvp.md)).
+
+### 7. Baixar os repositórios
+
+Os dois repositórios ficam lado a lado numa pasta `projeto_integrador` (o código procura a documentação em `../emagvalid_docs/`):
+
+```bash
+mkdir -p ~/projeto_integrador
+cd ~/projeto_integrador
+git clone https://github.com/JfmBR/emagvalid.git emagvalid
+git clone https://github.com/JfmBR/emagvalid-docs.git emagvalid_docs
+```
+
+Atenção: a pasta da documentação é `emagvalid_docs`, **com sublinhado**. Se o Git pedir senha, use um _token_ do GitHub, não a senha da conta (GitHub → Settings → Developer settings → Personal access tokens), ou configure uma chave SSH e clone com `git@github.com:...`.
+
+### 8. Instalar as dependências e rodar
+
+```bash
+cd ~/projeto_integrador/emagvalid
+npm install
+cp .env.example .env
+npm run db:up
+npm run db:migrate -w apps/api
+npx playwright install --with-deps chromium
+npm run dev
+```
+
+| Comando                                       | O que faz                                                                                      |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `npm install`                                 | Baixa as bibliotecas do projeto (pasta `node_modules`)                                         |
+| `cp .env.example .env`                        | Cria o seu `.env`; ele não entra no git                                                        |
+| `npm run db:up`                               | Liga o PostgreSQL no Docker                                                                    |
+| `npm run db:migrate -w apps/api`              | Cria as tabelas no banco                                                                       |
+| `npx playwright install --with-deps chromium` | Baixa o navegador e as bibliotecas do sistema que ele usa (pede a senha do `sudo`; só uma vez) |
+| `npm run dev`                                 | Sobe a API e o front-end                                                                       |
+
+No Linux, o `--with-deps` é necessário: sem ele, o Chromium do Playwright pode não abrir por falta de bibliotecas do sistema.
+
+### 9. Conferir
+
+1. Abra [http://localhost:5173](http://localhost:5173): deve aparecer **"API conectada."**
+2. Para parar, `Ctrl+C` no terminal; para desligar o banco, `npm run db:down`.
+3. Versões instaladas:
+
+```bash
+git --version
+node -v
+npm -v
+docker --version
+docker compose version
+```
+
+### Problemas comuns no Linux
+
+| Mensagem                                                                | O que fazer                                                                                                          |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `nvm: command not found`                                                | Feche e abra o terminal depois de instalar o nvm                                                                     |
+| `permission denied while trying to connect to the Docker daemon socket` | Faltou o `usermod -aG docker $USER` ou sair e entrar de novo na sessão                                               |
+| `docker: 'compose' is not a docker command`                             | Falta o pacote do Compose: `docker-compose` no Debian 13, `docker-compose-v2` no Ubuntu 24.04                        |
+| `npm run db:migrate` diz que não alcança o banco em `localhost:5432`    | O banco não está ligado (`npm run db:up`) ou outro PostgreSQL já usa a porta 5432 (`sudo systemctl stop postgresql`) |
+| O Playwright diz `Host system is missing dependencies`                  | Rode `npx playwright install-deps chromium`                                                                          |
+| Moveu ou renomeou a pasta do projeto e algo parou de funcionar          | Rode `npm install` de novo                                                                                           |
+| A tela mostra "API indisponível."                                       | Veja no terminal se a API subiu sem erro e se o `.env` existe na raiz de `emagvalid`                                 |
