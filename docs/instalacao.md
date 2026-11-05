@@ -17,7 +17,7 @@ Vale para Windows 10 (22H2) e Windows 11 (23H2 ou mais novo), inclusive a ediç�
 | --------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------- |
 | Git                   | Baixar os repositórios e fazer commits | [git-scm.com/install/windows](https://git-scm.com/install/windows)                                  | `Git.Git`                    |
 | Node.js 26 (LTS)      | Rodar a API, o front-end e o `npm`     | [nodejs.org/pt-br/download](https://nodejs.org/pt-br/download)                                      | `OpenJS.NodeJS.LTS`          |
-| WSL 2                 | Exigido pelo Docker Desktop            | comando `wsl --install` (passo 3)                                                                   | —                            |
+| WSL 2                 | Exigido pelo Docker Desktop            | comando `wsl --install --no-distribution` (passo 3)                                                 | —                            |
 | Docker Desktop        | Ligar o PostgreSQL local               | [docs.docker.com/…/windows-install](https://docs.docker.com/desktop/setup/install/windows-install/) | `Docker.DockerDesktop`       |
 | VS Code               | Editar o código                        | [code.visualstudio.com/download](https://code.visualstudio.com/download)                            | `Microsoft.VisualStudioCode` |
 | DBeaver Community     | Ver e testar os dados do banco         | [dbeaver.io/download](https://dbeaver.io/download/)                                                 | `DBeaver.DBeaver.Community`  |
@@ -58,17 +58,19 @@ git config --global user.email "seu-email@exemplo.com"
 
 ### 3. WSL 2
 
-O Docker Desktop roda o banco dentro do WSL 2 (o Linux do próprio Windows). Ative uma vez por computador:
+O Docker Desktop roda o banco dentro do WSL 2 (o Linux do próprio Windows). Ele só precisa do WSL ativado: cria sozinho a distribuição que usa (`docker-desktop`). Por isso **não é preciso instalar o Ubuntu**; o Node, o npm e o código rodam direto no Windows. Ative uma vez por computador:
 
 1. Abra o PowerShell **como administrador** (botão direito no menu Iniciar → "Terminal (Admin)").
 2. Rode:
 
 ```powershell
-wsl --install
+wsl --install --no-distribution
 ```
 
 3. Reinicie o computador quando pedir.
 4. Confira com `wsl --version`. Se não aparecer a versão, rode `wsl --update`.
+
+Sem o `--no-distribution`, o `wsl --install` também baixa o Ubuntu e pede para criar um usuário e uma senha do Linux. Se isso já aconteceu, não atrapalha; para tirar o Ubuntu, feche a janela (ou `Ctrl+C`), confira o nome com `wsl --list --verbose` e rode `wsl --unregister Ubuntu`. Esse comando apaga a distribuição e tudo o que estiver dentro dela, mas o WSL continua instalado para o Docker.
 
 Se der erro de virtualização, a virtualização do processador está desligada na BIOS/UEFI. Isso varia por fabricante; procure "ativar virtualização" com o modelo do seu computador.
 
