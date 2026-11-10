@@ -20,3 +20,16 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  # Telas no navegador, com axe (acessibilidade). Informativo: a proteção da main exige só o job verificar.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
