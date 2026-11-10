@@ -111,7 +111,7 @@ git clone https://github.com/JfmBR/emagvalid.git projeto_integrador
 
 Na primeira vez, o Git abre uma janela para entrar no GitHub pelo navegador.
 
-**Pasta privada (só para quem mexe nos .docx):** os .docx com dados de entrevistados e as planilhas RACI não ficam no repositório, que é público. Copie a pasta `acessaweb-privado` do Drive do grupo para o lado de `projeto_integrador`, de modo que fique `Documentos\Projetos\acessaweb-privado`. Sem ela, o código roda normalmente; só o `_gerar_fontes.py` não funciona.
+**Pasta privada (para quem mexe em `projeto/`):** os .docx com dados de entrevistados, as planilhas RACI e a tabela `nomes.json` não ficam no repositório, que é público. Copie a pasta `acessaweb-privado` do Drive do grupo (pasta "emagvalid · Grupo 3") para o lado de `projeto_integrador`, de modo que fique `Documentos\Projetos\acessaweb-privado`. Sem ela, o código roda e os testes passam; o que não funciona é o `_gerar_fontes.py`, inclusive o `--verificar` que o checklist da PR pede antes de mexer em `projeto/`.
 
 ### 9. Instalar as dependências e rodar
 
@@ -294,7 +294,7 @@ git clone https://github.com/JfmBR/emagvalid.git projeto_integrador
 
 Se o Git pedir senha, use um _token_ do GitHub, não a senha da conta (GitHub → Settings → Developer settings → Personal access tokens), ou configure uma chave SSH e clone com `git@github.com:...`.
 
-**Pasta privada (só para quem mexe nos .docx):** os .docx com dados de entrevistados e as planilhas RACI não ficam no repositório, que é público. Copie a pasta `acessaweb-privado` do Drive do grupo para o lado de `projeto_integrador`, de modo que fique `~/acessaweb-privado`. Sem ela, o código roda normalmente; só o `_gerar_fontes.py` não funciona.
+**Pasta privada (para quem mexe em `projeto/`):** os .docx com dados de entrevistados, as planilhas RACI e a tabela `nomes.json` não ficam no repositório, que é público. Copie a pasta `acessaweb-privado` do Drive do grupo (pasta "emagvalid · Grupo 3") para o lado de `projeto_integrador`, de modo que fique `~/acessaweb-privado`. Sem ela, o código roda e os testes passam; o que não funciona é o `_gerar_fontes.py`, inclusive o `--verificar` que o checklist da PR pede antes de mexer em `projeto/`.
 
 ### 8. Instalar as dependências e rodar
 

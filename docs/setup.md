@@ -84,6 +84,35 @@ Não rodaram (precisam de interação observável com o cliente): pausa e retoma
 
 Os quatro `npx skills add` rodados de novo: `git status` limpo, 7 skills, 7 entradas no `skills-lock.json`. `claude mcp list`: `chrome-devtools` aparece uma vez. `graphify update .` refez o grafo sem mudar arquivo versionado.
 
+## Antes e depois
+
+|                      | Antes (10/11, `92c37ff`)                          | Depois (fim da preparação)                                                                                                                                                                                                 |
+| -------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repositórios         | 2 (`emagvalid` público, `emagvalid-docs` privado) | 1 (`JfmBR/emagvalid`), documentação em `projeto/`                                                                                                                                                                          |
+| Checagens            | lint, formatação, tipos, 4 testes, build          | `npm run verificar`: + autoteste das regras, lint tipado, regras `max-lines`/`no-console`/`no-restricted-imports`; e2e com axe (4 testes); autoteste do gerador (8 testes)                                                 |
+| Agente vendo a tela  | não                                               | agent-browser (validado) e Chrome DevTools MCP (configurado)                                                                                                                                                               |
+| Instruções           | 2 `CLAUDE.md`                                     | `AGENTS.md` + `CLAUDE.md` + 7 documentos do manifesto                                                                                                                                                                      |
+| Revisão independente | —                                                 | Opus, só leitura, sobre `92c37ff..d537a0f`: sem achado crítico; 5 importantes corrigidos (fronteira web→API com import relativo, e2e em porta própria, `--verificar` lendo .docx, este fechamento, texto da pasta privada) |
+
 ## Pendências e próxima entrega
 
-Preenchido ao fim da preparação (Tarefa 13).
+| Pendência                                                                               | Causa                                                                              | Próxima ação                                                                           |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Push das 3 branches, PRs e merge                                                        | Só com ordem do João                                                               | João autoriza; merge em ordem (PR 1, 2, 3) como administrador                          |
+| Pasta privada no Drive                                                                  | `nomes.json`, `planejamento/` e a fonte de entrevistas foram criados nesta máquina | Copiar `../acessaweb-privado/` para a pasta do grupo no Drive (João)                   |
+| Aprovar o Chrome DevTools MCP                                                           | O Claude Code pede aprovação de servidor novo do `.mcp.json`                       | Abrir `claude` na raiz e aprovar `chrome-devtools`; depois, listar as ferramentas dele |
+| Arquivar o `JfmBR/emagvalid-docs`                                                       | Ação no GitHub, só com ordem do João                                               | Depois dos merges, `gh repo archive JfmBR/emagvalid-docs`                              |
+| Casos de harness não rodados (pausa e retomada, bloqueio parcial, conflito de recursos) | Exigem interação observável com o cliente                                          | Rodar quando o fluxo de subagentes for usado de verdade no MVP                         |
+| Responsável pelo Plano v1.1                                                             | Matheus saiu da equipe (`projeto/contexto_agente/07`, seção D)                     | Definir com o grupo                                                                    |
+| Ajustes menores da revisão (lista no relatório final da sessão)                         | Fora do passe de correções                                                         | Tratar quando o arquivo envolvido mudar                                                |
+
+Próxima entrega do produto: sprint 1 a partir de 16/11 (`docs/passo-a-passo-mvp.md`).
+
+## Manutenção
+
+- Conferir tudo: `npm run verificar` e `npm run test:e2e`; em `projeto/`, `python3 -I projeto/contexto_agente/fontes/_gerar_fontes.py --verificar`.
+- Atualizar skills: `npx skills@latest update --project --yes`, revisar o diff e o `skills-lock.json` e rodar as checagens.
+- Atualizar o grafo: `GRAPHIFY_NO_AUTO_REFRESH=1 graphify update .`
+- Atualizar o Chrome DevTools MCP: trocar a versão fixa no `.mcp.json` por uma estável conferida com `npm view chrome-devtools-mcp version`.
+- Repetir esta preparação: prompt 12 do toolkit, partindo desta página; preservar as personalizações (`.graphifyignore`, regras do oxlint, `AGENTS.md`) e registrar a revisão nova do toolkit aqui.
+- Revisar estas decisões quando: mudar a equipe, o layout de pastas, a hospedagem ou o cliente de IA; sair uma versão maior de oxlint, Vite, Playwright ou Prisma.
