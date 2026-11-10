@@ -15,11 +15,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run lint
-      - run: npm run format:check
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
+      # lint, autoteste das regras, formatação, tipos (gera o cliente Prisma), lint tipado, testes e build
+      - run: npm run verificar
 
   # Telas no navegador, com axe (acessibilidade). Informativo: a proteção da main exige só o job verificar.
   e2e:
