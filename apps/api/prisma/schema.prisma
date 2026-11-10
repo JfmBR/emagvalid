@@ -2,7 +2,7 @@
 // Cobre os requisitos de prioridade alta: conta (RF01), avaliação por URL (RF02),
 // falhas com requisito, local e prioridade (RF04), nota (RF05), orientação da IA
 // revisada pelo auditor (RF07, RF10, RF11) e histórico (RF14).
-// Requisitos em ../emagvalid-docs/docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md
+// Requisitos em projeto/docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md
 
 generator client {
   provider = "prisma-client"

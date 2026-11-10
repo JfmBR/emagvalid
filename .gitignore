@@ -32,3 +32,13 @@ Thumbs.db
 
 # Configurações locais do Claude Code (permissões desta máquina)
 .claude/settings.local.json
+
+# Documentação: Python, arquivos temporários do Word/LibreOffice e preferências locais
+__pycache__/
+*.pyc
+~$*
+.~lock.*#
+CLAUDE.local.md
+
+# Graphify (grafo local)
+graphify-out/

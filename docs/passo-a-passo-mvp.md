@@ -1,8 +1,8 @@
 # Passo a passo para construir o MVP
 
-Guia para o João construir o AcessaWeb do zero até a publicação, seguindo o Plano de Projeto v1 oficial (05/11/2026). Escrito em 03/11/2026 e atualizado em 05/11/2026 com as decisões de 05/11 (`../emagvalid_docs/contexto_agente/07-pendencias-e-decisoes.md`, seção D).
+Guia para o João construir o AcessaWeb do zero até a publicação, seguindo o Plano de Projeto v1 oficial (05/11/2026). Escrito em 03/11/2026 e atualizado em 05/11/2026 com as decisões de 05/11 (`projeto/contexto_agente/07-pendencias-e-decisoes.md`, seção D).
 
-Fontes (em `../emagvalid_docs/`):
+Fontes (em `projeto/`):
 
 - Plano: `docs/contexto_projeto/Plano de Projeto v1.docx` (texto literal em `contexto_agente/fontes/projeto/Plano_de_Projeto.md`)
 - Requisitos: `docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md`
@@ -12,8 +12,8 @@ Fontes (em `../emagvalid_docs/`):
 ## Como usar este guia
 
 - Siga os passos **na ordem**. Cada passo termina com algo que funciona e que você consegue mostrar.
-- Cada passo vira **um cartão no Trello** e **uma ou mais PRs** pequenas (uma tela ou uma regra por PR), numa branch curta (`feat/`, `fix/` ou `docs/`). A PR só entra com o CI verde e a revisão do Matheus, por squash.
-- Em cada passo há um **pedido sugerido** para o Claude Code. Abra a sessão na pasta `emagvalid`, com `emagvalid_docs` adicionada.
+- Cada passo vira **um cartão no Trello** e **uma ou mais PRs** pequenas (uma tela ou uma regra por PR), numa branch curta (`feat/`, `fix/` ou `docs/`). A PR só entra com o CI verde; desde 10/11/2026 o merge é feito pelo João como administrador (a equipe não tem revisor), por squash.
+- Em cada passo há um **pedido sugerido** para o Claude Code. Abra a sessão na pasta `projeto_integrador` (código e documentação no mesmo repositório).
 - Marque `[x]` no que terminar e faça commit deste arquivo junto: assim ele mostra onde você está.
 - **Pronto** (definição do Plano v1): funciona no ambiente publicado, outro integrante revisou, o Luis Otavio testou e, se for tela, passou no teste com teclado e leitor de tela.
 - **Horas:** 10 h por semana suas; 3 h dos demais (Plano v1, Equipe). Passe ao grupo o que não é código.
@@ -78,7 +78,7 @@ Instalação detalhada, com os links de download: [`instalacao.md`](instalacao.m
 - [x] Abrir http://localhost:5173 e ver "API conectada."
 - [x] Baixar o navegador do Playwright: `npx playwright install chromium` (no Linux, `npx playwright install --with-deps chromium`)
 - [ ] Fazer o "Quick Start" e o "Tutorial: Tic-Tac-Toe" de [react.dev](https://react.dev/learn)
-- [ ] Convidar o grupo para o repositório no GitHub e dar acesso de escrita ao Matheus. Sem isso, nenhuma PR tem a revisão que a proteção da `main` exige (`../emagvalid_docs/contexto_agente/07-pendencias-e-decisoes.md`, seção B, "Regras de branches")
+- [ ] Convidar o Luiz Felipe e o Luis Otavio para o repositório no GitHub, se forem contribuir pelo GitHub. Desde 10/11/2026 a equipe é João, Luiz Felipe e Luis Otavio, e o João faz o merge das PRs como administrador (`projeto/contexto_agente/07-pendencias-e-decisoes.md`, seção D).
 - [ ] Combinar com o grupo a dependência `concurrently`, que entrou na PR #1 sem ser combinada (mesma seção)
 
 **Terminou quando:** o projeto roda no seu computador com o banco ligado.
@@ -92,7 +92,7 @@ Instalação detalhada, com os links de download: [`instalacao.md`](instalacao.m
 - [ ] Criar `apps/api/src/analise/analisar.ts`: abre a URL com Playwright, roda o axe-core e devolve as violações
 - [ ] Criar um script `npm run analisar -- <url>` que imprime o resultado no terminal
 - [ ] Testar em 3 a 5 páginas públicas reais (inclusive uma do governo)
-- [ ] Montar a **tabela de requisitos** em `apps/api/src/emag/requisitos.ts` a partir de `../emagvalid_docs/docs/rascunhos/Cobertura_eMAG_axe-core.md`: as 29 recomendações do eMAG 3.1 que o axe-core cobre no todo ou em parte, cada uma com número, nome oficial, seção, link para a seção oficial, regras do axe-core e prioridade (peso 3, 2 ou 1). Essa tabela é a "lista fechada" do RF08; as recomendações sem cobertura vão para a revisão humana (RF09)
+- [ ] Montar a **tabela de requisitos** em `apps/api/src/emag/requisitos.ts` a partir de `projeto/docs/rascunhos/Cobertura_eMAG_axe-core.md`: as 29 recomendações do eMAG 3.1 que o axe-core cobre no todo ou em parte, cada uma com número, nome oficial, seção, link para a seção oficial, regras do axe-core e prioridade (peso 3, 2 ou 1). Essa tabela é a "lista fechada" do RF08; as recomendações sem cobertura vão para a revisão humana (RF09)
 - [ ] Conferir o mapeamento e os pesos com o mentor José Alves e os nomes de 6.5 a 6.8 no PDF oficial do eMAG (`07`, seções B e E)
 
 **Terminou quando:** o script mostra, para uma URL real, as falhas já com o número e o nome do requisito do eMAG.
@@ -102,7 +102,7 @@ Instalação detalhada, com os links de download: [`instalacao.md`](instalacao.m
 
 ## Passo 2 · Fechar as decisões para o Plano v1.1 (09–11/11)
 
-O Plano v1.1 (13/11) pede arquitetura e tecnologias. O responsável pela v1.1 é o Matheus (Plano v1, Marcos de Entrega): passe a ele o que o código decidir e leve ao mentor (Rodrigo Pereira) e ao arquiteto (Fábio Rezente).
+O Plano v1.1 (13/11) pede arquitetura e tecnologias. No Plano v1 (Marcos de Entrega), o responsável pela v1.1 era o Matheus, que saiu da equipe (10/11/2026); o novo responsável não consta nos arquivos. Passe ao responsável o que o código decidir e leve ao mentor (Rodrigo Pereira) e ao arquiteto (Fábio Rezente).
 
 Já decidido em 05/11 (Plano v1, Arquitetura e tecnologias e legenda dos requisitos):
 
@@ -116,7 +116,7 @@ Ainda a fechar:
 - [ ] Bibliotecas novas que vão ser precisas (ver sugestões), combinadas com o grupo
 - [ ] Ferramentas de apoio, que não vão para o produto: `concurrently` (sobe API e front-end juntos com `npm run dev`) e DBeaver Community (ver e testar os dados do banco, local e na nuvem)
 
-**Terminou quando:** o Matheus tem o que precisa para a seção "Arquitetura e tecnologias" do Plano v1.1.
+**Terminou quando:** o responsável pelo Plano v1.1 tem o que precisa para a seção "Arquitetura e tecnologias" do Plano v1.1.
 
 ## Passo 3 · Publicar o esqueleto (11–13/11)
 
@@ -142,7 +142,7 @@ Publicar cedo evita a surpresa de descobrir na última semana que algo não roda
 
 **Terminou quando:** os componentes estão prontos e iguais aos do protótipo.
 
-> Pedido sugerido: _"Crie os componentes Botao, Campo, Selo, Aviso e Layout seguindo o protótipo em ../emagvalid_docs/docs/prototipo/prototipo_emagvalid.html, acessíveis pelo eMAG 3.1, com um teste para cada."_
+> Pedido sugerido: _"Crie os componentes Botao, Campo, Selo, Aviso e Layout seguindo o protótipo em projeto/docs/prototipo/prototipo_emagvalid.html, acessíveis pelo eMAG 3.1, com um teste para cada."_
 
 ## Passo 5 · Conta e login — Telas 1 e 2 (16–18/11)
 
@@ -256,4 +256,4 @@ Decididas em 05/11 (Plano v1): começar antes de 16/11 pela análise e pela publ
 3. **PDF com o Playwright**, que já está instalado, em vez de outra biblioteca.
 4. **Bibliotecas novas a aprovar** (a regra do `CLAUDE.md` pede para perguntar): React Router (rotas das telas), o SDK do Google Gemini e, opcionalmente, Zod (validar o que chega na API).
 5. **Análise sem fila.** Rodar a análise em segundo plano no próprio processo da API e a tela perguntar o status a cada 2 s. Fila de tarefas é complexidade que o MVP não precisa.
-6. **Dividir o que não é código.** Luis Otavio nos testes, Luiz Felipe nos textos padrão por requisito, Leandro na documentação e Matheus na revisão das PRs e no Plano v1.1.
+6. **Dividir o que não é código.** Luis Otavio nos testes e Luiz Felipe nos textos padrão por requisito (equipe atual desde 10/11/2026: João, Luiz Felipe e Luis Otavio).

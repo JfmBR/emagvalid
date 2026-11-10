@@ -2,9 +2,9 @@
 
 <!-- Liste em poucas linhas o que esta PR traz. -->
 
-## Requisito ou tela
+## Requisito, tela ou marco
 
-<!-- Ex.: RF05 e RF06 (Tela 5 · Resultado). Requisitos em ../emagvalid_docs/docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md -->
+<!-- Ex.: RF05 e RF06 (Tela 5 · Resultado), ou Plano de Projeto v1.1 (13/11). Requisitos em projeto/docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md -->
 
 ## Checklist
 
@@ -26,8 +26,17 @@
 - [ ] Dentro do escopo do TAP; pedidos fora dele avisados ao João
 - [ ] A nota e as orientações da IA não aparecem como certificação
 
+**Documentação** (se a PR mexe em `projeto/`)
+
+- [ ] Só editei .docx a pedido do João, trocando texto sem mexer na formatação
+- [ ] Rodei `python3 -I projeto/contexto_agente/fontes/_gerar_fontes.py` (se algum .docx mudou)
+- [ ] Rodei `python3 -I projeto/contexto_agente/fontes/_gerar_fontes.py --verificar` e ele saiu com 0
+- [ ] Nome do arquivo e campo DATA do .docx têm a mesma data
+- [ ] Nenhum `[placeholder]` esquecido
+- [ ] `projeto/contexto_agente/03` com a situação atual do marco e `07` com as pendências e as decisões (seção D, com data)
+- [ ] Toda fala ou dado de entrevista tem fonte (A1–A3, Ctx1–Ctx4); nada inventado
+
 **Revisão**
 
-- [ ] Commits com mensagem em pt-BR
-- [ ] Pedi revisão de alguém do grupo
+- [ ] Commits com mensagem em pt-BR, no formato `tipo: descrição curta`
 - [ ] `README.md` atualizado (se entrou pasta, comando ou variável de ambiente nova)

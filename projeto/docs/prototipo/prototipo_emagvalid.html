@@ -1,0 +1,832 @@
+<title>Protótipo AcessaWeb</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@600;700;800&display=swap">
+<style>
+/* Layout: ferramenta de trabalho em coluna central larga (1120px); barra do protótipo separada da interface; telas trocam no mesmo lugar */
+:root {
+  --bg: #F3F5F8;
+  --surface: #FFFFFF;
+  --ink: #16202E;
+  --muted: #4A5568;
+  --line: #D5DBE4;
+  --accent: #2D46B9;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E7EBFA;
+  --alta: #B42318;
+  --alta-bg: #FDECEA;
+  --media: #7A4F00;
+  --media-bg: #FFF2CC;
+  --ok: #1E6B3A;
+  --ok-bg: #E2F3E8;
+  --code-bg: #EEF1F6;
+  --proto: #16202E;
+  --proto-ink: #F3F5F8;
+  --focus: #2D46B9;
+  --font-display: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F141B; --surface: #161D27; --ink: #E6EAF0; --muted: #A9B3C1; --line: #2C3645;
+    --accent: #93A5FF; --accent-ink: #0F141B; --accent-soft: #1E2748;
+    --alta: #FF9C8F; --alta-bg: #3A1714; --media: #F2C14E; --media-bg: #33280C;
+    --ok: #7FD39B; --ok-bg: #12301E; --code-bg: #1C2532; --proto: #E6EAF0; --proto-ink: #0F141B; --focus: #93A5FF;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F141B; --surface: #161D27; --ink: #E6EAF0; --muted: #A9B3C1; --line: #2C3645;
+  --accent: #93A5FF; --accent-ink: #0F141B; --accent-soft: #1E2748;
+  --alta: #FF9C8F; --alta-bg: #3A1714; --media: #F2C14E; --media-bg: #33280C;
+  --ok: #7FD39B; --ok-bg: #12301E; --code-bg: #1C2532; --proto: #E6EAF0; --proto-ink: #0F141B; --focus: #93A5FF;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 17px; line-height: 1.55; }
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.2; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.3rem); font-weight: 800; letter-spacing: -0.01em; }
+h2 { font-size: 1.3rem; font-weight: 700; }
+h3 { font-size: 1.08rem; font-weight: 700; }
+p { margin: 0; }
+code, .mono { font-family: var(--font-mono); font-size: 0.86em; }
+a { color: var(--accent); text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.pular { position: absolute; left: -9999px; top: 0; background: var(--accent); color: var(--accent-ink); padding: 10px 16px; z-index: 50; }
+.pular:focus { left: 16px; top: 8px; }
+
+/* Barra do protótipo (não faz parte da interface) */
+.proto { background: var(--proto); color: var(--proto-ink); font-size: 0.85rem; }
+.proto .wrap { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; padding-block: 8px; }
+.proto strong { letter-spacing: 0.06em; text-transform: uppercase; font-size: 0.75rem; }
+.proto label { display: flex; gap: 8px; align-items: center; }
+.proto select, .proto button { font: inherit; min-height: 34px; border-radius: 6px; border: 1px solid currentColor; background: transparent; color: inherit; padding: 2px 8px; }
+.proto select option { color: #16202E; background: #FFFFFF; }
+.proto .esp { flex: 1; }
+.proto-mini { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 40; font: inherit; font-size: 0.8rem; background: var(--proto); color: var(--proto-ink); border: 0; border-radius: 999px; padding: 8px 14px; min-height: 36px; opacity: 0.85; }
+
+/* Cabeçalho da aplicação */
+.topo { background: var(--surface); border-bottom: 1px solid var(--line); }
+.topo .wrap { display: flex; align-items: center; gap: 12px 20px; padding-block: 12px; flex-wrap: wrap; }
+.marca { font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; color: var(--ink); text-decoration: none; display: flex; align-items: center; gap: 8px; }
+.marca svg { flex: none; }
+.topo nav { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-left: auto; }
+.ola { color: var(--muted); padding: 0 8px; }
+
+/* Botões e campos */
+.btn { font: inherit; font-weight: 700; min-height: 44px; padding: 10px 18px; border-radius: 8px; border: 2px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+.btn.sec { background: transparent; color: var(--accent); }
+.btn.txt { border-color: transparent; background: transparent; color: var(--accent); padding-inline: 10px; }
+.btn.perigo { border-color: var(--alta); background: transparent; color: var(--alta); }
+.btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+.acoes { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.campo { display: grid; gap: 6px; }
+.campo label { font-weight: 700; }
+.campo input, .campo textarea { font: inherit; min-height: 48px; padding: 10px 12px; border: 2px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); width: 100%; }
+.campo textarea { font-family: var(--font-mono); font-size: 0.9rem; min-height: 120px; }
+.campo input:focus-visible, .campo textarea:focus-visible { border-color: var(--focus); outline-offset: 1px; }
+.dica { color: var(--muted); font-size: 0.92rem; }
+.erro-campo { color: var(--alta); font-weight: 700; font-size: 0.95rem; }
+.campo[data-erro] input { border-color: var(--alta); }
+
+/* Estrutura das telas */
+main { padding-block: 32px 72px; }
+.tela { display: grid; gap: 24px; }
+.cabeca { display: grid; gap: 8px; }
+.sobre { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+.painel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 24px; display: grid; gap: 16px; min-width: 0; }
+.estreito { max-width: 560px; }
+.aviso { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 8px; background: var(--accent-soft); border-left: 4px solid var(--accent); }
+.aviso.alerta { background: var(--media-bg); border-left-color: var(--media); }
+.aviso svg { flex: none; margin-top: 3px; }
+.duas { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+.lista { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+
+/* Selos */
+.selo { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap; border: 1px solid transparent; }
+.selo.alta { color: var(--alta); background: var(--alta-bg); border-color: var(--alta); }
+.selo.media { color: var(--media); background: var(--media-bg); border-color: var(--media); }
+.selo.auto { color: var(--accent); background: var(--accent-soft); }
+.selo.humana { color: var(--ink); background: var(--code-bg); border-color: var(--line); }
+.selo.aprovada { color: var(--ok); background: var(--ok-bg); border-color: var(--ok); }
+.selo.editada { color: var(--accent); background: var(--accent-soft); border-color: var(--accent); }
+.selo.descartada { color: var(--muted); background: var(--code-bg); border-color: var(--line); }
+.selo.pendente { color: var(--muted); background: transparent; border-color: var(--line); }
+
+/* Tela 4 */
+.passos { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.passos li { display: flex; gap: 12px; align-items: center; color: var(--muted); }
+.passos li .marca-p { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line); display: grid; place-items: center; font-weight: 700; font-size: 0.85rem; flex: none; }
+.passos li[data-st="feito"] { color: var(--ink); }
+.passos li[data-st="feito"] .marca-p { background: var(--ok); border-color: var(--ok); color: var(--surface); }
+.passos li[data-st="agora"] { color: var(--ink); font-weight: 700; }
+.passos li[data-st="agora"] .marca-p { border-color: var(--accent); border-top-color: transparent; animation: gira 0.9s linear infinite; }
+@keyframes gira { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .passos li[data-st="agora"] .marca-p { animation: none; border-top-color: var(--accent); } }
+
+/* Tela 5 */
+.nota { display: grid; grid-template-columns: auto 1fr; gap: 20px 28px; align-items: center; }
+.nota-num { font-family: var(--font-display); font-weight: 800; font-size: 4rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.nota-num small { font-size: 1.3rem; color: var(--muted); font-weight: 600; }
+.meta { color: var(--muted); font-size: 0.95rem; overflow-wrap: anywhere; }
+details.conta { border: 1px solid var(--line); border-radius: 8px; }
+details.conta summary { cursor: pointer; padding: 12px 16px; font-weight: 700; min-height: 44px; }
+details.conta .rolar { padding: 0 16px 16px; }
+.rolar { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 0.85rem; color: var(--muted); font-weight: 700; }
+td.n, th.n { text-align: right; }
+tfoot td { font-weight: 700; border-bottom: 0; }
+.barra-sec { display: inline-block; height: 8px; border-radius: 4px; background: var(--line); width: 90px; vertical-align: middle; overflow: hidden; }
+.barra-sec span { display: block; height: 100%; background: var(--accent); }
+[role="tablist"] { display: flex; gap: 4px; border-bottom: 2px solid var(--line); flex-wrap: wrap; }
+[role="tab"] { font: inherit; font-weight: 700; background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -2px; padding: 10px 14px; min-height: 44px; color: var(--muted); cursor: pointer; }
+[role="tab"][aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.falhas { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.falha { border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; align-items: center; background: var(--surface); }
+.falha .linha1 { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.falha .local { color: var(--muted); font-size: 0.92rem; overflow-wrap: anywhere; }
+.rodape-tela { position: sticky; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); padding-block: 12px calc(12px + env(safe-area-inset-bottom, 0px)); margin-top: 8px; }
+.rodape-tela .wrap { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.checks label { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.checks input { width: 22px; height: 22px; margin-top: 3px; flex: none; accent-color: var(--accent); }
+
+/* Tela 6 */
+.codigo { background: var(--code-bg); border-radius: 8px; padding: 12px 14px; overflow-x: auto; font-family: var(--font-mono); font-size: 0.88rem; white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+.ia { border: 2px dashed var(--accent); border-radius: var(--r); padding: 20px; display: grid; gap: 14px; }
+.ia-titulo { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.ocorrencias { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ocorrencias li { display: flex; gap: 10px; align-items: baseline; }
+.ocorrencias b { font-variant-numeric: tabular-nums; }
+.nav-falhas { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+/* Tela 7 */
+.folha { background: var(--surface); border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.06), 0 8px 24px rgba(22,32,46,0.08); padding: clamp(18px, 4vw, 40px); display: grid; gap: 20px; max-width: 860px; min-width: 0; }
+.folha .capa { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 2px solid var(--ink); padding-bottom: 12px; }
+.resumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.resumo div { border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+.resumo b { display: block; font-family: var(--font-display); font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.folha .assina { border-top: 1px solid var(--line); padding-top: 12px; color: var(--muted); font-size: 0.92rem; }
+
+/* Tela 8 */
+tr.novo td { background: var(--accent-soft); }
+.situacao { white-space: nowrap; }
+
+/* Aviso flutuante */
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 8px; max-width: min(520px, calc(100% - 32px)); z-index: 60; font-weight: 700; }
+
+@media (max-width: 560px) {
+  body { font-size: 16px; }
+  .painel { padding: 18px; }
+  .nota { grid-template-columns: 1fr; }
+  .falha { grid-template-columns: 1fr; }
+}
+</style>
+
+<a class="pular" href="#conteudo">Pular para o conteúdo</a>
+
+<div class="proto" id="proto" role="region" aria-label="Controles do protótipo">
+  <div class="wrap">
+    <strong>Protótipo</strong>
+    <span>Dados fictícios · Grupo 3 · teste de 30/10/2026</span>
+    <span class="esp"></span>
+    <label for="ir-tela">Ir para a tela
+      <select id="ir-tela">
+        <option value="1">1 · Inicial</option>
+        <option value="2">2 · Cadastro e login</option>
+        <option value="3">3 · Nova avaliação</option>
+        <option value="4">4 · Analisando</option>
+        <option value="4b">4b · Erro</option>
+        <option value="5">5 · Resultado</option>
+        <option value="6">6 · Orientação da IA</option>
+        <option value="7">7 · Prévia do relatório</option>
+        <option value="8">8 · Histórico</option>
+      </select>
+    </label>
+    <button type="button" id="recomecar">Recomeçar</button>
+    <button type="button" id="esconder-proto">Esconder barra</button>
+  </div>
+</div>
+<button type="button" class="proto-mini" id="mostrar-proto" hidden>Barra do protótipo</button>
+
+<header class="topo">
+  <div class="wrap">
+    <a class="marca" href="#tela1" data-ir="1">
+      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect x="1" y="1" width="26" height="26" rx="7" fill="var(--accent)"/><path d="M8 14.5l4 4 8-9" stroke="var(--accent-ink)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      AcessaWeb
+    </a>
+    <nav aria-label="Principal" id="nav-fora">
+      <button type="button" class="btn txt" data-ir="2" data-modo="entrar">Entrar</button>
+    </nav>
+    <nav aria-label="Principal" id="nav-dentro" hidden>
+      <button type="button" class="btn txt" data-ir="3">Nova avaliação</button>
+      <button type="button" class="btn txt" data-ir="8">Histórico</button>
+      <span class="ola">Olá, <span id="ola-nome">Helena</span></span>
+      <button type="button" class="btn txt" id="sair">Sair</button>
+    </nav>
+  </div>
+</header>
+
+<main id="conteudo" class="wrap">
+
+<!-- TELA 1 -->
+<section class="tela" data-tela="1" aria-labelledby="t1">
+  <div class="cabeca">
+    <p class="sobre">Auditoria de acessibilidade pelo eMAG 3.1</p>
+    <h1 id="t1" tabindex="-1">Audite páginas pelo eMAG 3.1 e entregue o relatório em menos tempo.</h1>
+  </div>
+  <div class="duas">
+    <div class="painel">
+      <p><span class="selo auto">Automático</span></p>
+      <h2>O que o AcessaWeb faz</h2>
+      <ul class="lista">
+        <li>Verifica a página automaticamente pelo eMAG 3.1.</li>
+        <li>Calcula a nota e mostra a conta, critério por critério.</li>
+        <li>Sugere correções com IA, citando o requisito do eMAG.</li>
+        <li>Gera o relatório em PDF para o cliente.</li>
+      </ul>
+    </div>
+    <div class="painel">
+      <p><span class="selo humana">Revisão humana</span></p>
+      <h2>O que continua com você</h2>
+      <ul class="lista">
+        <li>Revisar e aprovar as sugestões da IA.</li>
+        <li>Testar com teclado e leitor de tela.</li>
+        <li>Decidir a prioridade de cada falha.</li>
+        <li>Dar a conclusão de conformidade.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="aviso" role="note">
+    <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="var(--accent)" stroke-width="2"/><path d="M10 9v5M10 6v.5" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/></svg>
+    <p><strong>A nota é um apoio à auditoria. Não é certificação de conformidade.</strong></p>
+  </div>
+  <div class="acoes">
+    <button type="button" class="btn" data-ir="2" data-modo="criar">Criar conta</button>
+    <button type="button" class="btn sec" data-ir="2" data-modo="entrar">Entrar</button>
+  </div>
+</section>
+
+<!-- TELA 2 -->
+<section class="tela" data-tela="2" aria-labelledby="t2" hidden>
+  <div class="cabeca estreito">
+    <h1 id="t2" tabindex="-1">Criar conta</h1>
+    <p id="t2-apoio">Vamos pedir só 3 dados: nome, e-mail e senha.</p>
+  </div>
+  <form class="painel estreito" id="form-conta" novalidate>
+    <div class="campo" id="c-nome">
+      <label for="nome">Nome</label>
+      <input id="nome" name="nome" autocomplete="name">
+    </div>
+    <div class="campo" id="c-email">
+      <label for="email">E-mail</label>
+      <input id="email" name="email" type="email" autocomplete="email" aria-describedby="email-erro">
+      <p class="erro-campo" id="email-erro" hidden>Digite um e-mail válido, como nome@empresa.com.br.</p>
+    </div>
+    <div class="campo" id="c-senha">
+      <label for="senha">Senha</label>
+      <input id="senha" name="senha" type="password" autocomplete="new-password" aria-describedby="senha-regra senha-erro">
+      <p class="dica" id="senha-regra">Mínimo de 8 caracteres.</p>
+      <p class="erro-campo" id="senha-erro" hidden>A senha precisa ter pelo menos 8 caracteres.</p>
+      <label class="dica" style="display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" id="ver-senha" style="width:20px;height:20px;min-height:0"> Mostrar senha</label>
+    </div>
+    <div class="acoes">
+      <button type="submit" class="btn" id="btn-conta">Criar conta</button>
+      <button type="button" class="btn txt" id="trocar-modo">Já tenho conta</button>
+    </div>
+  </form>
+</section>
+
+<!-- TELA 3 -->
+<section class="tela" data-tela="3" aria-labelledby="t3" hidden>
+  <div class="cabeca estreito">
+    <p class="sobre">Nova avaliação</p>
+    <h1 id="t3" tabindex="-1">Qual página você quer avaliar?</h1>
+  </div>
+  <form class="painel" id="form-url" novalidate style="max-width:760px">
+    <div class="campo" id="c-url">
+      <label for="url">Endereço da página (URL)</label>
+      <input id="url" name="url" inputmode="url" autocomplete="url" aria-describedby="url-ex url-erro">
+      <p class="dica" id="url-ex">Ex.: https://servicos.exemplo.gov.br/agendamento</p>
+      <p class="erro-campo" id="url-erro" hidden>Digite o endereço da página.</p>
+    </div>
+    <div class="aviso" role="note">
+      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="none" stroke="var(--accent)" stroke-width="2"/><path d="M10 9v5M10 6v.5" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/></svg>
+      <p>Uma página pública por vez. Páginas que pedem login ainda não são avaliadas.</p>
+    </div>
+    <div class="acoes"><button type="submit" class="btn">Avaliar página</button></div>
+  </form>
+</section>
+
+<!-- TELA 4 -->
+<section class="tela" data-tela="4" aria-labelledby="t4" hidden>
+  <div class="cabeca">
+    <p class="sobre">Analisando</p>
+    <h1 id="t4" tabindex="-1">Avaliando a página</h1>
+    <p class="meta" id="t4-url"></p>
+  </div>
+  <div class="painel estreito">
+    <ol class="passos" id="passos" aria-live="polite">
+      <li data-st="agora"><span class="marca-p" aria-hidden="true">1</span><span>Carregando a página</span></li>
+      <li><span class="marca-p" aria-hidden="true">2</span><span>Verificando 38 itens do eMAG 3.1</span></li>
+      <li><span class="marca-p" aria-hidden="true">3</span><span>Preparando as orientações</span></li>
+    </ol>
+    <div class="acoes"><button type="button" class="btn sec" id="cancelar">Cancelar</button></div>
+  </div>
+</section>
+
+<!-- TELA 4b -->
+<section class="tela" data-tela="4b" aria-labelledby="t4b" hidden>
+  <div class="painel estreito" role="alert">
+    <span class="selo alta">Erro</span>
+    <h1 id="t4b" tabindex="-1">Não conseguimos abrir essa página.</h1>
+    <p>Confira se o endereço começa com <code>https://</code> e se a página abre sem login.</p>
+    <p class="meta">Endereço digitado: <span class="mono" id="t4b-url"></span></p>
+    <div class="acoes">
+      <button type="button" class="btn" id="corrigir-url">Corrigir o endereço</button>
+      <button type="button" class="btn sec" id="ajuda-erro">Ver ajuda</button>
+    </div>
+    <div class="aviso" id="ajuda-texto" hidden>
+      <p>Copie o endereço direto da barra do navegador, com <code>https://</code> no começo. Exemplo: <span class="mono">https://servicos.exemplo.gov.br/agendamento</span></p>
+    </div>
+  </div>
+</section>
+
+<!-- TELA 5 -->
+<section class="tela" data-tela="5" aria-labelledby="t5" hidden>
+  <div class="cabeca">
+    <p class="sobre">Resultado</p>
+    <h1 id="t5" tabindex="-1">Resultado da avaliação</h1>
+    <p class="meta"><span class="mono" id="t5-url"></span> · 28/10/2026, 14:32</p>
+  </div>
+  <div class="painel">
+    <div class="nota">
+      <p class="nota-num" aria-label="Nota 74 de 100">74<small>/100</small></p>
+      <div style="display:grid;gap:10px;min-width:0">
+        <p><span class="selo auto">Nota automática</span></p>
+        <p><strong>Não é certificação. A conclusão de conformidade é sua.</strong></p>
+        <p class="meta">28 de 38 verificações automáticas aprovadas · 10 falhas em 5 requisitos · 3 itens para revisão humana</p>
+      </div>
+    </div>
+    <details class="conta" id="conta">
+      <summary>Como chegamos a 74</summary>
+      <div class="rolar">
+        <table>
+          <caption class="dica" style="text-align:left;caption-side:bottom;padding-top:8px">Fórmula ilustrativa do protótipo: verificações aprovadas ÷ verificações feitas × 100. O cálculo final será definido no Plano de Projeto.</caption>
+          <thead><tr><th scope="col">Seção do eMAG 3.1</th><th scope="col" class="n">Aprovadas / feitas</th><th scope="col">Proporção</th><th scope="col" class="n">Falhas</th></tr></thead>
+          <tbody id="tabela-conta"></tbody>
+          <tfoot><tr><td>Total</td><td class="n">28 / 38 = 74</td><td></td><td class="n">10</td></tr></tfoot>
+        </table>
+      </div>
+    </details>
+  </div>
+  <div class="painel">
+    <div role="tablist" aria-label="Tipo de verificação">
+      <button type="button" role="tab" id="aba-falhas" aria-controls="painel-falhas" aria-selected="true">Falhas automáticas (10)</button>
+      <button type="button" role="tab" id="aba-humana" aria-controls="painel-humana" aria-selected="false" tabindex="-1">Revisão humana (3)</button>
+    </div>
+    <div role="tabpanel" id="painel-falhas" aria-labelledby="aba-falhas">
+      <ul class="falhas" id="lista-falhas"></ul>
+    </div>
+    <div role="tabpanel" id="painel-humana" aria-labelledby="aba-humana" hidden>
+      <p class="dica" style="margin-bottom:12px">A ferramenta não consegue julgar estes itens. Eles não entram na nota.</p>
+      <ul class="checks" id="lista-humana"></ul>
+    </div>
+  </div>
+  <div class="painel" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
+    <p>Orientações revisadas: <strong id="rev-cont">0</strong> de 5</p>
+    <button type="button" class="btn" data-ir="7">Prévia do relatório</button>
+  </div>
+</section>
+
+<!-- TELA 6 -->
+<section class="tela" data-tela="6" aria-labelledby="t6" hidden>
+  <div class="cabeca">
+    <p class="sobre"><button type="button" class="btn txt" data-ir="5" style="padding-left:0">← Voltar ao resultado</button></p>
+    <p id="t6-selos" class="acoes"></p>
+    <h1 id="t6" tabindex="-1"></h1>
+    <p><a id="t6-link" href="https://emag.governoeletronico.gov.br/" target="_blank" rel="noopener">Ler a recomendação no eMAG 3.1</a> <span class="dica" id="t6-wcag"></span></p>
+  </div>
+  <div class="painel">
+    <h2>Onde está</h2>
+    <ul class="ocorrencias" id="t6-ocorrencias"></ul>
+    <h3>Trecho encontrado (ocorrência 1)</h3>
+    <pre class="codigo" id="t6-trecho"></pre>
+  </div>
+  <div class="ia" aria-labelledby="t6-ia">
+    <div class="ia-titulo">
+      <h2 id="t6-ia">Sugestão da IA</h2>
+      <span class="selo pendente">Revise antes de usar</span>
+      <span id="t6-status"></span>
+    </div>
+    <div>
+      <h3>Por que é falha</h3>
+      <p id="t6-porque"></p>
+    </div>
+    <div>
+      <h3>Exemplo de correção</h3>
+      <pre class="codigo" id="t6-sugestao"></pre>
+    </div>
+    <form class="campo" id="form-edicao" hidden>
+      <label for="t6-editar">Editar a correção</label>
+      <textarea id="t6-editar"></textarea>
+      <div class="acoes"><button type="submit" class="btn">Salvar edição</button><button type="button" class="btn txt" id="cancelar-edicao">Cancelar</button></div>
+    </form>
+    <div class="acoes" id="t6-acoes">
+      <button type="button" class="btn" data-decisao="aprovada">Aprovar</button>
+      <button type="button" class="btn sec" id="editar">Editar</button>
+      <button type="button" class="btn perigo" data-decisao="descartada">Descartar</button>
+    </div>
+  </div>
+  <div class="nav-falhas">
+    <button type="button" class="btn sec" id="anterior">← Falha anterior</button>
+    <button type="button" class="btn sec" id="proxima">Próxima falha →</button>
+  </div>
+</section>
+
+<!-- TELA 7 -->
+<section class="tela" data-tela="7" aria-labelledby="t7" hidden>
+  <div class="cabeca">
+    <p class="sobre"><button type="button" class="btn txt" data-ir="5" style="padding-left:0">← Voltar ao resultado</button></p>
+    <h1 id="t7" tabindex="-1">Prévia do relatório</h1>
+  </div>
+  <div class="aviso alerta" id="t7-pendente" role="status" hidden>
+    <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2l9 16H1z" fill="none" stroke="var(--media)" stroke-width="2" stroke-linejoin="round"/><path d="M10 8v4M10 14.5v.5" stroke="var(--media)" stroke-width="2" stroke-linecap="round"/></svg>
+    <div style="display:grid;gap:10px">
+      <p><strong id="t7-pendente-txt"></strong> Orientações sem revisão saem marcadas como “pendente” no relatório.</p>
+      <div class="acoes"><button type="button" class="btn sec" id="revisar-agora">Revisar agora</button></div>
+    </div>
+  </div>
+  <article class="folha" aria-label="Página 1 do relatório">
+    <div class="capa">
+      <div>
+        <p class="sobre">Relatório de acessibilidade · eMAG 3.1</p>
+        <h2>Prefeitura de Exemplo (fictícia)</h2>
+        <p class="mono" id="t7-url"></p>
+      </div>
+      <p class="meta">Avaliação de 28/10/2026</p>
+    </div>
+    <section aria-labelledby="t7-resumo" style="display:grid;gap:12px">
+      <h3 id="t7-resumo">Resumo</h3>
+      <div class="resumo">
+        <div><b>74/100</b>Nota automática (não é certificação)</div>
+        <div><b>10</b>Falhas em 5 requisitos</div>
+        <div><b>6 · 4</b>Prioridade alta · média</div>
+        <div><b>3</b>Itens de revisão humana</div>
+      </div>
+    </section>
+    <section aria-labelledby="t7-falhas" style="display:grid;gap:12px;min-width:0">
+      <h3 id="t7-falhas">Falhas e correções</h3>
+      <div class="rolar">
+        <table>
+          <thead><tr><th scope="col">Requisito</th><th scope="col">Prioridade</th><th scope="col">Local</th><th scope="col">Correção</th></tr></thead>
+          <tbody id="t7-tabela"></tbody>
+        </table>
+      </div>
+    </section>
+    <section aria-labelledby="t7-humana" style="display:grid;gap:8px">
+      <h3 id="t7-humana">Revisão humana</h3>
+      <ul class="lista" id="t7-lista-humana"></ul>
+    </section>
+    <p class="assina">Relatório gerado com apoio do AcessaWeb. Conclusão de conformidade: <span id="t7-nome">Helena</span>, analista de acessibilidade.</p>
+  </article>
+  <div class="acoes">
+    <button type="button" class="btn" id="baixar">Baixar PDF</button>
+  </div>
+</section>
+
+<!-- TELA 8 -->
+<section class="tela" data-tela="8" aria-labelledby="t8" hidden>
+  <div class="cabeca" style="display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap">
+    <h1 id="t8" tabindex="-1">Histórico de avaliações</h1>
+    <button type="button" class="btn" data-ir="3">Nova avaliação</button>
+  </div>
+  <div class="painel">
+    <div class="rolar">
+      <table>
+        <thead><tr><th scope="col">Data</th><th scope="col">Página</th><th scope="col" class="n">Nota</th><th scope="col">Situação</th><th scope="col">Ações</th></tr></thead>
+        <tbody id="t8-tabela"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function () {
+  var URL_PADRAO = 'https://servicos.exemplo.gov.br/agendamento';
+  var SECOES = [
+    ['1 · Marcação', 8, 10], ['2 · Comportamento', 5, 6], ['3 · Conteúdo/Informação', 9, 12],
+    ['4 · Apresentação/Design', 4, 6], ['6 · Formulário', 2, 4]
+  ];
+  var REQ = [
+    { id: 'r36', num: '3.6', nome: 'Fornecer alternativa em texto para as imagens do sítio', pri: 'alta', wcag: '1.1.1',
+      locais: ['Banner principal — main > .banner img', 'Logotipo da prefeitura — header .logo img', 'Ícone “Documentos necessários” — #docs img'],
+      trecho: '<img src="/img/banner-vacina.jpg">',
+      porque: 'A imagem não tem texto alternativo. Quem usa leitor de tela ouve só “imagem” e perde a informação da campanha.',
+      sugestao: '<img src="/img/banner-vacina.jpg"\n     alt="Campanha de vacinação contra a gripe, de 15/04 a 31/05, nas unidades de saúde">' },
+    { id: 'r62', num: '6.2', nome: 'Associar etiquetas aos seus campos', pri: 'alta', wcag: '1.3.1 e 3.3.2',
+      locais: ['Campo CPF — #cpf', 'Campo Data — #data'],
+      trecho: '<span>CPF</span>\n<input id="cpf" type="text">',
+      porque: 'O campo não tem etiqueta associada. O leitor de tela anuncia só “editar texto”, sem dizer o que digitar.',
+      sugestao: '<label for="cpf">CPF</label>\n<input id="cpf" type="text">' },
+    { id: 'r21', num: '2.1', nome: 'Disponibilizar todas as funções da página via teclado', pri: 'alta', wcag: '2.1.1',
+      locais: ['Calendário de datas — #calendario'],
+      trecho: '<div class="dia" onclick="escolher(12)">12</div>',
+      porque: 'Os dias do calendário só respondem ao clique do mouse. Quem navega pelo teclado não consegue escolher a data.',
+      sugestao: '<button type="button" class="dia" onclick="escolher(12)">12</button>' },
+    { id: 'r41', num: '4.1', nome: 'Oferecer contraste mínimo entre plano de fundo e primeiro plano', pri: 'media', wcag: '1.4.3',
+      locais: ['Botão Agendar — #btn-agendar (contraste 2,9:1)', 'Texto do rodapé — footer p (contraste 3,2:1)'],
+      trecho: '#btn-agendar { color: #FFFFFF; background: #6C9AD6; }',
+      porque: 'O texto branco sobre azul-claro tem contraste de 2,9:1. O mínimo para texto normal é 4,5:1.',
+      sugestao: '#btn-agendar { color: #FFFFFF; background: #1F4E9C; } /* contraste 8,0:1 */' },
+    { id: 'r13', num: '1.3', nome: 'Utilizar corretamente os níveis de cabeçalho', pri: 'media', wcag: '1.3.1',
+      locais: ['Título “Documentos necessários” — h4 logo depois do h1', 'Título “Horários” — h4 logo depois do h1'],
+      trecho: '<h1>Agendamento</h1>\n…\n<h4>Documentos necessários</h4>',
+      porque: 'A página pula do h1 para o h4. Quem navega pelos títulos com leitor de tela acha que perdeu partes do conteúdo.',
+      sugestao: '<h1>Agendamento</h1>\n…\n<h2>Documentos necessários</h2>' }
+  ];
+  var HUMANA = [
+    ['3.6', 'O texto alternativo descreve bem cada imagem?'],
+    ['1.4', 'A ordem de leitura e de tabulação faz sentido?'],
+    ['3.5', 'Os links fazem sentido fora do contexto?']
+  ];
+  var ROTULO = { alta: 'Alta', media: 'Média' };
+  var DECISAO = { aprovada: 'Aprovada', editada: 'Editada', descartada: 'Descartada' };
+
+  var estado;
+  function novoEstado() {
+    return {
+      logado: false, nome: 'Helena', url: URL_PADRAO, modo: 'criar', atual: 0,
+      decisao: {}, edicao: {}, humana: {}, pdf: false, avaliada: false,
+      historico: [
+        { data: '14/10/2026', url: 'servicos.exemplo.gov.br/agendamento', nota: 61, sit: 'PDF gerado', antigo: true },
+        { data: '07/10/2026', url: 'servicos.exemplo.gov.br/ouvidoria', nota: 82, sit: 'PDF gerado', antigo: true }
+      ]
+    };
+  }
+  estado = novoEstado();
+
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function semProtocolo(u) { return u.replace(/^https?:\/\//i, ''); }
+
+  var timerToast;
+  function avisar(msg) {
+    var t = $('#toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(timerToast); timerToast = setTimeout(function () { t.hidden = true; }, 4200);
+  }
+
+  /* Navegação entre telas */
+  var timerAnalise = [];
+  function ir(tela, semFoco) {
+    tela = String(tela);
+    timerAnalise.forEach(clearTimeout); timerAnalise = [];
+    if (['3', '4', '5', '6', '7', '8'].indexOf(tela) >= 0 && !estado.logado) { estado.logado = true; }
+    $$('[data-tela]').forEach(function (s) { s.hidden = s.getAttribute('data-tela') !== tela; });
+    $('#nav-fora').hidden = estado.logado; $('#nav-dentro').hidden = !estado.logado;
+    $('#ola-nome').textContent = estado.nome;
+    $('#ir-tela').value = tela;
+    var render = { '2': telaConta, '4': telaAnalise, '4b': telaErro, '5': telaResultado, '6': telaOrientacao, '7': telaPrevia, '8': telaHistorico }[tela];
+    if (render) render();
+    if (location.hash !== '#tela' + tela) { try { history.replaceState(null, '', '#tela' + tela); } catch (e) {} }
+    window.scrollTo(0, 0);
+    if (!semFoco) { var h = document.querySelector('[data-tela="' + tela + '"] h1'); if (h) h.focus({ preventScroll: true }); }
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-ir]');
+    if (!b) return;
+    e.preventDefault();
+    if (b.hasAttribute('data-modo')) estado.modo = b.getAttribute('data-modo');
+    ir(b.getAttribute('data-ir'));
+  });
+
+  /* Tela 2 */
+  function telaConta() {
+    var criar = estado.modo === 'criar';
+    $('#t2').textContent = criar ? 'Criar conta' : 'Entrar';
+    $('#t2-apoio').textContent = criar ? 'Vamos pedir só 3 dados: nome, e-mail e senha.' : 'Use o e-mail e a senha da sua conta.';
+    $('#c-nome').hidden = !criar;
+    $('#btn-conta').textContent = criar ? 'Criar conta' : 'Entrar';
+    $('#trocar-modo').textContent = criar ? 'Já tenho conta' : 'Criar uma conta';
+    $('#senha').setAttribute('autocomplete', criar ? 'new-password' : 'current-password');
+    $('#senha-regra').hidden = !criar;
+    limparErro('c-email', 'email-erro'); limparErro('c-senha', 'senha-erro');
+  }
+  function limparErro(c, p) { $('#' + c).removeAttribute('data-erro'); $('#' + p).hidden = true; $('#' + c + ' input').removeAttribute('aria-invalid'); }
+  function marcarErro(c, p) { $('#' + c).setAttribute('data-erro', ''); $('#' + p).hidden = false; $('#' + c + ' input').setAttribute('aria-invalid', 'true'); }
+  $('#trocar-modo').addEventListener('click', function () { estado.modo = estado.modo === 'criar' ? 'entrar' : 'criar'; telaConta(); $('#t2').focus(); });
+  $('#ver-senha').addEventListener('change', function () { $('#senha').type = this.checked ? 'text' : 'password'; });
+  $('#form-conta').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var ok = true, primeiro = null;
+    limparErro('c-email', 'email-erro'); limparErro('c-senha', 'senha-erro');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('#email').value.trim())) { marcarErro('c-email', 'email-erro'); ok = false; primeiro = primeiro || $('#email'); }
+    if ($('#senha').value.length < 8) { marcarErro('c-senha', 'senha-erro'); ok = false; primeiro = primeiro || $('#senha'); }
+    if (!ok) { primeiro.focus(); return; }
+    var n = $('#nome').value.trim();
+    if (estado.modo === 'criar' && n) estado.nome = n.split(/\s+/)[0];
+    estado.logado = true;
+    ir('3');
+  });
+
+  /* Tela 3 */
+  $('#form-url').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = $('#url').value.trim();
+    limparErro('c-url', 'url-erro');
+    if (!v) { marcarErro('c-url', 'url-erro'); $('#url').focus(); return; }
+    estado.url = v;
+    if (!/^https?:\/\/[^\s\/]+\.[^\s\/]+/i.test(v)) { ir('4b'); return; }
+    ir('4');
+  });
+
+  /* Tela 4 e 4b */
+  function telaAnalise() {
+    $('#t4-url').textContent = estado.url;
+    var itens = $$('#passos li');
+    function marcar(i) { itens.forEach(function (li, j) { li.setAttribute('data-st', j < i ? 'feito' : (j === i ? 'agora' : '')); }); }
+    marcar(0);
+    timerAnalise.push(setTimeout(function () { marcar(1); }, 1100));
+    timerAnalise.push(setTimeout(function () { marcar(2); }, 2400));
+    timerAnalise.push(setTimeout(function () {
+      marcar(3);
+      if (!estado.avaliada) {
+        estado.avaliada = true;
+        estado.historico.unshift({ data: '28/10/2026', url: semProtocolo(estado.url), nota: 74, sit: 'Em revisão', atual: true });
+      }
+      ir('5');
+    }, 3400));
+  }
+  $('#cancelar').addEventListener('click', function () { ir('3'); });
+  function telaErro() { $('#t4b-url').textContent = estado.url || '(vazio)'; $('#ajuda-texto').hidden = true; }
+  $('#corrigir-url').addEventListener('click', function () { ir('3', true); var u = $('#url'); u.value = estado.url; u.focus(); u.select(); });
+  $('#ajuda-erro').addEventListener('click', function () { $('#ajuda-texto').hidden = false; });
+
+  /* Tela 5 */
+  function revisadas() { return REQ.filter(function (r) { return estado.decisao[r.id]; }).length; }
+  function seloDecisao(id) {
+    var d = estado.decisao[id];
+    return d ? '<span class="selo ' + d + '">' + DECISAO[d] + '</span>' : '<span class="selo pendente">Sem revisão</span>';
+  }
+  function telaResultado() {
+    $('#t5-url').textContent = semProtocolo(estado.url);
+    $('#tabela-conta').innerHTML = SECOES.map(function (s) {
+      var pct = Math.round(s[1] / s[2] * 100);
+      return '<tr><th scope="row" style="font-weight:400;color:var(--ink);font-size:1rem">' + s[0] + '</th><td class="n">' + s[1] + ' / ' + s[2] +
+        '</td><td><span class="barra-sec" aria-hidden="true"><span style="width:' + pct + '%"></span></span> ' + pct + '%</td><td class="n">' + (s[2] - s[1]) + '</td></tr>';
+    }).join('');
+    $('#lista-falhas').innerHTML = REQ.map(function (r, i) {
+      return '<li class="falha"><div style="display:grid;gap:6px;min-width:0">' +
+        '<p class="linha1"><span class="selo ' + r.pri + '">Prioridade ' + ROTULO[r.pri] + '</span><span class="selo auto">Automático</span>' + seloDecisao(r.id) + '</p>' +
+        '<h3>' + r.num + ' · ' + esc(r.nome) + '</h3>' +
+        '<p class="local">' + r.locais.length + (r.locais.length > 1 ? ' ocorrências' : ' ocorrência') + ' · ' + esc(r.locais[0]) + (r.locais.length > 1 ? ' e mais ' + (r.locais.length - 1) : '') + '</p>' +
+        '</div><button type="button" class="btn sec" data-orientacao="' + i + '" aria-label="Ver orientação do requisito ' + r.num + '">Ver orientação</button></li>';
+    }).join('');
+    $('#lista-humana').innerHTML = HUMANA.map(function (h, i) {
+      return '<li><label for="h' + i + '"><input type="checkbox" id="h' + i + '"' + (estado.humana[i] ? ' checked' : '') + '><span><strong>' + h[0] + '</strong> · ' + h[1] + '</span></label></li>';
+    }).join('');
+    $('#rev-cont').textContent = revisadas();
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-orientacao]');
+    if (b) { estado.atual = +b.getAttribute('data-orientacao'); ir('6'); }
+  });
+  document.addEventListener('change', function (e) {
+    var m = e.target.id && e.target.id.match(/^h(\d)$/);
+    if (m) estado.humana[m[1]] = e.target.checked;
+  });
+  var abas = [$('#aba-falhas'), $('#aba-humana')];
+  function abrirAba(i) {
+    abas.forEach(function (a, j) {
+      a.setAttribute('aria-selected', i === j ? 'true' : 'false'); a.tabIndex = i === j ? 0 : -1;
+      $('#' + a.getAttribute('aria-controls')).hidden = i !== j;
+    });
+    abas[i].focus();
+  }
+  abas.forEach(function (a, i) {
+    a.addEventListener('click', function () { abrirAba(i); });
+    a.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); abrirAba(i === 0 ? 1 : 0); }
+    });
+  });
+
+  /* Tela 6 */
+  function telaOrientacao() {
+    var r = REQ[estado.atual];
+    $('#t6').textContent = r.num + ' · ' + r.nome;
+    $('#t6-selos').innerHTML = '<span class="selo ' + r.pri + '">Prioridade ' + ROTULO[r.pri] + '</span><span class="selo auto">Automático</span>';
+    $('#t6-link').textContent = 'Ler a recomendação ' + r.num + ' no eMAG 3.1';
+    $('#t6-wcag').textContent = '· corresponde ao WCAG ' + r.wcag;
+    $('#t6-ocorrencias').innerHTML = r.locais.map(function (l, i) { return '<li><b>' + (i + 1) + '.</b><span>' + esc(l) + '</span></li>'; }).join('');
+    $('#t6-trecho').textContent = r.trecho;
+    $('#t6-porque').textContent = r.porque;
+    $('#t6-sugestao').textContent = estado.edicao[r.id] || r.sugestao;
+    $('#t6-status').innerHTML = seloDecisao(r.id);
+    $('#form-edicao').hidden = true; $('#t6-acoes').hidden = false;
+    $('#anterior').disabled = estado.atual === 0;
+    $('#proxima').disabled = estado.atual === REQ.length - 1;
+  }
+  $$('#t6-acoes [data-decisao]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var r = REQ[estado.atual], d = b.getAttribute('data-decisao');
+      estado.decisao[r.id] = d;
+      $('#t6-status').innerHTML = seloDecisao(r.id);
+      avisar('Orientação ' + r.num + ' ' + (d === 'aprovada' ? 'aprovada' : 'descartada') + '. Revisadas: ' + revisadas() + ' de 5.');
+    });
+  });
+  $('#editar').addEventListener('click', function () {
+    var r = REQ[estado.atual];
+    $('#t6-editar').value = estado.edicao[r.id] || r.sugestao;
+    $('#form-edicao').hidden = false; $('#t6-acoes').hidden = true; $('#t6-editar').focus();
+  });
+  $('#cancelar-edicao').addEventListener('click', function () { $('#form-edicao').hidden = true; $('#t6-acoes').hidden = false; $('#editar').focus(); });
+  $('#form-edicao').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var r = REQ[estado.atual];
+    estado.edicao[r.id] = $('#t6-editar').value; estado.decisao[r.id] = 'editada';
+    $('#t6-sugestao').textContent = estado.edicao[r.id];
+    $('#t6-status').innerHTML = seloDecisao(r.id);
+    $('#form-edicao').hidden = true; $('#t6-acoes').hidden = false; $('#editar').focus();
+    avisar('Edição salva. Revisadas: ' + revisadas() + ' de 5.');
+  });
+  $('#anterior').addEventListener('click', function () { if (estado.atual > 0) { estado.atual--; ir('6'); } });
+  $('#proxima').addEventListener('click', function () { if (estado.atual < REQ.length - 1) { estado.atual++; ir('6'); } });
+
+  /* Tela 7 */
+  function telaPrevia() {
+    var pend = REQ.length - revisadas();
+    $('#t7-pendente').hidden = pend === 0;
+    $('#t7-pendente-txt').textContent = pend === 1 ? '1 orientação ainda não foi revisada.' : pend + ' orientações ainda não foram revisadas.';
+    $('#baixar').textContent = pend ? 'Gerar mesmo assim' : 'Baixar PDF';
+    $('#t7-url').textContent = semProtocolo(estado.url);
+    $('#t7-nome').textContent = estado.nome;
+    $('#t7-tabela').innerHTML = REQ.map(function (r) {
+      var d = estado.decisao[r.id], corr;
+      if (d === 'descartada') corr = '<span class="dica">Descartada pela auditora</span>';
+      else if (!d) corr = '<span class="selo pendente">Pendente de revisão</span>';
+      else corr = '<code>' + esc(estado.edicao[r.id] || r.sugestao) + '</code>';
+      return '<tr><td><strong>' + r.num + '</strong> ' + esc(r.nome) + '</td><td><span class="selo ' + r.pri + '">' + ROTULO[r.pri] + '</span></td><td>' +
+        r.locais.map(esc).join('<br>') + '</td><td style="min-width:220px">' + corr + '</td></tr>';
+    }).join('');
+    $('#t7-lista-humana').innerHTML = HUMANA.map(function (h, i) {
+      return '<li>' + h[0] + ' · ' + h[1] + ' <strong>' + (estado.humana[i] ? '(conferido)' : '(a conferir)') + '</strong></li>';
+    }).join('');
+  }
+  $('#revisar-agora').addEventListener('click', function () {
+    var i = REQ.findIndex(function (r) { return !estado.decisao[r.id]; });
+    estado.atual = i < 0 ? 0 : i; ir('6');
+  });
+  $('#baixar').addEventListener('click', function () {
+    estado.pdf = true;
+    estado.historico.forEach(function (h) { if (h.atual) h.sit = 'PDF gerado'; });
+    ir('8');
+    avisar('PDF gerado. Neste protótipo o arquivo não é baixado.');
+  });
+
+  /* Tela 8 */
+  function telaHistorico() {
+    $('#t8-tabela').innerHTML = estado.historico.map(function (h, i) {
+      return '<tr' + (h.atual ? ' class="novo"' : '') + '><td>' + h.data + '</td><td class="mono" style="overflow-wrap:anywhere">' + esc(h.url) + '</td><td class="n">' + h.nota +
+        '</td><td class="situacao">' + (h.sit === 'PDF gerado' ? '<span class="selo aprovada">PDF gerado</span>' : '<span class="selo pendente">Em revisão</span>') +
+        '</td><td><div class="acoes"><button type="button" class="btn txt" data-hist="abrir" data-i="' + i + '">Abrir</button>' +
+        '<button type="button" class="btn txt" data-hist="pdf" data-i="' + i + '">Baixar PDF</button>' +
+        '<button type="button" class="btn txt" data-hist="denovo" data-i="' + i + '">Avaliar de novo</button></div></td></tr>';
+    }).join('');
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-hist]');
+    if (!b) return;
+    var h = estado.historico[+b.getAttribute('data-i')], acao = b.getAttribute('data-hist');
+    if (acao === 'abrir') { if (h.atual) ir('5'); else avisar('No protótipo, só a avaliação de 28/10/2026 abre.'); }
+    else if (acao === 'pdf') avisar('Neste protótipo o PDF não é baixado.');
+    else { ir('3', true); var u = $('#url'); u.value = 'https://' + h.url; u.focus(); }
+  });
+
+  /* Barra do protótipo */
+  $('#ir-tela').addEventListener('change', function () { ir(this.value); });
+  $('#recomecar').addEventListener('click', function () {
+    estado = novoEstado();
+    ['#nome', '#email', '#senha', '#url'].forEach(function (s) { $(s).value = ''; });
+    ir('1'); avisar('Protótipo reiniciado.');
+  });
+  $('#esconder-proto').addEventListener('click', function () { $('#proto').hidden = true; $('#mostrar-proto').hidden = false; $('#mostrar-proto').focus(); });
+  $('#mostrar-proto').addEventListener('click', function () { $('#proto').hidden = false; $('#mostrar-proto').hidden = true; $('#ir-tela').focus(); });
+  $('#sair').addEventListener('click', function () { estado.logado = false; ir('1'); });
+
+  var inicio = (location.hash.match(/^#tela(1|2|3|4b|4|5|6|7|8)$/) || [])[1] || '1';
+  if (inicio === '4') inicio = '3';
+  ir(inicio, true);
+})();
+</script>

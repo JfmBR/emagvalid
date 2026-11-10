@@ -13,18 +13,18 @@ Vale para Windows 10 (22H2) e Windows 11 (23H2 ou mais novo), inclusive a ediç�
 
 ### Resumo
 
-| Ferramenta            | Para quê                               | Download                                                                                            | Pelo `winget`                |
-| --------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------- |
-| Git                   | Baixar os repositórios e fazer commits | [git-scm.com/install/windows](https://git-scm.com/install/windows)                                  | `Git.Git`                    |
-| Node.js 26 (LTS)      | Rodar a API, o front-end e o `npm`     | [nodejs.org/pt-br/download](https://nodejs.org/pt-br/download)                                      | `OpenJS.NodeJS.LTS`          |
-| WSL 2                 | Exigido pelo Docker Desktop            | comando `wsl --install --no-distribution` (passo 3)                                                 | —                            |
-| Docker Desktop        | Ligar o PostgreSQL local               | [docs.docker.com/…/windows-install](https://docs.docker.com/desktop/setup/install/windows-install/) | `Docker.DockerDesktop`       |
-| VS Code               | Editar o código                        | [code.visualstudio.com/download](https://code.visualstudio.com/download)                            | `Microsoft.VisualStudioCode` |
-| DBeaver Community     | Ver e testar os dados do banco         | [dbeaver.io/download](https://dbeaver.io/download/)                                                 | `DBeaver.DBeaver.Community`  |
-| NVDA                  | Testar as telas com leitor de tela     | [nvaccess.org/download](https://www.nvaccess.org/download/)                                         | `NVAccess.NVDA`              |
-| Chromium (Playwright) | Navegador que a análise usa            | comando `npx playwright install chromium` (passo 9)                                                 | —                            |
+| Ferramenta            | Para quê                             | Download                                                                                            | Pelo `winget`                |
+| --------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------- | ---------------------------- |
+| Git                   | Baixar o repositório e fazer commits | [git-scm.com/install/windows](https://git-scm.com/install/windows)                                  | `Git.Git`                    |
+| Node.js 26 (LTS)      | Rodar a API, o front-end e o `npm`   | [nodejs.org/pt-br/download](https://nodejs.org/pt-br/download)                                      | `OpenJS.NodeJS.LTS`          |
+| WSL 2                 | Exigido pelo Docker Desktop          | comando `wsl --install --no-distribution` (passo 3)                                                 | —                            |
+| Docker Desktop        | Ligar o PostgreSQL local             | [docs.docker.com/…/windows-install](https://docs.docker.com/desktop/setup/install/windows-install/) | `Docker.DockerDesktop`       |
+| VS Code               | Editar o código                      | [code.visualstudio.com/download](https://code.visualstudio.com/download)                            | `Microsoft.VisualStudioCode` |
+| DBeaver Community     | Ver e testar os dados do banco       | [dbeaver.io/download](https://dbeaver.io/download/)                                                 | `DBeaver.DBeaver.Community`  |
+| NVDA                  | Testar as telas com leitor de tela   | [nvaccess.org/download](https://www.nvaccess.org/download/)                                         | `NVAccess.NVDA`              |
+| Chromium (Playwright) | Navegador que a análise usa          | comando `npx playwright install chromium` (passo 9)                                                 | —                            |
 
-Você também precisa de uma **conta no GitHub** com acesso aos repositórios `JfmBR/emagvalid` e `JfmBR/emagvalid-docs` (peça ao João).
+Você também precisa de uma **conta no GitHub** com acesso ao repositório `JfmBR/emagvalid` (peça ao João). Para regenerar as fontes da documentação, também é preciso a pasta privada `acessaweb-privado` (ver o fim do passo de baixar o repositório).
 
 **Atalho pelo `winget`:** o Windows 10 e 11 já trazem o `winget`. Em vez de baixar cada instalador, abra o PowerShell e rode uma linha por ferramenta, por exemplo:
 
@@ -101,25 +101,24 @@ O Docker Desktop precisa estar **aberto** sempre que você for usar o banco (`np
 2. Instale. Liga com `Ctrl+Alt+N`; desliga com `Insert+Q`.
 3. É o leitor que a persona do projeto usa: todo teste de tela passa por ele (Passos 4 e 12 do [passo a passo](passo-a-passo-mvp.md)).
 
-### 8. Baixar os repositórios
+### 8. Baixar o repositório
 
-Os dois repositórios ficam lado a lado numa pasta `projeto_integrador` (o código procura a documentação em `../emagvalid_docs/`). No PowerShell, na pasta onde quiser guardar o projeto (por exemplo, `Documentos\Projetos`):
+Código e documentação ficam num só repositório (até 10/11/2026 eram dois). No PowerShell, na pasta onde quiser guardar o projeto (por exemplo, `Documentos\Projetos`):
 
 ```powershell
-mkdir projeto_integrador
-cd projeto_integrador
-git clone https://github.com/JfmBR/emagvalid.git emagvalid
-git clone https://github.com/JfmBR/emagvalid-docs.git emagvalid_docs
+git clone https://github.com/JfmBR/emagvalid.git projeto_integrador
 ```
 
-Atenção: a pasta da documentação é `emagvalid_docs`, **com sublinhado**. Na primeira vez, o Git abre uma janela para entrar no GitHub pelo navegador.
+Na primeira vez, o Git abre uma janela para entrar no GitHub pelo navegador.
+
+**Pasta privada (só para quem mexe nos .docx):** os .docx com dados de entrevistados e as planilhas RACI não ficam no repositório, que é público. Copie a pasta `acessaweb-privado` do Drive do grupo para o lado de `projeto_integrador`, de modo que fique `Documentos\Projetos\acessaweb-privado`. Sem ela, o código roda normalmente; só o `_gerar_fontes.py` não funciona.
 
 ### 9. Instalar as dependências e rodar
 
 Com o **Docker Desktop aberto**, no PowerShell:
 
 ```powershell
-cd emagvalid
+cd projeto_integrador
 npm install
 Copy-Item .env.example .env
 npm run db:up
@@ -174,17 +173,17 @@ Escrito para o **Debian 13** (o Linux do João). Onde o **Ubuntu 24.04** é dife
 
 ### Resumo
 
-| Ferramenta            | Para quê                               | Como instalar                                                                               |
-| --------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Git                   | Baixar os repositórios e fazer commits | `sudo apt install git` (passo 1)                                                            |
-| nvm + Node.js 26      | Rodar a API, o front-end e o `npm`     | [github.com/nvm-sh/nvm](https://github.com/nvm-sh/nvm) (passo 2)                            |
-| Docker e Compose      | Ligar o PostgreSQL local               | `sudo apt install docker.io docker-compose` (passo 3)                                       |
-| VS Code               | Editar o código                        | [code.visualstudio.com/download](https://code.visualstudio.com/download) (`.deb`)           |
-| DBeaver Community     | Ver e testar os dados do banco         | [dbeaver.io/download](https://dbeaver.io/download/) (`.deb`)                                |
-| Orca                  | Testar as telas com leitor de tela     | já vem no GNOME; senão, `sudo apt install orca` ([orca.gnome.org](https://orca.gnome.org/)) |
-| Chromium (Playwright) | Navegador que a análise usa            | `npx playwright install --with-deps chromium` (passo 8)                                     |
+| Ferramenta            | Para quê                             | Como instalar                                                                               |
+| --------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Git                   | Baixar o repositório e fazer commits | `sudo apt install git` (passo 1)                                                            |
+| nvm + Node.js 26      | Rodar a API, o front-end e o `npm`   | [github.com/nvm-sh/nvm](https://github.com/nvm-sh/nvm) (passo 2)                            |
+| Docker e Compose      | Ligar o PostgreSQL local             | `sudo apt install docker.io docker-compose` (passo 3)                                       |
+| VS Code               | Editar o código                      | [code.visualstudio.com/download](https://code.visualstudio.com/download) (`.deb`)           |
+| DBeaver Community     | Ver e testar os dados do banco       | [dbeaver.io/download](https://dbeaver.io/download/) (`.deb`)                                |
+| Orca                  | Testar as telas com leitor de tela   | já vem no GNOME; senão, `sudo apt install orca` ([orca.gnome.org](https://orca.gnome.org/)) |
+| Chromium (Playwright) | Navegador que a análise usa          | `npx playwright install --with-deps chromium` (passo 8)                                     |
 
-Você também precisa de uma **conta no GitHub** com acesso aos repositórios `JfmBR/emagvalid` e `JfmBR/emagvalid-docs` (peça ao João).
+Você também precisa de uma **conta no GitHub** com acesso ao repositório `JfmBR/emagvalid` (peça ao João). Para regenerar as fontes da documentação, também é preciso a pasta privada `acessaweb-privado` (ver o fim do passo de baixar o repositório).
 
 Antes de tudo, atualize a lista de pacotes:
 
@@ -284,23 +283,23 @@ sudo apt install orca
 3. Teste no **Firefox**, que é o navegador que funciona melhor com o Orca.
 4. A persona do projeto usa o **NVDA**, que só existe no Windows. Antes de 04/12, faça ao menos uma rodada de testes com o NVDA num Windows (Passo 12 do [passo a passo](passo-a-passo-mvp.md)).
 
-### 7. Baixar os repositórios
+### 7. Baixar o repositório
 
-Os dois repositórios ficam lado a lado numa pasta `projeto_integrador` (o código procura a documentação em `../emagvalid_docs/`):
+Código e documentação ficam num só repositório (até 10/11/2026 eram dois):
 
 ```bash
-mkdir -p ~/projeto_integrador
-cd ~/projeto_integrador
-git clone https://github.com/JfmBR/emagvalid.git emagvalid
-git clone https://github.com/JfmBR/emagvalid-docs.git emagvalid_docs
+cd ~
+git clone https://github.com/JfmBR/emagvalid.git projeto_integrador
 ```
 
-Atenção: a pasta da documentação é `emagvalid_docs`, **com sublinhado**. Se o Git pedir senha, use um _token_ do GitHub, não a senha da conta (GitHub → Settings → Developer settings → Personal access tokens), ou configure uma chave SSH e clone com `git@github.com:...`.
+Se o Git pedir senha, use um _token_ do GitHub, não a senha da conta (GitHub → Settings → Developer settings → Personal access tokens), ou configure uma chave SSH e clone com `git@github.com:...`.
+
+**Pasta privada (só para quem mexe nos .docx):** os .docx com dados de entrevistados e as planilhas RACI não ficam no repositório, que é público. Copie a pasta `acessaweb-privado` do Drive do grupo para o lado de `projeto_integrador`, de modo que fique `~/acessaweb-privado`. Sem ela, o código roda normalmente; só o `_gerar_fontes.py` não funciona.
 
 ### 8. Instalar as dependências e rodar
 
 ```bash
-cd ~/projeto_integrador/emagvalid
+cd ~/projeto_integrador
 npm install
 cp .env.example .env
 npm run db:up
