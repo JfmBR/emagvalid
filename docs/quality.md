@@ -55,6 +55,18 @@ Só em `localhost`, com `npm run dev` rodando; nunca em produção nem com sess�
 - Prompt reutilizável: `docs/prompts/revisao-de-seguranca.md` (base do repositório ou diff preciso), só leitura, relatório em `../acessaweb-privado/relatorios/`.
 - Pontos de atenção do produto: URLs arbitrárias abertas pelo Playwright (SSRF), login e senhas (RNF04), dados enviados à IA (RNF05), chaves no `.env`.
 
+## Melhoria do harness (Harness2, adaptação nativa)
+
+Procedimento do prompt 15 do Vibe Coding Toolkit (`docs/prompts/15-harness-improvement.md`, revisão `7ef68dd`), usado quando o agente erra de forma recorrente (ignora uma regra, pula uma checagem, inventa um resultado):
+
+1. Descreva a falha observada e o critério de aceite antes de mexer em qualquer instrução.
+2. Reproduza numa cópia descartável, com o mesmo cliente e modelo, e anote o que o agente fez.
+3. Proponha **uma** mudança pequena (no `AGENTS.md`, numa skill, num teste ou num script) e rode o mesmo caso de novo nas mesmas condições.
+4. Adote só se a checagem independente melhorar; senão, mantenha o original e registre a falha.
+5. Registre a lição (evidência, escopo, data e quando invalidar) em `docs/setup.md`.
+
+Limite: uma comparação por falha. Na preparação de 10/11/2026 não houve falha (`docs/setup.md`, "Avaliação do harness"), então nada mudou. Casos de teste: `docs/07-harness-evaluation.md` e prompt 14 do toolkit.
+
 ## Dependências e entrega
 
 - Dependência nova só com motivo e, até o Plano v1.1 (13/11), com aval do João.
