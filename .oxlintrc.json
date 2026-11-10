@@ -13,5 +13,5 @@
       }
     ]
   },
-  "ignorePatterns": ["**/dist/**", "apps/api/generated/**", "projeto/**"]
+  "ignorePatterns": ["**/dist/**", "apps/api/generated/**", "projeto/**", ".claude/skills/**"]
 }

@@ -94,6 +94,18 @@ Antes de abrir uma PR, rode `npm run lint`, `npm run format` e `npm test`. O CI 
 | `.claude/agents/`                  | Agentes `emagvalid-dev` (código), `emagvalid` (documentos) e `emagvalid-checagem` (conferência) |
 | `projeto/`                         | Documentação do projeto (ver a tabela abaixo)                                                   |
 
+## Documentos do repositório
+
+| Arquivo                   | Para quê                                                           |
+| ------------------------- | ------------------------------------------------------------------ |
+| `PRODUCT.md`              | Produto, escopo do MVP e critérios de aceite                       |
+| `AGENTS.md` / `CLAUDE.md` | Regras para os agentes de IA (o `CLAUDE.md` importa o `AGENTS.md`) |
+| `docs/architecture.md`    | Stack, mapa do código, fronteiras e dados                          |
+| `docs/design.md`          | Critérios de acessibilidade e de interface                         |
+| `docs/quality.md`         | Comandos de checagem, testes e revisão                             |
+| `docs/setup.md`           | Ferramentas de IA do projeto e evidências                          |
+| `docs/instalacao.md`      | Preparar o computador (Windows e Linux)                            |
+
 ## Onde está cada coisa na documentação
 
 | Assunto                                   | Arquivo em `projeto/`                                               |
