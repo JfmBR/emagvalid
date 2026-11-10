@@ -118,14 +118,27 @@ def verificar(raiz, tabela):
     ).stdout.decode().split("\0")
     achados = []
     for nome in filter(None, arquivos):
-        try:
-            linhas = (raiz / nome).read_text(encoding="utf-8").splitlines()
-        except (UnicodeDecodeError, FileNotFoundError, IsADirectoryError):
-            continue  # binário (.docx, .png) ou apagado do disco
-        for n, linha in enumerate(linhas, 1):
-            achados += [f"{nome}:{n}: {t}" for t in termos if t in linha]
-            achados += [f"{nome}:{n}: {p}" for p, rx in padroes if rx.search(linha)]
+        for local, linha in linhas_de(raiz / nome, nome):
+            achados += [f"{local}: {t}" for t in termos if t in linha]
+            achados += [f"{local}: {p}" for p, rx in padroes if rx.search(linha)]
     return achados
+
+
+def linhas_de(caminho, nome):
+    """Devolve (local, texto) para cada linha de um arquivo de texto, ou o texto de
+    cada XML de um .docx/.xlsx/.pptx (sem as tags, que partem nomes em pedaços)."""
+    if caminho.suffix.lower() in (".docx", ".xlsx", ".pptx"):
+        try:
+            with zipfile.ZipFile(caminho) as z:
+                return [(f"{nome}:{m}", re.sub(r"<[^>]+>", "", z.read(m).decode("utf-8", "replace")))
+                        for m in z.namelist() if m.endswith(".xml")]
+        except (zipfile.BadZipFile, FileNotFoundError):
+            return []
+    try:
+        linhas = caminho.read_text(encoding="utf-8").splitlines()
+    except (UnicodeDecodeError, FileNotFoundError, IsADirectoryError):
+        return []  # binário (.png, .jpg) ou apagado do disco
+    return [(f"{nome}:{n}", linha) for n, linha in enumerate(linhas, 1)]
 
 
 def localizar(origem):

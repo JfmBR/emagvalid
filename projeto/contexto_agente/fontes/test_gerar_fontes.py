@@ -3,11 +3,13 @@
 Uso (a partir da raiz do repositório):
     python3 -I projeto/contexto_agente/fontes/test_gerar_fontes.py -v
 """
+import io
 import os
 import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -59,6 +61,15 @@ class TestVerificar(unittest.TestCase):
         tabela = {**TABELA, "padroes_proibidos": [r"\bBeltrana\b"]}
         repo = repo_git({"c.md": "perfil de Beltrana (A1)\nBeltranagem\n".encode()})
         self.assertEqual(g.verificar(repo, tabela), ["c.md:1: \\bBeltrana\\b"])
+
+    def test_verificar_le_texto_de_docx(self):
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w") as z:
+            # nome quebrado em dois "runs", como o Word costuma gravar
+            z.writestr("word/document.xml", "<w:document><w:p><w:r><w:t>Fulano </w:t></w:r>"
+                       "<w:r><w:t>de Tal</w:t></w:r></w:p></w:document>")
+        repo = repo_git({"d.docx": buffer.getvalue()})
+        self.assertEqual(g.verificar(repo, TABELA), ["d.docx:word/document.xml: Fulano de Tal"])
 
     def test_verificar_ignora_binario(self):
         repo = repo_git({"b.png": bytes(range(256))})
