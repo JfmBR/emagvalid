@@ -106,13 +106,12 @@ def sanitizar(texto_original, substituicoes):
     texto_novo = texto_original
     for de in sorted(substituicoes, key=len, reverse=True):
         texto_novo = texto_novo.replace(de, substituicoes[de])
-    # uma troca por "" pode deixar espaço duplo ou espaço antes de pontuação
-    texto_novo = re.sub(r"(?<=\S) {2,}(?=\S)", " ", texto_novo)
-    return re.sub(r" +([.,;])", r"\1", texto_novo)
+    return texto_novo
 
 
 def verificar(raiz, tabela):
     termos = list(tabela["substituicoes"]) + list(tabela["links_proibidos"])
+    padroes = [(p, re.compile(p)) for p in tabela.get("padroes_proibidos", [])]
     arquivos = subprocess.run(
         ["git", "-C", str(raiz), "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
         check=True, capture_output=True,
@@ -125,6 +124,7 @@ def verificar(raiz, tabela):
             continue  # binário (.docx, .png) ou apagado do disco
         for n, linha in enumerate(linhas, 1):
             achados += [f"{nome}:{n}: {t}" for t in termos if t in linha]
+            achados += [f"{nome}:{n}: {p}" for p, rx in padroes if rx.search(linha)]
     return achados
 
 

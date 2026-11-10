@@ -46,11 +46,19 @@ class TestSanitizar(unittest.TestCase):
             "Mentor Ciclano; Ctx2, 25 anos",
         )
 
+    def test_sanitizar_preserva_celulas_vazias(self):
+        self.assertEqual(g.sanitizar("- a |  | b", {"x": "y"}), "- a |  | b")
+
 
 class TestVerificar(unittest.TestCase):
     def test_verificar_acha_nome_e_link(self):
         repo = repo_git({"a.md": f"Fulano de Tal\nver https://{LINK}/x\n".encode()})
         self.assertEqual(len(g.verificar(repo, TABELA)), 2)
+
+    def test_verificar_acha_padrao_fora_da_tabela(self):
+        tabela = {**TABELA, "padroes_proibidos": [r"\bBeltrana\b"]}
+        repo = repo_git({"c.md": "perfil de Beltrana (A1)\nBeltranagem\n".encode()})
+        self.assertEqual(g.verificar(repo, tabela), ["c.md:1: \\bBeltrana\\b"])
 
     def test_verificar_ignora_binario(self):
         repo = repo_git({"b.png": bytes(range(256))})
