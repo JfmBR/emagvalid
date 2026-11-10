@@ -24,9 +24,9 @@ Versões das fontes: TAP v1.0 (08/10/2026) · Persona v1.0 e Jornada do Usuário
 | `fontes/projeto/` | `TAP.md`, `Persona.md` (v1.0), `Persona_v0.1.md`, `Jornada.md` (v1.0), `Plano_de_Projeto.md` (v1, oficial desde 05/11/2026), `Entrevistas_PcD.md`, `Artefatos_e_Cronograma.md` (literal) | Texto exato, conferência |
 | `docs/rascunhos/` | Rascunhos em Markdown: Persona v1.0, Jornada v1.0, Plano de Projeto v1.0, Requisitos do Plano v1.0, Cobertura do eMAG 3.1 pelo axe-core (lista fechada da IA e cálculo da nota, 05/11), Público-alvo e roteiro de entrevistas, Protótipo de 30/10 (telas e roteiro do teste). Também: rascunho da Matriz RACI do grupo (.xlsx; modelo didático em `docs/Modelos/`) | Continuar a redação; o .docx é a versão oficial |
 | `docs/prototipo/` | Protótipo clicável das 8 telas em HTML (publicado como link privado), espelhado num arquivo do Figma | Protótipo, teste de usabilidade, UX/UI |
-| `CLAUDE.md` (raiz) | Regras de trabalho do grupo: commit antes de cada alteração; PRs; editar .docx só a pedido. As preferências do João ficam em `CLAUDE.local.md`, fora do git | Sempre, antes de alterar arquivos |
+| `../CLAUDE.md` (raiz do repositório) | Regras de trabalho do grupo: commit antes de cada alteração; PRs; editar .docx só a pedido. As preferências do João ficam em `CLAUDE.local.md`, fora do git | Sempre, antes de alterar arquivos |
 | `fontes/modelos/` | `TAP.md`, `Plano_de_Projeto.md`, `Persona.md`, `Jornada.md` (literal) | Redigir um documento no modelo oficial |
-| `../emagvalid/` (outro repositório, https://github.com/JfmBR/emagvalid) | Código do MVP, criado em 03/11/2026. As duas pastas ficam lado a lado em `projeto_integrador/`; o código lê requisitos, telas e protótipo daqui por `../emagvalid_docs/`, sem copiar | Desenvolvimento |
+| `../../apps/` (raiz deste repositório, https://github.com/JfmBR/emagvalid) | Código do MVP, criado em 03/11/2026. Desde 10/11/2026, código e documentação ficam num só repositório: o código na raiz, a documentação em `projeto/`. O código lê requisitos, telas e protótipo daqui, sem copiar | Desenvolvimento |
 
 ## Tabela de cobertura (documento de origem → destino)
 | Origem | Seção | Destino |

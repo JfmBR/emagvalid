@@ -6,16 +6,18 @@ Fontes: TAP (equipe, partes interessadas, acordo de equipe) e Artefatos e Cronog
 | Nome | Função no projeto | Responsabilidades |
 |---|---|---|
 | Luiz Felipe | Líder e gerente (desde 05/11/2026; no TAP: analista de requisitos) | Gerenciar tarefas |
-| Leandro Cobra | Documentação | Organizar e atualizar os documentos do projeto |
+| Leandro Cobra | Documentação (fora da equipe atual: informado pelo João em 10/11/2026) | Organizar e atualizar os documentos do projeto |
 | **João Francisco** | **UX/UI e desenvolvimento** (desde 03/11/2026) | Projetar interfaces e protótipo de telas; desenvolver e publicar a solução |
 | Luis Otavio | Testes | Testar o fluxo e registrar falhas |
-| Matheus Francisconi | Analista de requisitos (desde 05/11/2026; no TAP: líder, gerente e programador) | Levantar e organizar os requisitos; revisar as pull requests do código; Plano de Projeto v1.1 |
+| Matheus Francisconi | Analista de requisitos (desde 05/11/2026; no TAP: líder, gerente e programador). Fora da equipe atual: informado pelo João em 10/11/2026 | Levantar e organizar os requisitos; revisar as pull requests do código; Plano de Projeto v1.1 |
 
 Responsável por marco (do TAP): início do projeto → Matheus Francisconi · levantamento de requisitos → Luiz Felipe · protótipo de telas iniciais → João Francisco · desenvolvimento da solução → Matheus Francisconi · testes e ajustes → Luis Otavio · apresentação final → toda a equipe.
 
 **Mudança de 03/11/2026 (ver `07`, seção D):** o João Francisco passa a ser responsável por construir todo o MVP (telas, API, análise das páginas e publicação). Confirmado com o grupo e o mentor em 05/11/2026.
 
 **Mudança de 05/11/2026 (ver `07`, seção D):** Luiz Felipe e Matheus Francisconi trocam de papel. Luiz Felipe passa a líder e gerente; Matheus passa a analista de requisitos e continua revisando as PRs e responsável pelo Plano v1.1. A tabela acima mostra os papéis atuais; os "responsáveis por marco" reproduzem o TAP, que não será alterado.
+
+**Mudança de 10/11/2026 (ver `07`, seção D):** a equipe atual é João Francisco, Luiz Felipe e Luis Otavio. Leandro Cobra e Matheus Francisconi não fazem mais parte da equipe (informado pelo João; data e motivo da saída não constam nos arquivos). Sem revisor de PR, o João faz o merge como administrador. O responsável pelo Plano v1.1 (antes Matheus) não consta nos arquivos. A tabela acima mantém os papéis registrados até aqui.
 
 Usuário principal deste contexto: **João Francisco (UX/UI)** (informação da sessão de criação, não dos documentos-fonte).
 

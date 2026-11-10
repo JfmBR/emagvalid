@@ -9,7 +9,7 @@ const textoEstado: Record<EstadoApi, string> = {
 }
 
 // Tela provisória: só confirma que o front-end fala com a API.
-// As telas do MVP seguem o protótipo em ../emagvalid-docs/docs/prototipo/.
+// As telas do MVP seguem o protótipo em projeto/docs/prototipo/.
 export default function App() {
   const [estado, setEstado] = useState<EstadoApi>('verificando')
 

@@ -1,20 +1,23 @@
-# emagvalid · Grupo 3 · código do MVP
+# AcessaWeb · Grupo 3
 
 Auditoria automatizada de acessibilidade pelo eMAG 3.1 (Trilha A — produto funcional).
 
-Este repositório guarda **só o código**. A documentação do projeto (TAP, Plano de Projeto, Persona, Jornada, requisitos e protótipo) fica no repositório [`emagvalid-docs`](https://github.com/JfmBR/emagvalid-docs), clonado numa pasta ao lado desta com o nome `emagvalid_docs` (com sublinhado: `git clone git@github.com:JfmBR/emagvalid-docs.git emagvalid_docs`):
+Este repositório guarda o código do MVP e a documentação do projeto (TAP, Plano de Projeto, Persona, Jornada, requisitos e protótipo). Até 10/11/2026 eram dois repositórios separados, `emagvalid` e `emagvalid-docs`:
 
 ```
-projeto_integrador/
-├── emagvalid_docs/   documentação
-└── emagvalid/        código (este repositório)
+projeto_integrador/      (este repositório)
+├── apps/                código: front-end e API
+├── docs/                guias do código (instalação, passo a passo do MVP)
+└── projeto/             documentação do projeto
 ```
+
+Os arquivos com dados de entrevistados ficam fora do repositório, na pasta privada `acessaweb-privado/`, ao lado desta (ver [`docs/instalacao.md`](docs/instalacao.md)).
 
 ## Situação em 03/11/2026
 
 - Estrutura pronta: front-end e API conversando, banco modelado (proposta), testes e CI. Ainda não há nenhuma tela ou regra do MVP.
 - A construção começa em 16/11/2026 (sprint 1: telas principais e estrutura). Arquitetura e tecnologias entram no Plano de Projeto v1.1, em 13/11/2026.
-- Decidido em 05/11/2026 (Plano de Projeto v1): IA com o Google Gemini, nota com pesos por prioridade nas 29 recomendações do eMAG cobertas pelo axe-core, hospedagem no Render com o banco no Neon (planos gratuitos) e regras de branches (`main` protegida, PR com CI verde e revisão do Matheus, squash).
+- Decidido em 05/11/2026 (Plano de Projeto v1): IA com o Google Gemini, nota com pesos por prioridade nas 29 recomendações do eMAG cobertas pelo axe-core, hospedagem no Render com o banco no Neon (planos gratuitos) e regras de branches (`main` protegida, PR com CI verde, squash; desde 10/11/2026, merge pelo João como administrador).
 - Passo a passo da construção, semana a semana: [`docs/passo-a-passo-mvp.md`](docs/passo-a-passo-mvp.md).
 
 ## Tecnologias
@@ -76,23 +79,24 @@ Antes de abrir uma PR, rode `npm run lint`, `npm run format` e `npm test`. O CI 
 
 ## Pastas
 
-| Caminho                            | Conteúdo                                                   |
-| ---------------------------------- | ---------------------------------------------------------- |
-| `apps/web/`                        | Front-end (telas)                                          |
-| `apps/api/src/`                    | API: `app.ts` monta as rotas, `rotas/` tem uma por assunto |
-| `apps/api/prisma/`                 | Esquema do banco e migrações                               |
-| `docker-compose.yml`               | PostgreSQL local                                           |
-| `.env.example`                     | Modelo das variáveis de ambiente (copie para `.env`)       |
-| `.github/workflows/ci.yml`         | CI                                                         |
-| `docs/instalacao.md`               | Guia de instalação das ferramentas (Windows e Linux)       |
-| `docs/passo-a-passo-mvp.md`        | Passo a passo da construção do MVP                         |
-| `.github/pull_request_template.md` | Checklist que aparece em toda pull request nova            |
-| `CLAUDE.md`                        | Regras de trabalho do Claude Code neste repositório        |
-| `.claude/agents/`                  | Agente `emagvalid-dev` (apoio ao desenvolvimento)          |
+| Caminho                            | Conteúdo                                                                                        |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `apps/web/`                        | Front-end (telas)                                                                               |
+| `apps/api/src/`                    | API: `app.ts` monta as rotas, `rotas/` tem uma por assunto                                      |
+| `apps/api/prisma/`                 | Esquema do banco e migrações                                                                    |
+| `docker-compose.yml`               | PostgreSQL local                                                                                |
+| `.env.example`                     | Modelo das variáveis de ambiente (copie para `.env`)                                            |
+| `.github/workflows/ci.yml`         | CI                                                                                              |
+| `docs/instalacao.md`               | Guia de instalação das ferramentas (Windows e Linux)                                            |
+| `docs/passo-a-passo-mvp.md`        | Passo a passo da construção do MVP                                                              |
+| `.github/pull_request_template.md` | Checklist que aparece em toda pull request nova                                                 |
+| `CLAUDE.md`                        | Regras de trabalho do Claude Code neste repositório                                             |
+| `.claude/agents/`                  | Agentes `emagvalid-dev` (código), `emagvalid` (documentos) e `emagvalid-checagem` (conferência) |
+| `projeto/`                         | Documentação do projeto (ver a tabela abaixo)                                                   |
 
 ## Onde está cada coisa na documentação
 
-| Assunto                                   | Arquivo em `../emagvalid_docs/`                                     |
+| Assunto                                   | Arquivo em `projeto/`                                               |
 | ----------------------------------------- | ------------------------------------------------------------------- |
 | Visão geral do contexto (comece por aqui) | `contexto_agente/00-indice.md`                                      |
 | Escopo, objetivos e tecnologias previstas | `contexto_agente/01-projeto-emagvalid.md`                           |
@@ -103,4 +107,4 @@ Antes de abrir uma PR, rode `npm run lint`, `npm run format` e `npm test`. O CI 
 | Telas e o que cada uma mostra             | `docs/rascunhos/Prototipo_30-10_telas_e_teste.md` (Tela 1 a Tela 8) |
 | Protótipo clicável                        | `docs/prototipo/prototipo_emagvalid.html`                           |
 
-Os requisitos e as telas não são copiados para cá, para não existirem duas versões.
+Os requisitos e as telas não são copiados para o código, para não existirem duas versões.

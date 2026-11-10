@@ -1,25 +1,31 @@
-# AcessaWeb · Grupo 3 · Projeto Integrador Conecta Jovem
+# AcessaWeb · Grupo 3 · Projeto Integrador Conecta Jovem — documentação
 
-Auditoria automatizada de acessibilidade pelo eMAG 3.1 (Trilha A — produto funcional).
+Auditoria automatizada de acessibilidade pelo eMAG 3.1 (Trilha A — produto funcional). Esta pasta guarda a documentação do projeto; o código do MVP está na raiz deste mesmo repositório (`apps/`). Até 10/11/2026, documentação e código eram dois repositórios (`emagvalid-docs` e `emagvalid`).
 
 ## Pastas
+
 | Pasta | Conteúdo |
 |---|---|
-| `docs/contexto_projeto/` | Documentos oficiais em .docx (TAP, Persona, Jornada, entrevistas, Artefatos e Cronograma) |
-| `docs/Modelos/` | Modelos do programa (TAP, Plano de Projeto, Persona, Jornada) e planilha didática da Matriz RACI e Plano de Comunicação |
-| `docs/rascunhos/` | Rascunhos em Markdown para colar nos .docx, protótipo do Plano de Projeto v1.0 (.docx) e rascunho da Matriz RACI do grupo (.xlsx) |
+| `docs/contexto_projeto/` | Documentos oficiais em .docx (TAP, Plano de Projeto v1, Persona v0.1, Artefatos e Cronograma) |
+| `docs/Modelos/` | Modelos do programa (TAP, Plano de Projeto, Persona, Jornada) |
+| `docs/rascunhos/` | Rascunhos em Markdown para colar nos .docx |
 | `docs/prototipo/` | Protótipo clicável das 8 telas (HTML), base do teste de 30/10/2026 |
-| `docs/imagem/` | Retrato da persona e esquemas da jornada |
+| `docs/imagem/` | Esquemas da jornada |
 | `contexto_agente/` | Contexto dos agentes do Claude Code; comece por `00-indice.md` |
-| `.claude/agents/` | Agentes `emagvalid` e `emagvalid-checagem` |
-| `CLAUDE.md` | Regras de trabalho do Claude Code (commits, PRs e edição dos .docx); preferências pessoais ficam em `CLAUDE.local.md`, fora do git |
-| `.github/pull_request_template.md` | Checklist que aparece em toda pull request nova |
+
+Agentes (`emagvalid` e `emagvalid-checagem`), regras de trabalho (`CLAUDE.md`) e modelo de PR ficam na raiz do repositório.
+
+## Pasta privada
+
+O repositório é público. Ficam fora dele, na pasta `acessaweb-privado/` ao lado de `projeto_integrador/` (cópia da pasta do grupo no Drive): os .docx da Persona v1.0, da Jornada v1.0, das entrevistas e do feedback do mentor; as planilhas RACI; o retrato da persona; a fonte `Entrevistas_PcD.md`; e `nomes.json`, que troca o nome de cada entrevistado pelo código (A1–A3, Ctx1–Ctx4). Como montar a pasta: `docs/instalacao.md`, na raiz.
 
 ## Depois de alterar um .docx
-```bash
-python3 -I contexto_agente/fontes/_gerar_fontes.py
-```
-Regenera `contexto_agente/fontes/`. Em seguida, peça ao agente `emagvalid` para revisar `contexto_agente/01`–`07`.
 
-## Código do MVP
-O código fica em outro repositório, [`emagvalid`](https://github.com/JfmBR/emagvalid) (público desde 05/11/2026), clonado numa pasta ao lado desta: as duas ficam em `projeto_integrador/` (`projeto_integrador/emagvalid` para o código e `projeto_integrador/emagvalid_docs` para os documentos). Ele consulta os requisitos, as telas e o protótipo daqui por `../emagvalid_docs/`; nada disso é copiado para lá.
+Na raiz do repositório:
+
+```bash
+python3 -I projeto/contexto_agente/fontes/_gerar_fontes.py
+python3 -I projeto/contexto_agente/fontes/_gerar_fontes.py --verificar
+```
+
+O primeiro regenera `contexto_agente/fontes/` (sem nomes de entrevistados); o segundo confere que nada privado ficou no que é público e precisa sair com 0. Em seguida, peça ao agente `emagvalid` para revisar `contexto_agente/01`–`07`.
