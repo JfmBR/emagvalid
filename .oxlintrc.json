@@ -11,7 +11,57 @@
       {
         "allowConstantExport": true
       }
+    ],
+    "max-lines": [
+      "error",
+      {
+        "max": 350
+      }
     ]
   },
-  "ignorePatterns": ["**/dist/**", "apps/api/generated/**", "projeto/**", ".claude/skills/**"]
+  "ignorePatterns": ["**/dist/**", "apps/api/generated/**", "projeto/**", ".claude/skills/**"],
+  "overrides": [
+    {
+      "files": ["**/*.test.*", "**/e2e/**", "scripts/**"],
+      "rules": {
+        "max-lines": "off"
+      }
+    },
+    {
+      "files": ["apps/api/src/**"],
+      "rules": {
+        "no-console": [
+          "error",
+          {
+            "allow": ["error", "warn"]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/web/src/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@prisma/**",
+                  "**/generated/prisma/**",
+                  "**/apps/api/**",
+                  "../../api/**",
+                  "../../../api/**",
+                  "../../../../api/**",
+                  "@emagvalid/api",
+                  "@emagvalid/api/**"
+                ],
+                "message": "O front-end fala com a API só por HTTP (/api/...); nunca importa o banco nem o código da API."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

@@ -12,16 +12,21 @@
     "dev:web": "npm run dev -w apps/web",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
+    "test:e2e": "npm run test:e2e -w apps/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "oxlint",
+    "lint:autoteste": "node scripts/verificar-regras-lint.mjs",
+    "lint:tipos": "oxlint --type-aware -A all -D typescript/no-floating-promises -D typescript/no-misused-promises apps",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "verificar": "npm run lint && npm run lint:autoteste && npm run format:check && npm run typecheck && npm run lint:tipos && npm test && npm run build",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down"
   },
   "devDependencies": {
     "concurrently": "^10.0.6",
     "oxlint": "^1.91.0",
+    "oxlint-tsgolint": "^7.0.2006",
     "prettier": "^3.9.10"
   },
   "allowScripts": {

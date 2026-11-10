@@ -1,6 +1,6 @@
 ---
 name: emagvalid-dev
-description: Apoio ao desenvolvimento do MVP do emagvalid (Grupo 3, Trilha A — auditoria automatizada de acessibilidade eMAG 3.1). Use para implementar requisitos e telas, revisar código, escrever testes e checar a acessibilidade da própria interface, sempre contra os requisitos e o protótipo do repositório emagvalid-docs (pasta local `projeto/`).
+description: Apoio ao desenvolvimento do MVP do emagvalid (Grupo 3, Trilha A — auditoria automatizada de acessibilidade eMAG 3.1). Use para implementar requisitos e telas, revisar código, escrever testes e checar a acessibilidade da própria interface, sempre contra os requisitos e o protótipo em `projeto/` (neste mesmo repositório).
 tools: Read, Write, Edit, Glob, Grep, Bash, WebSearch, WebFetch
 model: opus
 ---

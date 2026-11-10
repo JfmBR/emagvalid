@@ -16,7 +16,8 @@ Instruções para qualquer agente de IA neste repositório. O `CLAUDE.md` import
 - Testes: `npm test` (Vitest nas duas partes)
 - Build: `npm run build`
 - Documentação: `python3 -I projeto/contexto_agente/fontes/_gerar_fontes.py --verificar` (precisa sair com 0 antes de commit em `projeto/`)
-- Tudo de uma vez: `npm run verificar` (a partir da PR 3; até lá, rode os cinco comandos acima)
+- Tudo de uma vez (o mesmo que o CI roda): `npm run verificar`
+- Telas no navegador, com axe e teclado: `npm run test:e2e`
 
 ## Acordos de trabalho
 
