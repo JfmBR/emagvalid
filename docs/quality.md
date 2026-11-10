@@ -27,6 +27,14 @@ O CI (`.github/workflows/ci.yml`, job `verificar`) roda lint, formatação, tipo
 - **Leitor de tela (manual):** Orca + Firefox e NVDA; roteiro em `docs/design.md`.
 - Correção de bug começa por um teste que reproduz o erro.
 
+## Navegador para o agente
+
+Só em `localhost`, com `npm run dev` rodando; nunca em produção nem com sessões pessoais.
+
+- **agent-browser** (CLI global): abrir uma tela, ler a árvore de acessibilidade (`agent-browser snapshot`), navegar por teclado (`agent-browser press Tab`) e preencher formulários. Use para conferir uma tela antes de entregar.
+- **Chrome DevTools MCP** (`.mcp.json`): console, requisições de rede e desempenho (por exemplo, o tempo da análise, RNF06). Use para investigar erro de tela ou lentidão.
+- Nenhum dos dois substitui o teste com leitor de tela (`docs/design.md`).
+
 ## Revisão depois de implementar ou corrigir
 
 - Rode os comandos acima e leia a saída; "deve passar" não é evidência.
