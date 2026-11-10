@@ -3,5 +3,7 @@ dist/
 apps/api/generated/
 package-lock.json
 
-# Documentação do projeto (Markdown à mão e fontes geradas; fora do Prettier)
+# Documentação do projeto e skills de terceiros (fora do Prettier)
 projeto/
+.claude/skills/
+skills-lock.json

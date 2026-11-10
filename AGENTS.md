@@ -62,7 +62,7 @@ Instruções para qualquer agente de IA neste repositório. O `CLAUDE.md` import
 - **Context7:** documentação atual de bibliotecas (Prisma 7, Express 5, Vite, Playwright…). Uma consulta por conceito; nunca envie segredos ou código privado.
 - **RTK:** já age por hook global; não prefixe comandos à mão. `rtk proxy <comando>` mostra a saída original.
 - **Graphify:** use o grafo (`graphify-out/`, local) para perguntas de estrutura; regenere com o comando de `docs/setup.md`. Grafo velho é evidência fraca.
-- **Skills do projeto** (`.agents/skills/`): `web-design-guidelines` antes de entregar tela; `vercel-react-best-practices` e `vercel-composition-patterns` ao escrever React; `supabase-postgres-best-practices` em esquema, SQL e migração; `differential-review` em mudança sensível de segurança; `writing-guidelines` ao revisar documentação; `find-skills` só quando faltar uma capacidade concreta.
+- **Skills do projeto** (`.claude/skills/`, travadas em `skills-lock.json`): `web-design-guidelines` antes de entregar tela; `vercel-react-best-practices` e `vercel-composition-patterns` ao escrever React; `supabase-postgres-best-practices` em esquema, SQL e migração; `differential-review` em mudança sensível de segurança; `writing-guidelines` ao revisar documentação; `find-skills` só quando faltar uma capacidade concreta.
 - **Navegador:** `agent-browser` para abrir e usar as telas e ler a árvore de acessibilidade; Chrome DevTools MCP para console, rede e desempenho. Só em `localhost`, nunca em produção nem com sessões pessoais. Quando usar cada um: `docs/quality.md`.
 - Revisão de segurança: `docs/prompts/revisao-de-seguranca.md`, só leitura, relatório privado.
 

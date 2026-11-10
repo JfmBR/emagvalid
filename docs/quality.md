@@ -5,7 +5,7 @@
 | Comando                                                                  | O que confere                                                                      |
 | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
 | `npm run lint`                                                           | oxlint: erros de correção, regras de React e de acessibilidade no JSX (`jsx-a11y`) |
-| `npm run format:check`                                                   | Prettier (ignora `projeto/` e `.agents/`)                                          |
+| `npm run format:check`                                                   | Prettier (ignora `projeto/` e `.claude/skills/`)                                   |
 | `npm run typecheck`                                                      | TypeScript nas duas partes (gera o cliente Prisma antes)                           |
 | `npm test`                                                               | Vitest: `apps/api` e `apps/web`                                                    |
 | `npm run build`                                                          | Build de produção das duas partes                                                  |
