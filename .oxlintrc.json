@@ -46,7 +46,16 @@
           {
             "patterns": [
               {
-                "group": ["@prisma/*", "**/generated/prisma/**", "**/apps/api/**"],
+                "group": [
+                  "@prisma/**",
+                  "**/generated/prisma/**",
+                  "**/apps/api/**",
+                  "../../api/**",
+                  "../../../api/**",
+                  "../../../../api/**",
+                  "@emagvalid/api",
+                  "@emagvalid/api/**"
+                ],
                 "message": "O front-end fala com a API só por HTTP (/api/...); nunca importa o banco nem o código da API."
               }
             ]

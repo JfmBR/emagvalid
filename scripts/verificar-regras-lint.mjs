@@ -13,6 +13,8 @@ const pasta = mkdtempSync(join(tmpdir(), 'regras-lint-'))
 const arquivos = {
   'apps/web/src/acessa-banco.ts':
     "import { PrismaClient } from '@prisma/client'\nexport const banco = PrismaClient\n",
+  'apps/web/src/telas/importa-api.ts':
+    "import { criarApp } from '../../../api/src/app'\nexport const app = criarApp\n",
   'apps/api/src/loga.ts': "console.log('depuração esquecida')\n",
   'apps/api/src/longo.ts':
     Array.from({ length: 351 }, (_, n) => `export const a${n} = ${n}`).join('\n') + '\n',
@@ -33,8 +35,19 @@ try {
   } catch (erro) {
     saida = String(erro.stdout) // oxlint sai com 1 quando acha erro, que é o esperado aqui
   }
-  for (const regra of ['max-lines', 'no-console', 'no-restricted-imports']) {
-    assert.ok(saida.includes(regra), `a regra ${regra} não acusou o arquivo de teste:\n${saida}`)
+  // cada arquivo de prova precisa ser acusado pela sua regra
+  const esperado = {
+    'acessa-banco.ts': 'no-restricted-imports',
+    'importa-api.ts': 'no-restricted-imports',
+    'loga.ts': 'no-console',
+    'longo.ts': 'max-lines',
+  }
+  const linhas = saida.split('\n')
+  for (const [arquivo, regra] of Object.entries(esperado)) {
+    assert.ok(
+      linhas.some((linha) => linha.includes(arquivo) && linha.includes(regra)),
+      `${regra} não acusou ${arquivo}:\n${saida}`,
+    )
   }
   console.log('ok: max-lines, no-console e no-restricted-imports acusam o que devem')
 } finally {
