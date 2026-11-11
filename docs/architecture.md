@@ -26,6 +26,7 @@ Estado em 10/11/2026: estrutura pronta, ainda sem telas nem regras do MVP. A arq
 | `apps/api/src/db.ts`            | Única conexão Prisma da API                                                          |
 | `apps/api/prisma/schema.prisma` | Esquema (proposta inicial): `Usuario`, `Avaliacao`, `Falha`, `StatusAvaliacao`       |
 | `apps/api/generated/`           | Cliente Prisma gerado (fora do git)                                                  |
+| `design-system/`                | Sistema de design: tokens, CSS dos componentes, marca e ícones (`docs/design.md`)    |
 | `projeto/`                      | Documentação do projeto (requisitos, telas, protótipo, contexto dos agentes)         |
 
 ## Fronteiras e fluxo

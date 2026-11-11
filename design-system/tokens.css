@@ -1,0 +1,86 @@
+/* AcessaWeb — gerado de tokens.json por scripts/gerar-tokens-css.mjs. Não edite à mão. */
+:root {
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --ink: #16202e;
+  --muted: #4a5568;
+  --line: #d5dbe4;
+  --line-strong: #7d8899;
+  --accent: #2d46b9;
+  --accent-ink: #ffffff;
+  --accent-soft: #e7ebfa;
+  --focus: var(--accent);
+  --alta: #b42318;
+  --alta-bg: #fdecea;
+  --media: #7a4f00;
+  --media-bg: #fff2cc;
+  --ok: #1e6b3a;
+  --ok-bg: #e2f3e8;
+  --code-bg: #eef1f6;
+  --brand-navy: #0f2f55;
+  --brand-mint: #8fdccb;
+  --sun-yellow: #fec843;
+  --sun-orange: #f7931e;
+  --sun-red: #f0502a;
+  --font-display: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-72: 72px;
+  --radius-sheet: 4px;
+  --radius-control: 8px;
+  --radius-panel: 10px;
+  --radius-pill: 999px;
+  --shadow-sheet: 0 1px 2px rgba(0,0,0,0.06), 0 8px 24px rgba(22,32,46,0.08);
+  --target-min: 44px;
+  --input-min: 48px;
+  --focus-ring: 3px;
+  --content-max: 1120px;
+  --narrow-max: 560px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='claro']) {
+    --bg: #0f141b;
+    --surface: #161d27;
+    --ink: #e6eaf0;
+    --muted: #a9b3c1;
+    --line: #2c3645;
+    --line-strong: #667286;
+    --accent: #93a5ff;
+    --accent-ink: #0f141b;
+    --accent-soft: #1e2748;
+    --alta: #ff9c8f;
+    --alta-bg: #3a1714;
+    --media: #f2c14e;
+    --media-bg: #33280c;
+    --ok: #7fd39b;
+    --ok-bg: #12301e;
+    --code-bg: #1c2532;
+  }
+}
+
+:root[data-theme='escuro'] {
+  --bg: #0f141b;
+  --surface: #161d27;
+  --ink: #e6eaf0;
+  --muted: #a9b3c1;
+  --line: #2c3645;
+  --line-strong: #667286;
+  --accent: #93a5ff;
+  --accent-ink: #0f141b;
+  --accent-soft: #1e2748;
+  --alta: #ff9c8f;
+  --alta-bg: #3a1714;
+  --media: #f2c14e;
+  --media-bg: #33280c;
+  --ok: #7fd39b;
+  --ok-bg: #12301e;
+  --code-bg: #1c2532;
+}

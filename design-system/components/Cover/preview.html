@@ -1,0 +1,137 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>AcessaWeb</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--font-body);
+        overflow: hidden;
+      }
+      .cover {
+        position: relative;
+        width: 960px;
+        height: 288px;
+        overflow: hidden;
+      }
+      .art {
+        position: absolute;
+        top: 0;
+        left: 480px;
+        width: 480px;
+        height: 288px;
+      }
+      .art svg {
+        display: block;
+      }
+      .deep {
+        fill: var(--brand-navy);
+      }
+      .mint {
+        fill: var(--accent);
+      }
+      .blue {
+        fill: var(--accent-soft);
+      }
+      .orange {
+        fill: var(--sun-orange);
+      }
+      .sun {
+        fill: var(--sun-yellow);
+      }
+      .org {
+        fill: var(--sun-orange);
+      }
+      .blk {
+        rx: var(--radius-panel);
+      }
+      .words {
+        position: absolute;
+        left: var(--space-32);
+        bottom: var(--space-32);
+        max-width: 440px;
+      }
+      .name {
+        margin: 0;
+        font-family: var(--font-display);
+        font-size: 72px;
+        line-height: 0.92;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        color: var(--ink);
+      }
+      .tag {
+        margin: var(--space-16) 0 0 2px;
+        font-size: 14px;
+        line-height: 20px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cover">
+      <div class="art" aria-hidden="true">
+        <svg viewBox="0 0 480 288" width="480" height="288">
+          <!--
+  blocks      brand-navy 256x320 slab bled off top and bottom (the pitch's ground, carries the mark) · accent 208x152 bled off the right (the app's action colour) · accent-soft 96x72 · sun-orange 64x72 — about 40% of 960x288
+  arrangement one tall navy slab carrying the motif, accent block and two small satellites stacked right of it, gutters space-16
+  pattern     the brand's own ring: 36 tapered rays, sun-yellow on the upper half, sun-orange below — "a literal motif" row, because the pitch mark IS rays on navy
+  scales      gutters space-16; small blocks 96 / 64 wide, 72 tall; corners radius-panel; ring radii 68 / 112 inside the 256 slab
+-->
+          <rect class="deep blk" x="16" y="-16" width="256" height="320" rx="10" />
+          <rect class="mint blk" x="288" y="32" width="208" height="152" rx="10" />
+          <rect class="blue blk" x="288" y="200" width="96" height="72" rx="10" />
+          <rect class="orange blk" x="400" y="200" width="64" height="72" rx="10" />
+          <polygon class="sun" points="142.5,76.0 138.6,32.1 149.4,32.1 145.5,76.0" />
+          <polygon class="sun" points="154.4,76.8 158.1,32.9 168.7,34.8 157.3,77.3" />
+          <polygon class="sun" points="165.9,79.6 177.2,37.0 187.3,40.7 168.6,80.6" />
+          <polygon class="sun" points="176.7,84.4 195.3,44.4 204.6,49.8 179.3,85.9" />
+          <polygon class="sun" points="186.6,91.0 211.8,54.8 220.0,61.8 188.8,92.9" />
+          <polygon class="sun" points="195.1,99.2 226.2,68.0 233.2,76.2 197.0,101.4" />
+          <polygon class="sun" points="202.1,108.7 238.2,83.4 243.6,92.7 203.6,111.3" />
+          <polygon class="sun" points="207.4,119.4 247.3,100.7 251.0,110.8 208.4,122.1" />
+          <polygon class="sun" points="210.7,130.7 253.2,119.3 255.1,129.9 211.2,133.6" />
+          <polygon class="org" points="212.0,142.5 255.9,138.6 255.9,149.4 212.0,145.5" />
+          <polygon class="org" points="211.2,154.4 255.1,158.1 253.2,168.7 210.7,157.3" />
+          <polygon class="org" points="208.4,165.9 251.0,177.2 247.3,187.3 207.4,168.6" />
+          <polygon class="org" points="203.6,176.7 243.6,195.3 238.2,204.6 202.1,179.3" />
+          <polygon class="org" points="197.0,186.6 233.2,211.8 226.2,220.0 195.1,188.8" />
+          <polygon class="org" points="188.8,195.1 220.0,226.2 211.8,233.2 186.6,197.0" />
+          <polygon class="org" points="179.3,202.1 204.6,238.2 195.3,243.6 176.7,203.6" />
+          <polygon class="org" points="168.6,207.4 187.3,247.3 177.2,251.0 165.9,208.4" />
+          <polygon class="org" points="157.3,210.7 168.7,253.2 158.1,255.1 154.4,211.2" />
+          <polygon class="org" points="145.5,212.0 149.4,255.9 138.6,255.9 142.5,212.0" />
+          <polygon class="org" points="133.6,211.2 129.9,255.1 119.3,253.2 130.7,210.7" />
+          <polygon class="org" points="122.1,208.4 110.8,251.0 100.7,247.3 119.4,207.4" />
+          <polygon class="org" points="111.3,203.6 92.7,243.6 83.4,238.2 108.7,202.1" />
+          <polygon class="org" points="101.4,197.0 76.2,233.2 68.0,226.2 99.2,195.1" />
+          <polygon class="org" points="92.9,188.8 61.8,220.0 54.8,211.8 91.0,186.6" />
+          <polygon class="org" points="85.9,179.3 49.8,204.6 44.4,195.3 84.4,176.7" />
+          <polygon class="org" points="80.6,168.6 40.7,187.3 37.0,177.2 79.6,165.9" />
+          <polygon class="org" points="77.3,157.3 34.8,168.7 32.9,158.1 76.8,154.4" />
+          <polygon class="org" points="76.0,145.5 32.1,149.4 32.1,138.6 76.0,142.5" />
+          <polygon class="sun" points="76.8,133.6 32.9,129.9 34.8,119.3 77.3,130.7" />
+          <polygon class="sun" points="79.6,122.1 37.0,110.8 40.7,100.7 80.6,119.4" />
+          <polygon class="sun" points="84.4,111.3 44.4,92.7 49.8,83.4 85.9,108.7" />
+          <polygon class="sun" points="91.0,101.4 54.8,76.2 61.8,68.0 92.9,99.2" />
+          <polygon class="sun" points="99.2,92.9 68.0,61.8 76.2,54.8 101.4,91.0" />
+          <polygon class="sun" points="108.7,85.9 83.4,49.8 92.7,44.4 111.3,84.4" />
+          <polygon class="sun" points="119.4,80.6 100.7,40.7 110.8,37.0 122.1,79.6" />
+          <polygon class="sun" points="130.7,77.3 119.3,34.8 129.9,32.9 133.6,76.8" />
+        </svg>
+      </div>
+      <div class="words">
+        <h1 class="name">AcessaWeb</h1>
+        <p class="tag">Acessibilidade não é nota. É conseguir usar.</p>
+      </div>
+    </div>
+  </body>
+</html>

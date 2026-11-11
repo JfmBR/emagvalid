@@ -7,3 +7,6 @@ package-lock.json
 projeto/
 .claude/skills/
 skills-lock.json
+
+# Gerado por scripts/gerar-tokens-css.mjs
+design-system/tokens.css

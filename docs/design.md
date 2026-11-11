@@ -8,9 +8,12 @@ O AcessaWeb é uma ferramenta de acessibilidade: a própria interface precisa se
 - Linguagem simples, em pt-BR, com ajuda curta na própria tela (RF16) e mensagens de erro com o próximo passo (RF17).
 - A nota e as orientações da IA aparecem sempre como apoio à avaliação humana, nunca como certificação (RF09, RNF07).
 
-## Sistema existente
+## Sistema de design
 
-- Não há biblioteca de componentes: CSS próprio em `apps/web/src/index.css`, fonte e cores do protótipo.
+- Fonte única do visual: `design-system/` (tokens, componentes, marca e ícones). Comece pelo `design-system/README.md`.
+- Valores em `design-system/tokens.json`; depois de mudar, rode `node scripts/gerar-tokens-css.mjs` para atualizar o `tokens.css`.
+- Ao construir uma tela, use `design-system/tokens.css` e as classes de `design-system/components/bundle.css`. Não crie cor, fonte ou espaçamento fora dos tokens.
+- A tela provisória (`apps/web/src/index.css`) ainda usa a paleta antiga; troque pelos tokens ao portar as telas do protótipo.
 - A tela provisória já traz o link "Pular para o conteúdo", `main` com foco programático e um `<output>` que o leitor de tela anuncia quando o estado da API muda.
 
 ## Interação
