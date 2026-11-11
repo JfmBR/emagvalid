@@ -65,9 +65,10 @@ Detalhes, mapa do código e fronteiras: [`docs/architecture.md`](docs/architectu
 projeto_integrador/
 ├── apps/web/       front-end (telas)
 ├── apps/api/       API, banco (prisma/) e, em breve, a análise
+├── design-system/  sistema de design: tokens, CSS dos componentes, marca e ícones
 ├── docs/           guias do código: instalação, passo a passo, arquitetura, design, qualidade e setup
 ├── projeto/        documentação do projeto: contexto, requisitos, telas, protótipo, .docx oficiais
-└── scripts/        checagens auxiliares
+└── scripts/        checagens auxiliares e geração do tokens.css
 ```
 
 | Para saber…                              | Abra                                                                                  |
@@ -78,6 +79,7 @@ projeto_integrador/
 | Requisitos (RF e RNF, com prioridade)    | `projeto/docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md`                          |
 | Telas e o que cada uma mostra            | `projeto/docs/rascunhos/Prototipo_30-10_telas_e_teste.md` e `projeto/docs/prototipo/` |
 | Critérios de acessibilidade da interface | [`docs/design.md`](docs/design.md)                                                    |
+| Cores, fontes e componentes da interface | [`design-system/README.md`](design-system/README.md)                                  |
 | Checagens e testes                       | [`docs/quality.md`](docs/quality.md)                                                  |
 | Regras para agentes de IA                | [`AGENTS.md`](AGENTS.md) (o `CLAUDE.md` importa este)                                 |
 | Ferramentas de IA do projeto             | [`docs/setup.md`](docs/setup.md)                                                      |
