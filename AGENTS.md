@@ -28,7 +28,7 @@ Instruções para qualquer agente de IA neste repositório. O `CLAUDE.md` import
 - Preserve validação, tratamento de erro, segurança, acessibilidade e mudanças locais de outras pessoas.
 - Não transforme suposição em fato nem integração pendente em resultado. Instalar uma ferramenta não autoriza publicar, gastar ou mandar mensagem.
 - Atualize o documento responsável junto com a mudança: escopo em `PRODUCT.md`, estrutura em `docs/architecture.md`, interface em `docs/design.md`, checagens em `docs/quality.md`, preparação em `docs/instalacao.md`.
-- Escopo do MVP: só o que o TAP prevê. A nota (0–100) e as orientações da IA complementam a avaliação humana; nunca as apresente como certificação.
+- Escopo do MVP: só o que o Plano de Projeto v1.1 prevê (`PRODUCT.md`). A nota (0–100) e as orientações da IA complementam a avaliação humana; nunca as apresente como certificação.
 - A interface segue o eMAG 3.1/WCAG: teclado, foco visível, rótulos, contraste e alvos de 44 px ou mais. Uma ferramenta de acessibilidade não pode ser inacessível.
 - Nomes do domínio em pt-BR (`avaliacao`, `falha`, `rotas/saude.ts`), como no código existente. Comentários em pt-BR.
 - Segredos só no `.env` (fora do git); exemplo sem valores reais em `.env.example`.

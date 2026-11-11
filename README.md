@@ -76,7 +76,7 @@ projeto_integrador/
 | Visão geral do projeto (comece por aqui) | `projeto/contexto_agente/00-indice.md`                                                                                         |
 | Prazos e situação dos marcos             | `projeto/contexto_agente/03-cronograma-e-marcos.md`                                                                            |
 | Pendências e decisões                    | `projeto/contexto_agente/07-pendencias-e-decisoes.md`                                                                          |
-| Requisitos (RF e RNF, com prioridade)    | `projeto/docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md`                                                                   |
+| Requisitos (RF e RNF, com prioridade)    | `projeto/contexto_agente/fontes/projeto/Plano_de_Projeto.md` (Plano v1.1)                                                      |
 | Fluxo das telas (guia, não visual)       | `projeto/docs/prototipo/beta/` (beta, 11/11); telas que ele não tem: `projeto/docs/rascunhos/Prototipo_30-10_telas_e_teste.md` |
 | Critérios de acessibilidade da interface | [`docs/design.md`](docs/design.md)                                                                                             |
 | Cores, fontes e componentes da interface | [`design-system/README.md`](design-system/README.md)                                                                           |

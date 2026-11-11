@@ -1,5 +1,7 @@
 # Requisitos da solução — Plano de Projeto v1.0 (rascunho)
 
+> **Superado em 11/11/2026 pelo Plano de Projeto v1.1** (`docs/contexto_projeto/Plano de Projeto v1.1.docx`; texto em `contexto_agente/fontes/projeto/Plano_de_Projeto.md`): público novo, RF07, RF10, RF11, RF17 e RNF04 alterados, RF20, RF21 e RNF10 novos. Este rascunho guarda a v1.0.
+
 **Projeto:** AcessaWeb · Grupo 3 · Trilha A
 **Prazo:** Plano de Projeto v1.0 em 06/11/2026
 **Data deste rascunho:** 28/10/2026 (ajustado em 05/11/2026)

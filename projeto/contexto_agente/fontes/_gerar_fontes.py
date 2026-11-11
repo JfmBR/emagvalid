@@ -33,7 +33,7 @@ ORIGENS = {
     "projeto/Persona_v0.1.md": "docs/contexto_projeto/Persona_emagvalid_16-10-2026.docx",
     "projeto/Jornada.md": "docs/contexto_projeto/Jornada_do_Usuario_emagvalid_v1.0_28-10-2026.docx",
     "projeto/Entrevistas_PcD.md": "docs/contexto_projeto/ entrevistas EmagValid.docx",
-    "projeto/Plano_de_Projeto.md": "docs/contexto_projeto/Plano de Projeto v1.docx",
+    "projeto/Plano_de_Projeto.md": "docs/contexto_projeto/Plano de Projeto v1.1.docx",
     "projeto/Artefatos_e_Cronograma.md": "docs/contexto_projeto/Projeto_Integrador_Artefatos_e_Cronograma-ok.docx",
     "modelos/TAP.md": "docs/Modelos/Termo_de_Abertura_de_Projeto_Conecta_Jovem.docx",
     "modelos/Plano_de_Projeto.md": "docs/Modelos/Plano_de_Projeto_Conecta_Jovem.docx",
