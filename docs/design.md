@@ -4,7 +4,7 @@ O AcessaWeb é uma ferramenta de acessibilidade: a própria interface precisa se
 
 ## Direção
 
-- Referência visual e de fluxo: o protótipo clicável das 8 telas, `projeto/docs/prototipo/prototipo_emagvalid.html`, e a descrição de cada tela em `projeto/docs/rascunhos/Prototipo_30-10_telas_e_teste.md`. O arquivo do Figma está no Índice de links do Drive do grupo.
+- Referência de fluxo e de textos: o protótipo beta, `projeto/docs/prototipo/beta/` (abra o `index.html`; `dashboard.png` mostra as telas principais). É um guia do caminho, não especificação: o visual segue `design-system/` (paleta, fontes e componentes do beta não entram), e o que o beta mostra fora do MVP não se implementa (`PRODUCT.md`, "Fora do escopo"). Telas do MVP que o beta não tem (login, histórico, revisão das orientações da IA) seguem o protótipo anterior, `projeto/docs/prototipo/prototipo_emagvalid.html` e `projeto/docs/rascunhos/Prototipo_30-10_telas_e_teste.md`. O arquivo do Figma está no Índice de links do Drive do grupo.
 - Linguagem simples, em pt-BR, com ajuda curta na própria tela (RF16) e mensagens de erro com o próximo passo (RF17).
 - A nota e as orientações da IA aparecem sempre como apoio à avaliação humana, nunca como certificação (RF09, RNF07).
 

@@ -5,9 +5,9 @@ Guia para o João construir o AcessaWeb do zero até a publicação, seguindo o 
 Fontes (em `projeto/`):
 
 - Plano: `docs/contexto_projeto/Plano de Projeto v1.docx` (texto literal em `contexto_agente/fontes/projeto/Plano_de_Projeto.md`)
-- Requisitos: `docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md`
+- Requisitos: Plano de Projeto v1.1, texto em `contexto_agente/fontes/projeto/Plano_de_Projeto.md` (desde 11/11/2026; o rascunho v1.0 fica como histórico)
 - Lista fechada do eMAG e nota: `docs/rascunhos/Cobertura_eMAG_axe-core.md`
-- Telas: `docs/rascunhos/Prototipo_30-10_telas_e_teste.md` e `docs/prototipo/prototipo_emagvalid.html`
+- Telas: fluxo do protótipo beta, `docs/prototipo/beta/` (guia, desde 11/11/2026; visual do `design-system/`, e o que estiver fora do MVP não entra); telas que o beta não tem: `docs/rascunhos/Prototipo_30-10_telas_e_teste.md` e `docs/prototipo/prototipo_emagvalid.html`
 
 ## Como usar este guia
 

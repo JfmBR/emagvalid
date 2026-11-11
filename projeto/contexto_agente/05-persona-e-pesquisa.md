@@ -2,6 +2,8 @@
 
 Fontes: `Persona_emagvalid_v1.0_28-10-2026.docx` (`fontes/projeto/Persona.md`), a versão anterior `Persona_emagvalid_16-10-2026.docx` (`fontes/projeto/Persona_v0.1.md`), `Jornada_do_Usuario_emagvalid_v1.0_28-10-2026.docx` (`fontes/projeto/Jornada.md`), ` entrevistas EmagValid.docx` (`fontes/projeto/Entrevistas_PcD.md`) e o modelo `Persona_Conecta_Jovem.docx` (`fontes/modelos/Persona.md`). A Jornada do Usuário parte da Persona (ver `04`).
 
+> **Desde 11/11/2026 o público mudou** (Plano de Projeto v1.1): pequenas e médias empresas e devs que terceirizam a validação; persona sugerida, fictícia: dona de pequena empresa com site próprio. A Helena (auditora) e as entrevistas abaixo descrevem o público antigo; o público novo ainda não foi entrevistado (risco R8). Ver `07`, seção D.
+
 ## Estado atual (29/10/2026)
 - **Persona v1.0 preenchida** no modelo: `Persona_emagvalid_v1.0_28-10-2026.docx` (nome e cabeçalho com 28/10/2026 · v1.0, data real de entrega; o marco era 23/10). Persona: **Helena**, analista de acessibilidade em consultoria de software (fictícia; reúne as 3 entrevistas com auditores: perfil e rotina de A1, com dores, canais e ferramentas também de A2 e A3). Sem `[placeholders]`. Retrato: `docs/imagem/persona_helena.jpg`.
 - **Jornada do Usuário v1.0 preenchida**: `Jornada_do_Usuario_emagvalid_v1.0_28-10-2026.docx` (mesma data), com os esquemas `docs/imagem/Jornada_contexto1_esquema.png` e `Jornada_contexto2_esquema.png`. Em 29/10/2026, o campo "Mentor do Grupo 3" (Fontes e validação) passou de "a definir" para Rodrigo Pereira.

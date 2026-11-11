@@ -1,6 +1,6 @@
 # Código e arquitetura
 
-Estado em 10/11/2026: estrutura pronta, ainda sem telas nem regras do MVP. A arquitetura oficial entra no Plano de Projeto v1.1 (13/11/2026); este arquivo descreve o que existe no código.
+Estado em 10/11/2026: estrutura pronta, ainda sem telas nem regras do MVP. A arquitetura oficial está no Plano de Projeto v1.1 (11/11/2026); este arquivo descreve o que existe no código.
 
 ## Stack real
 
@@ -33,8 +33,8 @@ Estado em 10/11/2026: estrutura pronta, ainda sem telas nem regras do MVP. A arq
 
 - O front-end só fala com a API por HTTP (`/api/...`); nunca importa Prisma nem código de `apps/api`. Uma regra de lint vai impor isso (`docs/quality.md`).
 - A API concentra banco, análise (Playwright + axe-core) e IA (Gemini). Segredos só no `.env` (`DATABASE_URL`, `IA_API_KEY`).
-- Fluxo previsto da avaliação: URL → validação → Playwright abre a página → axe-core → falhas mapeadas para o eMAG 3.1 → nota → orientações da IA (só o trecho público com a falha) → revisão humana → PDF.
-- **Risco a tratar ao implementar:** a API vai abrir URLs informadas pelo usuário. Bloqueie endereços internos (localhost, redes privadas, metadados de nuvem) para evitar SSRF, e limite tempo e tamanho da página.
+- Fluxo previsto da avaliação: URL → validação → Playwright abre a página → axe-core → falhas mapeadas para o eMAG 3.1 → nota → sugestões da IA (só o trecho público com a falha), marcadas como sugestão → PDF (plano pago; bloqueado na amostra, RF21). Requisitos e público: Plano de Projeto v1.1.
+- **Segurança (RNF04 e RNF10 do Plano v1.1):** a API vai abrir URLs informadas pelo usuário. Bloqueie endereços internos (localhost, redes privadas, metadados de nuvem) para evitar SSRF; limite tempo, tamanho da página e análises seguidas; mostre trechos da página como texto, nunca como HTML (XSS); consultas só pelo Prisma, sem SQL montado com texto do usuário (SQL injection).
 
 ## Dados e migrações
 

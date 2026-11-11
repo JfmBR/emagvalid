@@ -71,18 +71,18 @@ projeto_integrador/
 └── scripts/        checagens auxiliares e geração do tokens.css
 ```
 
-| Para saber…                              | Abra                                                                                  |
-| ---------------------------------------- | ------------------------------------------------------------------------------------- |
-| Visão geral do projeto (comece por aqui) | `projeto/contexto_agente/00-indice.md`                                                |
-| Prazos e situação dos marcos             | `projeto/contexto_agente/03-cronograma-e-marcos.md`                                   |
-| Pendências e decisões                    | `projeto/contexto_agente/07-pendencias-e-decisoes.md`                                 |
-| Requisitos (RF e RNF, com prioridade)    | `projeto/docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md`                          |
-| Telas e o que cada uma mostra            | `projeto/docs/rascunhos/Prototipo_30-10_telas_e_teste.md` e `projeto/docs/prototipo/` |
-| Critérios de acessibilidade da interface | [`docs/design.md`](docs/design.md)                                                    |
-| Cores, fontes e componentes da interface | [`design-system/README.md`](design-system/README.md)                                  |
-| Checagens e testes                       | [`docs/quality.md`](docs/quality.md)                                                  |
-| Regras para agentes de IA                | [`AGENTS.md`](AGENTS.md) (o `CLAUDE.md` importa este)                                 |
-| Ferramentas de IA do projeto             | [`docs/setup.md`](docs/setup.md)                                                      |
+| Para saber…                              | Abra                                                                                                                           |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Visão geral do projeto (comece por aqui) | `projeto/contexto_agente/00-indice.md`                                                                                         |
+| Prazos e situação dos marcos             | `projeto/contexto_agente/03-cronograma-e-marcos.md`                                                                            |
+| Pendências e decisões                    | `projeto/contexto_agente/07-pendencias-e-decisoes.md`                                                                          |
+| Requisitos (RF e RNF, com prioridade)    | `projeto/contexto_agente/fontes/projeto/Plano_de_Projeto.md` (Plano v1.1)                                                      |
+| Fluxo das telas (guia, não visual)       | `projeto/docs/prototipo/beta/` (beta, 11/11); telas que ele não tem: `projeto/docs/rascunhos/Prototipo_30-10_telas_e_teste.md` |
+| Critérios de acessibilidade da interface | [`docs/design.md`](docs/design.md)                                                                                             |
+| Cores, fontes e componentes da interface | [`design-system/README.md`](design-system/README.md)                                                                           |
+| Checagens e testes                       | [`docs/quality.md`](docs/quality.md)                                                                                           |
+| Regras para agentes de IA                | [`AGENTS.md`](AGENTS.md) (o `CLAUDE.md` importa este)                                                                          |
+| Ferramentas de IA do projeto             | [`docs/setup.md`](docs/setup.md)                                                                                               |
 
 O repositório é público. Os arquivos com dados de entrevistados ficam fora dele, na pasta privada `acessaweb-privado/`, ao lado de `projeto_integrador/`. Como montar essa pasta: [`docs/instalacao.md`](docs/instalacao.md). Até 10/11/2026, código e documentação eram dois repositórios (`emagvalid` e `emagvalid-docs`).
 

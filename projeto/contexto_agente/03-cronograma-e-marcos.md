@@ -20,6 +20,8 @@ Esta seção é a avaliação feita ao criar o contexto, só com os arquivos dis
 - 28/09 a 02/10: primeiras reuniões de mentoria com cada grupo.
 - Semana de 05/10: encontro geral sobre escopo (data a definir), presença obrigatória de Igor, Alexandre, Marcos e Fábio. O grupo pode pivotar livremente até 09/10.
 - 09/10: TAP entregue e grupo organizado.
+- 11/11: apresentação da lâmina e do protótipo beta à banca (não constava no cronograma; feedback em `docs/rascunhos/Feedback_pitch_11-11-2026.md`).
+- 13/11: Plano de Projeto v1.1 (arquitetura e tecnologias). Pronto em 11/11/2026: `docs/contexto_projeto/Plano de Projeto v1.1.docx`, com o público novo e as mudanças de escopo (ver `07`, seção D).
 - 13/11: DER e dicionário de dados, **apenas Trilha B** (o Grupo 3 é Trilha A: não entrega).
 - Outubro e novembro: design, planejamento e modelagem (sextas-feiras são as datas de entrega).
 - 03/12: última aula do Conecta Jovem.
