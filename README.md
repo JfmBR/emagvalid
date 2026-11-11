@@ -1,122 +1,89 @@
 # AcessaWeb · Grupo 3
 
-Auditoria automatizada de acessibilidade pelo eMAG 3.1 (Trilha A — produto funcional).
+Auditoria automatizada de acessibilidade de páginas web pelo eMAG 3.1. É o MVP do Grupo 3 no Projeto Integrador Conecta Jovem (Trilha A, produto funcional). O auditor informa a URL de uma página pública e recebe:
 
-Este repositório guarda o código do MVP e a documentação do projeto (TAP, Plano de Projeto, Persona, Jornada, requisitos e protótipo). Até 10/11/2026 eram dois repositórios separados, `emagvalid` e `emagvalid-docs`:
+- as falhas, com o requisito do eMAG violado e o local exato;
+- uma nota de 0 a 100;
+- orientações de correção geradas por IA e revisadas por ele;
+- um PDF e o histórico das avaliações.
 
-```
-projeto_integrador/      (este repositório)
-├── apps/                código: front-end e API
-├── docs/                guias do código (instalação, passo a passo do MVP)
-└── projeto/             documentação do projeto
-```
+A nota e a IA complementam a avaliação humana; não são certificação. Produto, escopo e aceite: [`PRODUCT.md`](PRODUCT.md).
 
-Os arquivos com dados de entrevistados ficam fora do repositório, na pasta privada `acessaweb-privado/`, ao lado desta (ver [`docs/instalacao.md`](docs/instalacao.md)).
+## Situação em 10/11/2026
 
-## Situação em 03/11/2026
-
-- Estrutura pronta: front-end e API conversando, banco modelado (proposta), testes e CI. Ainda não há nenhuma tela ou regra do MVP.
-- A construção começa em 16/11/2026 (sprint 1: telas principais e estrutura). Arquitetura e tecnologias entram no Plano de Projeto v1.1, em 13/11/2026.
-- Decidido em 05/11/2026 (Plano de Projeto v1): IA com o Google Gemini, nota com pesos por prioridade nas 29 recomendações do eMAG cobertas pelo axe-core, hospedagem no Render com o banco no Neon (planos gratuitos) e regras de branches (`main` protegida, PR com CI verde, squash; desde 10/11/2026, merge pelo João como administrador).
-- Passo a passo da construção, semana a semana: [`docs/passo-a-passo-mvp.md`](docs/passo-a-passo-mvp.md).
-
-## Tecnologias
-
-| Parte                  | O que usa                                                                        |
-| ---------------------- | -------------------------------------------------------------------------------- |
-| Front-end (`apps/web`) | React 19, TypeScript, Vite                                                       |
-| API (`apps/api`)       | Node.js 26, Express 5, TypeScript                                                |
-| Banco                  | PostgreSQL 17, com Prisma 7 (esquema em `apps/api/prisma/schema.prisma`)         |
-| Análise das páginas    | Playwright e axe-core (instalados; ainda sem código)                             |
-| Qualidade              | Vitest e Testing Library (testes), oxlint com regras de acessibilidade, Prettier |
-| CI                     | GitHub Actions: lint, formatação, tipos, testes e build em todo push e PR        |
-
-O esquema do banco é uma **proposta inicial** para os requisitos de prioridade alta; revisar no Plano v1.1.
+- A estrutura está pronta: front-end e API conversando, banco modelado (proposta inicial), testes, teste de ponta a ponta com axe e CI. Ainda não há tela nem regra do MVP.
+- A construção começa em 16/11/2026, seguindo [`docs/passo-a-passo-mvp.md`](docs/passo-a-passo-mvp.md). O MVP deve estar publicado em 04/12/2026 (Render e Neon, planos gratuitos).
+- Arquitetura e tecnologias entram no Plano de Projeto v1.1 (13/11/2026).
+- Equipe: João Francisco, Luiz Felipe e Luis Otavio.
 
 ## Como rodar
 
-Pré-requisitos: [Node.js 26](https://nodejs.org) e, para o banco, [Docker Desktop](https://www.docker.com/products/docker-desktop/). Instalação passo a passo, com os links de download: [`docs/instalacao.md`](docs/instalacao.md).
+Pré-requisitos: Node.js 26 e Docker. O passo a passo para Windows e Linux está em [`docs/instalacao.md`](docs/instalacao.md).
 
 ```bash
-npm install
+npm ci
 cp .env.example .env
 npm run dev
 ```
 
-Abre o front-end em http://localhost:5173 e a API em http://localhost:3000. A tela inicial diz se a API está conectada.
+O front-end abre em http://localhost:5173 e a API em http://localhost:3000. A tela inicial diz se a API está conectada.
 
-Para usar o banco:
-
-```bash
-npm run db:up
-npm run db:migrate -w apps/api
-```
-
-Para ver os dados, o grupo usa o [DBeaver Community](https://dbeaver.io). Crie uma conexão PostgreSQL com host `localhost`, porta `5432` e o banco, o usuário e a senha do `docker-compose.yml`. Use o DBeaver para ver e testar dados; mudanças nas tabelas só pelo `schema.prisma` e uma migração, senão o Prisma deixa de bater com o banco.
-
-Para a análise com Playwright, baixe o navegador uma vez:
-
-```bash
-npx playwright install chromium
-```
+Para usar o banco: `npm run db:up` e depois `npm run db:migrate -w apps/api`. Para os testes no navegador, baixe o Chromium uma vez com `npx playwright install chromium`.
 
 ## Comandos
 
-| Comando                          | O que faz                                         |
-| -------------------------------- | ------------------------------------------------- |
-| `npm run dev`                    | Sobe API e front-end juntos                       |
-| `npm run dev:api` / `dev:web`    | Sobe só uma das partes                            |
-| `npm test`                       | Roda os testes das duas partes                    |
-| `npm run lint`                   | Procura erros, inclusive de acessibilidade no JSX |
-| `npm run format`                 | Formata o código com o Prettier                   |
-| `npm run typecheck`              | Confere os tipos do TypeScript                    |
-| `npm run build`                  | Gera a versão de produção                         |
-| `npm run db:up` / `db:down`      | Liga e desliga o PostgreSQL local (Docker)        |
-| `npm run db:migrate -w apps/api` | Cria ou atualiza as tabelas a partir do esquema   |
-| `npm run db:studio -w apps/api`  | Abre uma tela para ver os dados do banco          |
+| Comando                          | O que faz                                                                                 |
+| -------------------------------- | ----------------------------------------------------------------------------------------- |
+| `npm run dev`                    | Sobe API e front-end juntos (`dev:api` e `dev:web` sobem só uma parte)                    |
+| `npm run verificar`              | Roda tudo o que o CI exige: lint, regras de qualidade, formatação, tipos, testes e build  |
+| `npm test`                       | Testes das duas partes (Vitest)                                                           |
+| `npm run test:e2e`               | Testa as telas no navegador, com axe (acessibilidade) e teclado                           |
+| `npm run lint` / `format`        | Procura erros (inclusive de acessibilidade no JSX) / formata o código                     |
+| `npm run db:up` / `db:down`      | Liga e desliga o PostgreSQL local (Docker)                                                |
+| `npm run db:migrate -w apps/api` | Cria ou atualiza as tabelas a partir de `apps/api/prisma/schema.prisma`                   |
+| `npm run db:studio -w apps/api`  | Abre uma tela para ver os dados do banco (o grupo também usa o DBeaver; ver a instalação) |
 
-Antes de abrir uma PR, rode `npm run lint`, `npm run format` e `npm test`. O CI roda o mesmo.
+Antes de abrir uma PR, rode `npm run verificar`. O CI roda o mesmo, mais o `test:e2e`, em todo push e PR.
 
-## Pastas
+## Tecnologias
 
-| Caminho                            | Conteúdo                                                                                        |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `apps/web/`                        | Front-end (telas)                                                                               |
-| `apps/api/src/`                    | API: `app.ts` monta as rotas, `rotas/` tem uma por assunto                                      |
-| `apps/api/prisma/`                 | Esquema do banco e migrações                                                                    |
-| `docker-compose.yml`               | PostgreSQL local                                                                                |
-| `.env.example`                     | Modelo das variáveis de ambiente (copie para `.env`)                                            |
-| `.github/workflows/ci.yml`         | CI                                                                                              |
-| `docs/instalacao.md`               | Guia de instalação das ferramentas (Windows e Linux)                                            |
-| `docs/passo-a-passo-mvp.md`        | Passo a passo da construção do MVP                                                              |
-| `.github/pull_request_template.md` | Checklist que aparece em toda pull request nova                                                 |
-| `CLAUDE.md`                        | Regras de trabalho do Claude Code neste repositório                                             |
-| `.claude/agents/`                  | Agentes `emagvalid-dev` (código), `emagvalid` (documentos) e `emagvalid-checagem` (conferência) |
-| `projeto/`                         | Documentação do projeto (ver a tabela abaixo)                                                   |
+| Parte                  | O que usa                                                              |
+| ---------------------- | ---------------------------------------------------------------------- |
+| Front-end (`apps/web`) | React 19, TypeScript, Vite                                             |
+| API (`apps/api`)       | Node.js 26, Express 5, TypeScript                                      |
+| Banco                  | PostgreSQL 17 com Prisma 7                                             |
+| Análise das páginas    | Playwright e axe-core (instalados; a análise ainda não foi construída) |
+| IA                     | Google Gemini, plano gratuito (ainda não integrado)                    |
+| Qualidade              | Vitest, Testing Library, Playwright + axe, oxlint, Prettier            |
+| CI                     | GitHub Actions: jobs `verificar` (obrigatório) e `e2e`                 |
 
-## Documentos do repositório
+Detalhes, mapa do código e fronteiras: [`docs/architecture.md`](docs/architecture.md).
 
-| Arquivo                   | Para quê                                                           |
-| ------------------------- | ------------------------------------------------------------------ |
-| `PRODUCT.md`              | Produto, escopo do MVP e critérios de aceite                       |
-| `AGENTS.md` / `CLAUDE.md` | Regras para os agentes de IA (o `CLAUDE.md` importa o `AGENTS.md`) |
-| `docs/architecture.md`    | Stack, mapa do código, fronteiras e dados                          |
-| `docs/design.md`          | Critérios de acessibilidade e de interface                         |
-| `docs/quality.md`         | Comandos de checagem, testes e revisão                             |
-| `docs/setup.md`           | Ferramentas de IA do projeto e evidências                          |
-| `docs/instalacao.md`      | Preparar o computador (Windows e Linux)                            |
+## Onde está cada coisa
 
-## Onde está cada coisa na documentação
+```
+projeto_integrador/
+├── apps/web/       front-end (telas)
+├── apps/api/       API, banco (prisma/) e, em breve, a análise
+├── docs/           guias do código: instalação, passo a passo, arquitetura, design, qualidade e setup
+├── projeto/        documentação do projeto: contexto, requisitos, telas, protótipo, .docx oficiais
+└── scripts/        checagens auxiliares
+```
 
-| Assunto                                   | Arquivo em `projeto/`                                               |
-| ----------------------------------------- | ------------------------------------------------------------------- |
-| Visão geral do contexto (comece por aqui) | `contexto_agente/00-indice.md`                                      |
-| Escopo, objetivos e tecnologias previstas | `contexto_agente/01-projeto-emagvalid.md`                           |
-| Equipe e mentores                         | `contexto_agente/02-equipe-e-mentores.md`                           |
-| Prazos e status                           | `contexto_agente/03-cronograma-e-marcos.md`                         |
-| Pendências e decisões                     | `contexto_agente/07-pendencias-e-decisoes.md`                       |
-| Requisitos (RF e RNF, com prioridade)     | `docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md`                |
-| Telas e o que cada uma mostra             | `docs/rascunhos/Prototipo_30-10_telas_e_teste.md` (Tela 1 a Tela 8) |
-| Protótipo clicável                        | `docs/prototipo/prototipo_emagvalid.html`                           |
+| Para saber…                              | Abra                                                                                  |
+| ---------------------------------------- | ------------------------------------------------------------------------------------- |
+| Visão geral do projeto (comece por aqui) | `projeto/contexto_agente/00-indice.md`                                                |
+| Prazos e situação dos marcos             | `projeto/contexto_agente/03-cronograma-e-marcos.md`                                   |
+| Pendências e decisões                    | `projeto/contexto_agente/07-pendencias-e-decisoes.md`                                 |
+| Requisitos (RF e RNF, com prioridade)    | `projeto/docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md`                          |
+| Telas e o que cada uma mostra            | `projeto/docs/rascunhos/Prototipo_30-10_telas_e_teste.md` e `projeto/docs/prototipo/` |
+| Critérios de acessibilidade da interface | [`docs/design.md`](docs/design.md)                                                    |
+| Checagens e testes                       | [`docs/quality.md`](docs/quality.md)                                                  |
+| Regras para agentes de IA                | [`AGENTS.md`](AGENTS.md) (o `CLAUDE.md` importa este)                                 |
+| Ferramentas de IA do projeto             | [`docs/setup.md`](docs/setup.md)                                                      |
 
-Os requisitos e as telas não são copiados para o código, para não existirem duas versões.
+O repositório é público. Os arquivos com dados de entrevistados ficam fora dele, na pasta privada `acessaweb-privado/`, ao lado de `projeto_integrador/`. Como montar essa pasta: [`docs/instalacao.md`](docs/instalacao.md). Até 10/11/2026, código e documentação eram dois repositórios (`emagvalid` e `emagvalid-docs`).
+
+## Como contribuir
+
+Cada tarefa vai numa branch curta a partir da `main` (`feat/`, `fix/` ou `docs/` + nome em pt-BR), com commits em pt-BR no formato `tipo: descrição curta`. A PR passa pelo checklist de [`.github/pull_request_template.md`](.github/pull_request_template.md) e pelo CI verde; o merge é por squash, feito pelo João.
