@@ -1,0 +1,28 @@
+<!-- @dsCard group="Formulários" height=330 -->
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Field</title>
+  </head>
+  <body style="padding: 24px">
+    <form class="painel" style="max-width: 560px" novalidate>
+      <div class="campo">
+        <label for="url">Endereço da página (URL)</label
+        ><input id="url" inputmode="url" aria-describedby="url-ex" />
+        <p class="dica" id="url-ex">Ex.: https://servicos.exemplo.gov.br/agendamento</p>
+      </div>
+      <div class="campo" data-erro>
+        <label for="email">E-mail</label
+        ><input
+          id="email"
+          type="email"
+          value="helena@"
+          aria-invalid="true"
+          aria-describedby="email-erro"
+        />
+        <p class="erro-campo" id="email-erro">Digite um e-mail válido, como nome@empresa.com.br.</p>
+      </div>
+    </form>
+  </body>
+</html>

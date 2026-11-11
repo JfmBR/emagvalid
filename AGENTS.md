@@ -5,6 +5,7 @@ Instruções para qualquer agente de IA neste repositório. O `CLAUDE.md` import
 ## Produto e stack
 
 - Produto, escopo e aceite: `PRODUCT.md`. Contexto completo do projeto: `projeto/contexto_agente/00-indice.md` (abra só o que a tarefa pedir).
+- Sistema de design (cores, fontes, componentes, marca): `design-system/README.md`.
 - Stack: npm workspaces; `apps/web` (React 19.3, Vite 8, TypeScript 7); `apps/api` (Node.js 26, Express 5.3, Prisma 7.10, PostgreSQL 17 no Docker); análise com Playwright 1.64 e axe-core 4.14; Vitest 5; oxlint 1.91; Prettier 3.9. Detalhes: `docs/architecture.md`.
 - Preparação da máquina: `docs/instalacao.md`. Ferramentas de IA e evidências do setup: `docs/setup.md`.
 
