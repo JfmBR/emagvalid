@@ -8,12 +8,12 @@ Documentar à mão as falhas de acessibilidade de uma página pelo eMAG 3.1 leva
 
 ## Público e papéis
 
-- Auditores de acessibilidade em empresas de auditoria e consultoria de software e em equipes de auditoria web. Persona: Helena, analista de acessibilidade (fictícia, a partir de 3 entrevistas com auditores: `projeto/contexto_agente/05-persona-e-pesquisa.md`).
-- Um único papel no MVP: o(a) auditor(a) com conta própria. Não há administrador nem equipes.
+- Desde 11/11/2026 (decisão do João): o cliente que tem ou vai criar um site, não entende de acessibilidade e quer melhorar o site e alcançar mais pessoas. Antes, o público eram auditores de acessibilidade (persona Helena, `projeto/contexto_agente/05-persona-e-pesquisa.md`); TAP, Persona e Jornada v1.0 ainda falam em auditor (ver "Suposições e pendências").
+- Um único papel no MVP: o cliente com conta própria. Não há administrador nem equipes.
 
 ## Fluxos da primeira versão
 
-Telas e textos: `projeto/docs/rascunhos/Prototipo_30-10_telas_e_teste.md` (Tela 1 a 8) e o protótipo clicável `projeto/docs/prototipo/prototipo_emagvalid.html`.
+Caminho a seguir: o protótipo beta, `projeto/docs/prototipo/beta/index.html` (11/11/2026). Ele orienta o fluxo e os textos, não o visual (o visual é o de `design-system/`), e não define escopo: o que ele mostra fora do MVP fica fora. O que o MVP tem e o beta não mostra continua (login, histórico, revisão das orientações da IA, nota com a conta). Protótipo anterior, só como histórico: `projeto/docs/prototipo/prototipo_emagvalid.html` e `projeto/docs/rascunhos/Prototipo_30-10_telas_e_teste.md`.
 
 1. Criar conta ou entrar com e-mail e senha.
 2. Informar a URL de uma página pública e iniciar a avaliação; acompanhar o andamento.
@@ -29,7 +29,7 @@ Requisitos de prioridade alta (A) e média (M) do Plano de Projeto v1: RF01–RF
 
 ## Fora do escopo
 
-Varredura de várias páginas, aplicativo móvel, certificação de conformidade integral, comparação entre avaliações (RF15), exportação CSV (RF18), canal de contato humano (RF19), uso em celular (RNF09), páginas atrás de login e integrações com Jira, GitHub ou CI.
+O que o protótipo beta mostra além do MVP: nota por perfil de deficiência, critérios WCAG, auditoria aprofundada, indicação de equipes parceiras, validação com pessoas com deficiência e selo próprio (decisão de 11/11/2026). Também: varredura de várias páginas, aplicativo móvel, certificação de conformidade integral, comparação entre avaliações (RF15), exportação CSV (RF18), canal de contato humano (RF19), uso em celular (RNF09), páginas atrás de login e integrações com Jira, GitHub ou CI.
 
 ## Requisitos
 
@@ -49,6 +49,7 @@ Varredura de várias páginas, aplicativo móvel, certificação de conformidade
 
 - Responsável pelo Plano de Projeto v1.1 (13/11), antes Matheus Francisconi: não consta nos arquivos (`projeto/contexto_agente/07-pendencias-e-decisoes.md`, seção D, 10/11/2026).
 - Mapeamento eMAG ↔ axe-core e pesos: a conferir com o mentor José Alves (`07`, seção E).
+- Público mudou de auditor para cliente leigo em 11/11/2026: TAP v1.0, Persona v1.0, Jornada v1.0 e os requisitos ainda descrevem o auditor; alinhar no Plano v1.1 (13/11) e com o mentor. Em aberto: como o cliente leigo revisa as orientações da IA (RF08) e o que exige revisão humana (`07`, seção D, 11/11/2026).
 - Demais pendências do programa e do mentor: `07`, seções A e E.
 
 ## Critérios de aceite

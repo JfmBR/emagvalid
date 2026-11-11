@@ -9,7 +9,7 @@ Auditoria automatizada de acessibilidade pelo eMAG 3.1 (Trilha A — produto fun
 | `docs/contexto_projeto/` | Documentos oficiais em .docx (TAP, Plano de Projeto v1, Persona v0.1, Artefatos e Cronograma) |
 | `docs/Modelos/` | Modelos do programa (TAP, Plano de Projeto, Persona, Jornada) |
 | `docs/rascunhos/` | Rascunhos em Markdown para colar nos .docx |
-| `docs/prototipo/` | Protótipo clicável das 8 telas (HTML), base do teste de 30/10/2026 |
+| `docs/prototipo/` | `beta/`: protótipo beta de 11/11/2026, guia do fluxo; `prototipo_emagvalid.html`: protótipo das 8 telas, base do teste de 30/10/2026 |
 | `docs/imagem/` | Esquemas da jornada |
 | `contexto_agente/` | Contexto dos agentes do Claude Code; comece por `00-indice.md` |
 

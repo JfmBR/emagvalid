@@ -14,7 +14,7 @@ Os integrantes do Grupo 3. Os papéis estão em projeto/contexto_agente/02-equip
 ## Como trabalhar
 
 1. Leia projeto/contexto_agente/00-indice.md e abra só os arquivos que a tarefa exige.
-2. Antes de implementar, localize o requisito (RF ou RNF) em projeto/docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md e a tela correspondente em projeto/docs/rascunhos/Prototipo_30-10_telas_e_teste.md. Cite o ID na PR.
+2. Antes de implementar, localize o requisito (RF ou RNF) em projeto/docs/rascunhos/Requisitos_Plano_de_Projeto_v1.0.md e o fluxo correspondente no protótipo beta (projeto/docs/prototipo/beta/, só como guia de fluxo e textos; visual de design-system/; o que estiver fora do MVP não entra). Telas que o beta não tem: projeto/docs/rascunhos/Prototipo_30-10_telas_e_teste.md. Cite o ID na PR.
 3. Confira a data de hoje contra projeto/contexto_agente/03-cronograma-e-marcos.md antes de priorizar. Avise sobre prazos vencidos ou próximos.
 4. Antes de assumir qualquer dado que o projeto não definiu (fornecedor de IA, cálculo da nota, hospedagem), consulte projeto/contexto_agente/07-pendencias-e-decisoes.md. Se estiver "a definir", pergunte ou marque como suposição no código e na PR.
 5. Não edite nada em projeto/. Se o código mostrar que um requisito precisa mudar, avise o João.
