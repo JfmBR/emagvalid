@@ -89,10 +89,10 @@ Instalação detalhada, com os links de download: [`instalacao.md`](instalacao.m
 
 É o coração do produto e o maior risco (R1 do Plano). Antes de qualquer tela, prove que dá para analisar uma página.
 
-- [ ] Criar `apps/api/src/analise/analisar.ts`: abre a URL com Playwright, roda o axe-core e devolve as violações
-- [ ] Criar um script `npm run analisar -- <url>` que imprime o resultado no terminal
-- [ ] Testar em 3 a 5 páginas públicas reais (inclusive uma do governo)
-- [ ] Montar a **tabela de requisitos** em `apps/api/src/emag/requisitos.ts` a partir de `projeto/docs/rascunhos/Cobertura_eMAG_axe-core.md`: as 29 recomendações do eMAG 3.1 que o axe-core cobre no todo ou em parte, cada uma com número, nome oficial, seção, link para a seção oficial, regras do axe-core e prioridade (peso 3, 2 ou 1). Essa tabela é a "lista fechada" do RF08; as recomendações sem cobertura vão para a revisão humana (RF09)
+- [x] Criar `apps/api/src/analise/analisar.ts`: abre a URL com Playwright, roda o axe-core e devolve as violações
+- [x] Criar um script `npm run analisar -- <url>` (`npm run analisar -w apps/api -- <url>`) que imprime o resultado no terminal
+- [ ] Testar em 3 a 5 páginas públicas reais (inclusive uma do governo). Em 12/11: funcionou em example.com e na página de demonstração do W3C (28 s); `gov.br`, `planalto.gov.br` (a página navega depois de abrir, o axe perde o contexto), `python.org` e o site do eMAG estouraram os 30 s ou falharam, com a rede lenta neste computador (`curl` no `gov.br` leva 11 s). Falta: tratar a espera (`waitUntil`) e o redirecionamento, e repetir numa rede boa
+- [x] Montar a **tabela de requisitos** em `apps/api/src/emag/requisitos.ts` a partir de `projeto/docs/rascunhos/Cobertura_eMAG_axe-core.md`: as 29 recomendações do eMAG 3.1 que o axe-core cobre no todo ou em parte, cada uma com número, nome oficial, seção, link para a seção oficial, regras do axe-core e prioridade (peso 3, 2 ou 1). Essa tabela é a "lista fechada" do RF08; as recomendações sem cobertura vão para a revisão humana (RF09)
 - [ ] Conferir o mapeamento e os pesos com o mentor José Alves e os nomes de 6.5 a 6.8 no PDF oficial do eMAG (`07`, seções B e E)
 
 **Terminou quando:** o script mostra, para uma URL real, as falhas já com o número e o nome do requisito do eMAG.
