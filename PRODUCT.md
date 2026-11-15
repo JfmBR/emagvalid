@@ -19,7 +19,7 @@ Caminho a seguir: o protótipo beta, `projeto/docs/prototipo/beta/index.html` (1
 2. Informar a URL de uma página pública e iniciar a avaliação (ou, se houver tempo, uma lista de URLs analisadas uma por vez, RF20); acompanhar o andamento.
 3. Ver o resultado: nota, nota por requisito com a conta, falhas com requisito, local exato e prioridade, e o que exige revisão humana.
 4. Ler as sugestões da IA, marcadas como sugestão, com aviso para conferir antes de aplicar (RF10).
-5. Gerar o PDF (plano pago). Na amostra gratuita, o PDF aparece bloqueado, com aviso; não há cobrança no MVP (RF21).
+5. Gerar o PDF (plano pago). Na amostra gratuita, que exige conta, o PDF aparece bloqueado, com aviso; não há cobrança no MVP (RF21).
 6. Abrir uma avaliação anterior no histórico.
 7. Em erro e nos casos de borda (URL inválida, página fora do ar ou lenta demais, redirecionamento, arquivo que não é HTML, página que pede login, análise que falhou), ver mensagem clara com o próximo passo (RF17).
 
