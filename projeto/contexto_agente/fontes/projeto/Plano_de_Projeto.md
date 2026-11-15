@@ -1,4 +1,4 @@
-<!-- GERADO por _gerar_fontes.py em 11/11/2026 a partir de docs/contexto_projeto/Plano de Projeto v1.1.docx. NÃO EDITAR. -->
+<!-- GERADO por _gerar_fontes.py em 14/11/2026 a partir de docs/contexto_projeto/Plano de Projeto v1.1.docx. NÃO EDITAR. -->
 # Fonte literal: Plano de Projeto v1.1.docx
 Origem: `docs/contexto_projeto/Plano de Projeto v1.1.docx` · Conversão automática, sem resumo. Linhas `- a | b` são linhas de tabela; células vazias aparecem como vazio.
 
@@ -58,7 +58,7 @@ REQUISITOS FUNCIONAIS · O QUE A SOLUÇÃO FAZ
 - RF18 | O sistema deve exportar o resultado em formato tabular (CSV) ou texto para colar em issue | B · fora do MVP
 - RF19 | O sistema deve oferecer um canal de contato humano para dúvidas (por exemplo, e-mail ou formulário) | B · fora do MVP
 - RF20 | O sistema deve permitir informar uma lista de URLs e analisá-las uma por vez, em fila, nunca ao mesmo tempo | B · se houver tempo
-- RF21 | Sem plano pago, o sistema deve permitir informar a URL e ver o resultado da análise; o relatório em PDF aparece bloqueado, com aviso de que está no plano pago (não há cobrança no MVP) | M
+- RF21 | Sem plano pago, o sistema deve permitir que o cliente com conta (RF01) informe a URL e veja o resultado da análise; o relatório em PDF aparece bloqueado, com aviso de que está no plano pago (não há cobrança no MVP) | M
 [fim da tabela]
 Prioridade: A = alta · M = média · B = baixa. Nota (RF05 e RF06) = 100 × pesos das verificações aprovadas ÷ pesos das verificações aplicáveis, com peso alta 3, média 2 e baixa 1, nas 29 recomendações do eMAG que o axe-core verifica; as demais vão para a revisão humana (RF09).
 REQUISITOS NÃO FUNCIONAIS · COMO A SOLUÇÃO SE COMPORTA
