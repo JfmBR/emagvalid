@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import express, { type ErrorRequestHandler } from 'express'
 import { rotasSaude } from './rotas/saude.js'
@@ -6,6 +7,7 @@ import { rotasSaude } from './rotas/saude.js'
 // Em desenvolvimento fica vazia: o Vite serve as telas e repassa /api para cá.
 export function criarApp(pastaWeb?: string) {
   const app = express()
+  app.disable('x-powered-by')
 
   app.use(express.json())
   app.use('/api/saude', rotasSaude)
@@ -15,11 +17,14 @@ export function criarApp(pastaWeb?: string) {
   })
 
   if (pastaWeb) {
-    const index = resolve(pastaWeb, 'index.html')
+    // falha na partida (aparece no log do Render) em vez de responder 500 em toda tela
+    if (!existsSync(resolve(pastaWeb, 'index.html'))) {
+      throw new Error(`PASTA_WEB sem index.html: ${pastaWeb}`)
+    }
     app.use(express.static(pastaWeb))
     // qualquer outra rota é uma tela do React: devolve o index.html e o React decide o que mostrar
     app.get('/{*tela}', (_req, res) => {
-      res.sendFile(index)
+      res.sendFile('index.html', { root: pastaWeb })
     })
   }
 

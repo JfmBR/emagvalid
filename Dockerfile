@@ -10,7 +10,8 @@ COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 # inclui as de desenvolvimento: o build e o "prisma migrate deploy" da partida precisam delas
-RUN npm ci && npx playwright install --with-deps chromium && npm cache clean --force
+RUN npm ci && npx playwright install --with-deps chromium \
+  && npm cache clean --force && rm -rf /var/lib/apt/lists/*
 
 COPY . .
 RUN npm run build
@@ -21,4 +22,5 @@ USER node
 WORKDIR /app/apps/api
 EXPOSE 3000
 # aplica as migrações pendentes no banco (Neon) e sobe a API
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/server.js"]
+# exec: o node vira o processo principal e recebe o aviso de parada do Render (SIGTERM)
+CMD ["sh", "-c", "npx prisma migrate deploy && exec node dist/src/server.js"]

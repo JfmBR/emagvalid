@@ -47,6 +47,29 @@ describe('front-end pronto (produção)', () => {
     expect(resposta.text).toBe('<p>tela</p>')
   })
 
+  it('serve a tela inicial em /', async () => {
+    const resposta = await request(criarApp(pastaWeb)).get('/')
+
+    expect(resposta.status).toBe(200)
+    expect(resposta.text).toBe('<p>tela</p>')
+  })
+
+  it('mantém /api/saude', async () => {
+    const resposta = await request(criarApp(pastaWeb)).get('/api/saude')
+
+    expect(resposta.body).toEqual({ status: 'ok' })
+  })
+
+  it('não diz que roda com Express', async () => {
+    const resposta = await request(criarApp(pastaWeb)).get('/')
+
+    expect(resposta.headers['x-powered-by']).toBeUndefined()
+  })
+
+  it('recusa subir sem o index.html', () => {
+    expect(() => criarApp(join(pastaWeb, 'nao-existe'))).toThrow(/index\.html/)
+  })
+
   it('mantém o 404 em JSON nas rotas da API', async () => {
     const resposta = await request(criarApp(pastaWeb)).get('/api/nao-existe')
 
