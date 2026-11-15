@@ -344,3 +344,32 @@ docker compose version
 | O Playwright diz `Host system is missing dependencies`                  | Rode `npx playwright install-deps chromium`                                                                          |
 | Moveu ou renomeou a pasta do projeto e algo parou de funcionar          | Rode `npm install` de novo                                                                                           |
 | A tela mostra "API indisponível."                                       | Veja no terminal se a API subiu sem erro e se o `.env` existe na raiz de `emagvalid`                                 |
+
+## Publicar no Render e no Neon
+
+Feito uma vez pelo João; depois disso, o Render publica de novo a cada commit na `main` (Auto-Deploy, ligado por padrão em serviços ligados ao GitHub). A imagem já foi testada localmente (`docs/architecture.md`, seção Publicação).
+
+**Segurança:** a string de conexão do Neon tem a senha do banco. Cole-a só no painel do Render (e no DBeaver), nunca no chat, no código ou num commit.
+
+### 1. Banco no Neon
+
+1. Crie a conta em [neon.com](https://neon.com) e um projeto: PostgreSQL 17, região da AWS no leste dos EUA (N. Virginia), a mesma do Render, para a API e o banco ficarem perto.
+2. Em **Connect**, desligue **Connection pooling** e copie a string de conexão (começa com `postgresql://` e termina com `sslmode=require&channel_binding=require`). Use a conexão direta, sem `-pooler` no nome do servidor: é a que o `prisma migrate deploy` precisa. Se a API não conectar, tire o `&channel_binding=require` do fim (ainda não testado com o Neon).
+
+### 2. Serviço no Render
+
+1. Crie a conta em [render.com](https://render.com) e ligue a sua conta do GitHub.
+2. **New → Web Service**, escolha o repositório e preencha:
+   - **Branch:** `main`
+   - **Language** (ou Runtime): Docker (o Render acha o `Dockerfile` da raiz)
+   - **Region:** Virginia (US East)
+   - **Instance Type:** Free
+3. Em **Environment Variables**, crie `DATABASE_URL` com a string do Neon. Para medir a análise no servidor, crie também `ANALISAR_AO_INICIAR` com `https://www.w3.org/WAI/demos/bad/before/home.html`.
+4. Clique em **Deploy Web Service** e acompanhe os **Logs**: devem aparecer `All migrations have been successfully applied.`, `API do emagvalid em ...` e, se a variável existir, `Diagnóstico: ... analisada em X s`.
+5. Em **Settings → Health Check Path**, coloque `/api/saude`: o Render só manda tráfego para uma versão nova depois que essa rota responde.
+
+### 3. Conferir
+
+1. Abra o endereço `https://<nome>.onrender.com`: deve aparecer "API conectada.".
+2. No DBeaver, crie uma conexão PostgreSQL colando a string do Neon e confira as tabelas `usuarios`, `avaliacoes` e `falhas`.
+3. Deixe o serviço 15 minutos sem acesso (o plano gratuito hiberna) e meça quanto tempo a página leva para abrir de novo. Esse tempo inclui o `prisma migrate deploy`, que roda a cada partida; se ficar alto, é o primeiro a sair da partida. Anote esse tempo e o do `Diagnóstico` no Passo 3 do `docs/passo-a-passo-mvp.md`. Depois apague a variável `ANALISAR_AO_INICIAR`.

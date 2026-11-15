@@ -1,0 +1,19 @@
+# Fora da imagem: segredos, dependências e builds locais, documentação e ferramentas de IA
+**/.env
+**/.env.*
+!**/.env.example
+**/node_modules
+**/dist
+apps/api/generated
+.git
+.github
+.claude
+.superpowers
+projeto
+design-system
+graphify-out
+docs
+**/test-results
+**/playwright-report
+*.log
+**/CLAUDE.local.md
