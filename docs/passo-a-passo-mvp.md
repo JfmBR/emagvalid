@@ -122,7 +122,7 @@ Ainda a fechar:
 
 Publicar cedo evita a surpresa de descobrir na última semana que algo não roda no servidor (R7).
 
-- [ ] Criar um `Dockerfile` que monta a API, inclui o Chromium e serve o front-end pronto
+- [x] Criar um `Dockerfile` que monta a API, inclui o Chromium e serve o front-end pronto. Testado em 15/11/2026 com os limites do plano gratuito (512 MB, 0,1 CPU): análise em 11 a 21 s, pico de 242 MB (`docs/architecture.md`, seção Publicação). Painéis: `docs/instalacao.md`, seção "Publicar no Render e no Neon"
 - [ ] Criar o banco no Neon e configurar `DATABASE_URL` no Render
 - [ ] Conectar o DBeaver ao banco da nuvem e conferir que as tabelas foram criadas. Os dados de conexão ficam no painel do provedor; a senha não entra no repositório
 - [ ] Publicar e abrir o endereço público: deve aparecer "API conectada."

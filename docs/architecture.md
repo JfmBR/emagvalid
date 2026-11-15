@@ -20,8 +20,9 @@ Estado em 10/11/2026: estrutura pronta, ainda sem telas nem regras do MVP. A arq
 | ------------------------------- | ------------------------------------------------------------------------------------ |
 | `apps/web/src/App.tsx`          | Tela provisória: confirma que o front-end fala com a API (`/api/saude`)              |
 | `apps/web/vite.config.ts`       | Servidor em `5173` com proxy de `/api` para `localhost:3000`; configuração do Vitest |
-| `apps/api/src/app.ts`           | `criarApp()`: monta as rotas, o 404 de `/api` e o tratamento de erro                 |
-| `apps/api/src/server.ts`        | Sobe a API na porta `PORT` (padrão 3000)                                             |
+| `apps/api/src/app.ts`           | `criarApp()`: monta as rotas, o 404 de `/api`, o front-end pronto e o erro           |
+| `apps/api/src/server.ts`        | Sobe a API na porta `PORT` (padrão 3000); diagnóstico `ANALISAR_AO_INICIAR`          |
+| `Dockerfile`, `.dockerignore`   | Imagem de produção: API, front-end pronto e Chromium (seção Publicação)              |
 | `apps/api/src/rotas/`           | Uma rota por assunto (hoje só `saude.ts`)                                            |
 | `apps/api/src/db.ts`            | Única conexão Prisma da API                                                          |
 | `apps/api/prisma/schema.prisma` | Esquema (proposta inicial): `Usuario`, `Avaliacao`, `Falha`, `StatusAvaliacao`       |
@@ -41,6 +42,14 @@ Estado em 10/11/2026: estrutura pronta, ainda sem telas nem regras do MVP. A arq
 - Esquema em `apps/api/prisma/schema.prisma`; migrações em `apps/api/prisma/migrations/` (`20261105122347_inicial`).
 - Mudança no esquema entra como migração (`npm run db:migrate -w apps/api`), revisada antes de aplicar. Nunca migrar durante o build ou por requisição.
 - O DBeaver serve para ver e testar dados locais, não para mudar tabelas.
+
+## Publicação
+
+- Uma imagem só (`Dockerfile`, base `node:26-trixie-slim`) roda no Render, plano gratuito: a API serve `/api` e também o front-end pronto (`PASTA_WEB=/app/apps/web/dist`); qualquer rota fora de `/api` devolve o `index.html`. O Chromium do Playwright vai na imagem porque a análise roda no servidor.
+- Banco no Neon (plano gratuito). Na partida, o contêiner roda `prisma migrate deploy` (aplica as migrações já revisadas, nunca cria novas) e depois sobe a API.
+- Variáveis no painel do Render, nunca no repositório: `DATABASE_URL` (obrigatória) e, só para medir, `ANALISAR_AO_INICIAR=<url>`, que analisa essa URL ao subir e escreve o tempo no log. A URL vem só do painel, não de um pedido, para não abrir SSRF.
+- Medição local em 15/11/2026, com os limites do plano gratuito (`docker run --memory=512m --cpus=0.1`): example.com em 11,4 s; página de demonstração do W3C em 21,2 s, com pico de 242 MB. A CPU do Render pode ser mais lenta; falta medir lá (`docs/passo-a-passo-mvp.md`, Passo 3).
+- Passo a passo dos painéis: `docs/instalacao.md`, seção "Publicar no Render e no Neon".
 
 ## Decisões
 

@@ -1,7 +1,10 @@
+import { resolve } from 'node:path'
 import express, { type ErrorRequestHandler } from 'express'
 import { rotasSaude } from './rotas/saude.js'
 
-export function criarApp() {
+// pastaWeb: build do front-end (apps/web/dist), servido pela própria API em produção.
+// Em desenvolvimento fica vazia: o Vite serve as telas e repassa /api para cá.
+export function criarApp(pastaWeb?: string) {
   const app = express()
 
   app.use(express.json())
@@ -10,6 +13,15 @@ export function criarApp() {
   app.use('/api', (_req, res) => {
     res.status(404).json({ erro: 'Rota não encontrada.' })
   })
+
+  if (pastaWeb) {
+    const index = resolve(pastaWeb, 'index.html')
+    app.use(express.static(pastaWeb))
+    // qualquer outra rota é uma tela do React: devolve o index.html e o React decide o que mostrar
+    app.get('/{*tela}', (_req, res) => {
+      res.sendFile(index)
+    })
+  }
 
   const tratarErro: ErrorRequestHandler = (erro, _req, res, _next) => {
     console.error(erro)
