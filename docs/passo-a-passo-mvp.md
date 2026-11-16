@@ -168,6 +168,7 @@ Requisitos: RF02, RF03, RF04, RF17, RNF06. **Checkpoint 19/11.**
 - [ ] Tela 3: campo da URL com exemplo e ajuda curta ("Uma página pública por vez…")
 - [ ] Tela 4: progresso em 3 passos, perguntando à API a cada 2 s; 4b (URL inválida) e 4c (demorou demais)
 - [ ] Tempo máximo da análise: 60 s por página, já com as orientações (RNF06)
+- [ ] Página grande (R7): logo depois de o Chromium abrir a página, contar os elementos; acima de um limite, a Tela 4 mostra "Por ser uma página grande, a análise pode demorar mais de 1 minuto." e a análise continua. O limite sai de medições com páginas reais
 - [ ] Conferir no DBeaver as linhas de `avaliacoes` e `falhas` de uma análise real
 
 **Terminou quando:** você digita uma URL real e as falhas ficam salvas no banco.
@@ -191,6 +192,7 @@ Requisitos: RF07, RF08, RF10, RF11.
 - [ ] **Depois a IA (Google Gemini):** `apps/api/src/orientacoes/ia.ts` manda ao Gemini a falha, o trecho e o requisito da lista fechada, e pede a resposta em formato fixo (JSON). Se a IA citar requisito fora da lista, descartar e usar o texto padrão
 - [ ] Mandar à IA só o trecho da página pública com a falha, sem dado do usuário, e dizer isso na Tela 6 (RNF05)
 - [ ] Guardar as orientações já geradas para não chamar o Gemini de novo pela mesma falha: o plano gratuito limita as chamadas (R7)
+- [ ] Se o limite do Gemini acabar (R7): mostrar "Serviço de IA indisponível no momento." e, abaixo, o texto padrão do requisito
 - [ ] Chave da IA só no `.env` e no Render; nunca no código
 - [ ] Tela 6: requisito com link oficial, ocorrência com local e trecho, bloco "Sugestão da IA — revise antes de usar", botões Aprovar, Editar e Descartar, navegação entre falhas
 - [ ] Gravar `orientacaoFinal` e `orientacaoAprovada`
