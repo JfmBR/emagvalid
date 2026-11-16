@@ -354,7 +354,7 @@ Feito uma vez pelo João; depois disso, o Render publica de novo a cada commit n
 ### 1. Banco no Neon
 
 1. Crie a conta em [neon.com](https://neon.com) e um projeto: PostgreSQL 17, região da AWS no leste dos EUA (N. Virginia), a mesma do Render, para a API e o banco ficarem perto.
-2. Em **Connect**, desligue **Connection pooling** e copie a string de conexão (começa com `postgresql://` e termina com `sslmode=require&channel_binding=require`). Use a conexão direta, sem `-pooler` no nome do servidor: é a que o `prisma migrate deploy` precisa. Se a API não conectar, tire o `&channel_binding=require` do fim (ainda não testado com o Neon).
+2. Em **Connect**, desligue **Connection pooling** e copie a string de conexão (começa com `postgresql://` e termina com `sslmode=require&channel_binding=require`). Use a conexão direta, sem `-pooler` no nome do servidor: é a que o `prisma migrate deploy` precisa. A API conecta com a string inteira, com `channel_binding=require` (testado em 15/11/2026).
 
 ### 2. Serviço no Render
 
