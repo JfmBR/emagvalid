@@ -13,8 +13,8 @@ O AcessaWeb é uma ferramenta de acessibilidade: a própria interface precisa se
 - Fonte única do visual: `design-system/` (tokens, componentes, marca e ícones). Comece pelo `design-system/README.md`.
 - Valores em `design-system/tokens.json`; depois de mudar, rode `node scripts/gerar-tokens-css.mjs` para atualizar o `tokens.css`.
 - Ao construir uma tela, use `design-system/tokens.css` e as classes de `design-system/components/bundle.css`. Não crie cor, fonte ou espaçamento fora dos tokens.
-- A tela provisória (`apps/web/src/index.css`) ainda usa a paleta antiga; troque pelos tokens ao portar as telas do protótipo.
-- A tela provisória já traz o link "Pular para o conteúdo", `main` com foco programático e um `<output>` que o leitor de tela anuncia quando o estado da API muda.
+- O app importa `tokens.css` e `bundle.css` em `apps/web/src/main.tsx`; o `index.css` guarda só o que o `design-system/` não cobre. Componentes React em `apps/web/src/componentes/` (`Botao`, `Campo`, `Selo`, `Aviso`, `Layout`).
+- O `Layout` traz o link "Pular para o conteúdo", o cabeçalho com a marca e o `main`. Ao trocar de tela, o foco vai para o `h1`; cada tela define o seu `<title>`.
 
 ## Interação
 

@@ -7,7 +7,7 @@ Estado em 10/11/2026: estrutura pronta, ainda sem telas nem regras do MVP. A arq
 | Parte              | Tecnologia (versão no `package-lock.json`)                                           |
 | ------------------ | ------------------------------------------------------------------------------------ |
 | Monorepo           | npm workspaces (`apps/web`, `apps/api`), Node.js 26 (`.nvmrc`)                       |
-| Front-end          | React 19.3, Vite 8.3, TypeScript 7.0                                                 |
+| Front-end          | React 19.3, Vite 8.3, TypeScript 7.0, React Router 8.5 (modo declarativo)            |
 | API                | Express 5.3, TypeScript, `tsx` em desenvolvimento                                    |
 | Banco              | PostgreSQL 17 (Docker local; Neon em produção), Prisma 7.10 com `@prisma/adapter-pg` |
 | Análise de páginas | Playwright 1.64 e `@axe-core/playwright` 4.14 (instalados na API, ainda sem código)  |
@@ -18,7 +18,9 @@ Estado em 10/11/2026: estrutura pronta, ainda sem telas nem regras do MVP. A arq
 
 | Caminho                         | Papel                                                                                |
 | ------------------------------- | ------------------------------------------------------------------------------------ |
-| `apps/web/src/App.tsx`          | Tela provisória: confirma que o front-end fala com a API (`/api/saude`)              |
+| `apps/web/src/App.tsx`          | Rotas das telas (React Router); cada passo do MVP acrescenta a rota da sua tela      |
+| `apps/web/src/componentes/`     | `Botao`, `Campo`, `Selo`, `Aviso` e `Layout`, sobre as classes de `design-system/`   |
+| `apps/web/src/paginas/`         | Uma tela por arquivo; hoje a Inicial provisória (`/api/saude`) e a não encontrada    |
 | `apps/web/vite.config.ts`       | Servidor em `5173` com proxy de `/api` para `localhost:3000`; configuração do Vitest |
 | `apps/api/src/app.ts`           | `criarApp()`: monta as rotas, o 404 de `/api`, o front-end pronto e o erro           |
 | `apps/api/src/server.ts`        | Sobe a API na porta `PORT` (padrão 3000)                                             |
@@ -58,6 +60,7 @@ Estado em 10/11/2026: estrutura pronta, ainda sem telas nem regras do MVP. A arq
 | 03/11/2026 | Prisma 7 (entre Prisma, SQL puro e Drizzle)                                | `projeto/contexto_agente/07-pendencias-e-decisoes.md`, seção D |
 | 05/11/2026 | Render + Neon, Gemini, nota com pesos, 60 s por análise                    | `07`, seção D                                                  |
 | 10/11/2026 | Código e documentação num só repositório; dados de entrevistados fora dele | `07`, seção D                                                  |
+| 16/11/2026 | React Router para as rotas das telas                                       | `07`, seção D                                                  |
 
 ## Manutenção
 
