@@ -21,7 +21,7 @@ Estado em 10/11/2026: estrutura pronta, ainda sem telas nem regras do MVP. A arq
 | `apps/web/src/App.tsx`          | Tela provisória: confirma que o front-end fala com a API (`/api/saude`)              |
 | `apps/web/vite.config.ts`       | Servidor em `5173` com proxy de `/api` para `localhost:3000`; configuração do Vitest |
 | `apps/api/src/app.ts`           | `criarApp()`: monta as rotas, o 404 de `/api`, o front-end pronto e o erro           |
-| `apps/api/src/server.ts`        | Sobe a API na porta `PORT` (padrão 3000); diagnóstico `ANALISAR_AO_INICIAR`          |
+| `apps/api/src/server.ts`        | Sobe a API na porta `PORT` (padrão 3000)                                             |
 | `Dockerfile`, `.dockerignore`   | Imagem de produção: API, front-end pronto e Chromium (seção Publicação)              |
 | `apps/api/src/rotas/`           | Uma rota por assunto (hoje só `saude.ts`)                                            |
 | `apps/api/src/db.ts`            | Única conexão Prisma da API                                                          |
@@ -47,8 +47,8 @@ Estado em 10/11/2026: estrutura pronta, ainda sem telas nem regras do MVP. A arq
 
 - Uma imagem só (`Dockerfile`, base `node:26-trixie-slim`) roda no Render, plano gratuito: a API serve `/api` e também o front-end pronto (`PASTA_WEB=/app/apps/web/dist`); qualquer rota fora de `/api` devolve o `index.html`. O Chromium do Playwright vai na imagem porque a análise roda no servidor.
 - Banco no Neon (plano gratuito). Na partida, o contêiner roda `prisma migrate deploy` (aplica as migrações já revisadas, nunca cria novas) e depois sobe a API.
-- Variáveis no painel do Render, nunca no repositório: `DATABASE_URL` (obrigatória) e, só para medir, `ANALISAR_AO_INICIAR=<url>`, que analisa essa URL ao subir e escreve o tempo no log. A URL vem só do painel, não de um pedido, para não abrir SSRF.
-- Medição local em 15/11/2026, com os limites do plano gratuito (`docker run --memory=512m --cpus=0.1`): example.com em 11,4 s; página de demonstração do W3C em 21,2 s, com pico de 242 MB. A CPU do Render pode ser mais lenta; falta medir lá (`docs/passo-a-passo-mvp.md`, Passo 3).
+- Variáveis no painel do Render, nunca no repositório: `DATABASE_URL` (obrigatória).
+- Medição local em 15/11/2026, com os limites do plano gratuito (`docker run --memory=512m --cpus=0.1`): example.com em 11,4 s; página de demonstração do W3C em 21,2 s, com pico de 242 MB. No Render (16/11/2026): a mesma página do W3C em 15,6 s; acordar depois de hibernar levou 52,8 s, e com o serviço acordado a página abre em 0,6 s. Acordar + análise passa dos 60 s do RNF06 (risco R7; ver `docs/passo-a-passo-mvp.md`, Passo 3). O diagnóstico usado para medir (`ANALISAR_AO_INICIAR`) foi retirado do código.
 - Passo a passo dos painéis: `docs/instalacao.md`, seção "Publicar no Render e no Neon".
 
 ## Decisões

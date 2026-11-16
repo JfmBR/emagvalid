@@ -123,11 +123,11 @@ Ainda a fechar:
 Publicar cedo evita a surpresa de descobrir na última semana que algo não roda no servidor (R7).
 
 - [x] Criar um `Dockerfile` que monta a API, inclui o Chromium e serve o front-end pronto. Testado em 15/11/2026 com os limites do plano gratuito (512 MB, 0,1 CPU): análise em 11 a 21 s, pico de 242 MB (`docs/architecture.md`, seção Publicação). Painéis: `docs/instalacao.md`, seção "Publicar no Render e no Neon"
-- [ ] Criar o banco no Neon e configurar `DATABASE_URL` no Render
-- [ ] Conectar o DBeaver ao banco da nuvem e conferir que as tabelas foram criadas. Os dados de conexão ficam no painel do provedor; a senha não entra no repositório
-- [ ] Publicar e abrir o endereço público: deve aparecer "API conectada."
-- [ ] Rodar o script do Passo 1 **no servidor** para ver se o Chromium funciona lá
-- [ ] Medir os limites do plano gratuito (R7 do Plano v1): o Chromium cabe na memória do Render? Quanto tempo o serviço leva para acordar depois de hibernar? Some isso aos 60 s do RNF06
+- [x] Criar o banco no Neon e configurar `DATABASE_URL` no Render
+- [x] Conectar o DBeaver ao banco da nuvem e conferir que as tabelas foram criadas. Os dados de conexão ficam no painel do provedor; a senha não entra no repositório
+- [x] Publicar e abrir o endereço público: deve aparecer "API conectada." (https://acessaweb.onrender.com)
+- [x] Rodar o script do Passo 1 **no servidor** para ver se o Chromium funciona lá: a página de demonstração do W3C foi analisada em 15,6 s, com 7 regras com falha; o pico de memória no Render não foi medido
+- [x] Medir os limites do plano gratuito (R7 do Plano v1): o Chromium cabe na memória do Render? Quanto tempo o serviço leva para acordar depois de hibernar? Some isso aos 60 s do RNF06. Medido em 16/11/2026: acordar levou 52,8 s (acordado, 0,6 s). Acordar + análise = 68,4 s, acima dos 60 s, e ainda sem o tempo da IA. **Pendente:** decidir com o mentor o que fazer (risco R7)
 
 **Terminou quando:** o esqueleto está num endereço público e a análise roda no servidor dentro dos limites do plano gratuito.
 
@@ -168,6 +168,7 @@ Requisitos: RF02, RF03, RF04, RF17, RNF06. **Checkpoint 19/11.**
 - [ ] Tela 3: campo da URL com exemplo e ajuda curta ("Uma página pública por vez…")
 - [ ] Tela 4: progresso em 3 passos, perguntando à API a cada 2 s; 4b (URL inválida) e 4c (demorou demais)
 - [ ] Tempo máximo da análise: 60 s por página, já com as orientações (RNF06)
+- [ ] Página grande (R7): logo depois de o Chromium abrir a página, contar os elementos; acima de um limite, a Tela 4 mostra "Por ser uma página grande, a análise pode demorar mais de 1 minuto." e a análise continua. O limite sai de medições com páginas reais
 - [ ] Conferir no DBeaver as linhas de `avaliacoes` e `falhas` de uma análise real
 
 **Terminou quando:** você digita uma URL real e as falhas ficam salvas no banco.
@@ -191,6 +192,7 @@ Requisitos: RF07, RF08, RF10, RF11.
 - [ ] **Depois a IA (Google Gemini):** `apps/api/src/orientacoes/ia.ts` manda ao Gemini a falha, o trecho e o requisito da lista fechada, e pede a resposta em formato fixo (JSON). Se a IA citar requisito fora da lista, descartar e usar o texto padrão
 - [ ] Mandar à IA só o trecho da página pública com a falha, sem dado do usuário, e dizer isso na Tela 6 (RNF05)
 - [ ] Guardar as orientações já geradas para não chamar o Gemini de novo pela mesma falha: o plano gratuito limita as chamadas (R7)
+- [ ] Se o limite do Gemini acabar (R7): mostrar "Serviço de IA indisponível no momento." e, abaixo, o texto padrão do requisito
 - [ ] Chave da IA só no `.env` e no Render; nunca no código
 - [ ] Tela 6: requisito com link oficial, ocorrência com local e trecho, bloco "Sugestão da IA — revise antes de usar", botões Aprovar, Editar e Descartar, navegação entre falhas
 - [ ] Gravar `orientacaoFinal` e `orientacaoAprovada`
