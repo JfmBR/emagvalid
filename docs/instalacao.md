@@ -364,12 +364,12 @@ Feito uma vez pelo João; depois disso, o Render publica de novo a cada commit n
    - **Language** (ou Runtime): Docker (o Render acha o `Dockerfile` da raiz)
    - **Region:** Virginia (US East)
    - **Instance Type:** Free
-3. Em **Environment Variables**, crie `DATABASE_URL` com a string do Neon. Para medir a análise no servidor, crie também `ANALISAR_AO_INICIAR` com `https://www.w3.org/WAI/demos/bad/before/home.html`.
-4. Clique em **Deploy Web Service** e acompanhe os **Logs**: devem aparecer `All migrations have been successfully applied.`, `API do emagvalid em ...` e, se a variável existir, `Diagnóstico: ... analisada em X s`.
+3. Em **Environment Variables**, crie `DATABASE_URL` com a string do Neon.
+4. Clique em **Deploy Web Service** e acompanhe os **Logs**: devem aparecer `All migrations have been successfully applied.` e `API do emagvalid em ...`.
 5. Em **Settings → Health Check Path**, coloque `/api/saude`: o Render só manda tráfego para uma versão nova depois que essa rota responde.
 
 ### 3. Conferir
 
 1. Abra o endereço `https://<nome>.onrender.com`: deve aparecer "API conectada.".
 2. No DBeaver, crie uma conexão PostgreSQL colando a string do Neon e confira as tabelas `usuarios`, `avaliacoes` e `falhas`.
-3. Deixe o serviço 15 minutos sem acesso (o plano gratuito hiberna) e meça quanto tempo a página leva para abrir de novo. Esse tempo inclui o `prisma migrate deploy`, que roda a cada partida; se ficar alto, é o primeiro a sair da partida. Anote esse tempo e o do `Diagnóstico` no Passo 3 do `docs/passo-a-passo-mvp.md`. Depois apague a variável `ANALISAR_AO_INICIAR`.
+3. O plano gratuito hiberna depois de 15 minutos sem acesso. Para medir quanto a página leva para abrir de novo, rode `curl -o /dev/null -s -w "%{http_code} %{time_total}s\n" https://<nome>.onrender.com/` depois desse tempo. Esse tempo inclui o `prisma migrate deploy`, que roda a cada partida. A medição de 16/11/2026 está no Passo 3 do `docs/passo-a-passo-mvp.md`.

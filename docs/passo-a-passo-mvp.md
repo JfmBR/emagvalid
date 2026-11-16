@@ -123,11 +123,11 @@ Ainda a fechar:
 Publicar cedo evita a surpresa de descobrir na última semana que algo não roda no servidor (R7).
 
 - [x] Criar um `Dockerfile` que monta a API, inclui o Chromium e serve o front-end pronto. Testado em 15/11/2026 com os limites do plano gratuito (512 MB, 0,1 CPU): análise em 11 a 21 s, pico de 242 MB (`docs/architecture.md`, seção Publicação). Painéis: `docs/instalacao.md`, seção "Publicar no Render e no Neon"
-- [ ] Criar o banco no Neon e configurar `DATABASE_URL` no Render
-- [ ] Conectar o DBeaver ao banco da nuvem e conferir que as tabelas foram criadas. Os dados de conexão ficam no painel do provedor; a senha não entra no repositório
-- [ ] Publicar e abrir o endereço público: deve aparecer "API conectada."
-- [ ] Rodar o script do Passo 1 **no servidor** para ver se o Chromium funciona lá
-- [ ] Medir os limites do plano gratuito (R7 do Plano v1): o Chromium cabe na memória do Render? Quanto tempo o serviço leva para acordar depois de hibernar? Some isso aos 60 s do RNF06
+- [x] Criar o banco no Neon e configurar `DATABASE_URL` no Render
+- [x] Conectar o DBeaver ao banco da nuvem e conferir que as tabelas foram criadas. Os dados de conexão ficam no painel do provedor; a senha não entra no repositório
+- [x] Publicar e abrir o endereço público: deve aparecer "API conectada." (https://acessaweb.onrender.com)
+- [x] Rodar o script do Passo 1 **no servidor** para ver se o Chromium funciona lá: a página de demonstração do W3C foi analisada em 15,6 s, com 7 regras com falha, sem estourar a memória
+- [x] Medir os limites do plano gratuito (R7 do Plano v1): o Chromium cabe na memória do Render? Quanto tempo o serviço leva para acordar depois de hibernar? Some isso aos 60 s do RNF06. Medido em 16/11/2026: acordar levou 52,8 s (acordado, 0,6 s). Acordar + análise = 68,4 s, acima dos 60 s, e ainda sem o tempo da IA. **Pendente:** decidir com o mentor o que fazer (risco R7)
 
 **Terminou quando:** o esqueleto está num endereço público e a análise roda no servidor dentro dos limites do plano gratuito.
 
