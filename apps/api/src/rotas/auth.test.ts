@@ -175,3 +175,71 @@ describe('sessão', () => {
     expect(banco.sessoes).toHaveLength(0)
   })
 })
+
+// Achados da revisão de segurança de 16/11/2026 (relatório na pasta privada)
+describe('proteções', () => {
+  it('corpo grande demais é recusado antes de chegar às rotas (evita travar a regex do e-mail)', async () => {
+    const resposta = await request(criarApp())
+      .post('/api/auth/cadastro')
+      .send({ nome: 'X', email: `${'a'.repeat(20_000)}@`, senha: 'senha-forte-1' })
+
+    expect(resposta.status).toBe(413)
+    expect(banco.usuarios).toHaveLength(0)
+  })
+
+  it('e-mail acima de 254 caracteres é recusado no cadastro', async () => {
+    const resposta = await request(criarApp())
+      .post('/api/auth/cadastro')
+      .send({ ...helena, email: `${'a'.repeat(250)}@empresa.com.br` })
+
+    expect(resposta.status).toBe(400)
+    expect(resposta.body.campos.email).toMatch(/Digite um e-mail válido/)
+  })
+
+  it(`tentativas simultâneas não passam de ${MAX_TENTATIVAS}`, async () => {
+    const dados = { ...helena, email: 'simultaneo@empresa.com.br' }
+    await cadastrar(request.agent(criarApp()), dados)
+    const app = criarApp()
+
+    const respostas = await Promise.all(
+      Array.from({ length: 10 }, () =>
+        request(app).post('/api/auth/entrar').send({ email: dados.email, senha: 'errada-123' }),
+      ),
+    )
+
+    expect(respostas.filter((r) => r.status === 401).length).toBeLessThanOrEqual(MAX_TENTATIVAS)
+    expect(respostas.filter((r) => r.status === 429).length).toBeGreaterThanOrEqual(5)
+  })
+
+  it('login com e-mail ou senha longos demais recebe a mesma mensagem genérica', async () => {
+    const app = criarApp()
+    const emailLongo = await request(app)
+      .post('/api/auth/entrar')
+      .send({ email: `${'a'.repeat(300)}@empresa.com.br`, senha: 'qualquer-1' })
+    const senhaLonga = await request(app)
+      .post('/api/auth/entrar')
+      .send({ email: 'helena@empresa.com.br', senha: 'a'.repeat(200) })
+
+    expect(emailLongo.status).toBe(401)
+    expect(senhaLonga.body).toEqual({ erro: 'E-mail ou senha incorretos.' })
+  })
+
+  it('outro site não consegue deslogar nem entrar (CSRF)', async () => {
+    const app = criarApp()
+
+    const porOutroSite = await request(app)
+      .post('/api/auth/sair')
+      .set('Sec-Fetch-Site', 'cross-site')
+    const porOrigemEstranha = await request(app)
+      .post('/api/auth/entrar')
+      .set('Origin', 'https://mal.exemplo')
+      .send({ email: helena.email, senha: helena.senha })
+    const pelasTelas = await request(app)
+      .post('/api/auth/sair')
+      .set('Sec-Fetch-Site', 'same-origin')
+
+    expect(porOutroSite.status).toBe(403)
+    expect(porOrigemEstranha.status).toBe(403)
+    expect(pelasTelas.status).toBe(204)
+  })
+})

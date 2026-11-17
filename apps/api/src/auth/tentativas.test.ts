@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   JANELA_MS,
+  MAX_REGISTROS,
   MAX_TENTATIVAS,
   bloqueado,
   limparTentativas,
   registrarErro,
+  totalRegistros,
 } from './tentativas.js'
 
 describe('tentativas de login', () => {
@@ -25,5 +27,11 @@ describe('tentativas de login', () => {
     limparTentativas(email)
 
     expect(bloqueado(email)).toBe(false)
+  })
+
+  it('a memória tem teto, mesmo com muitos e-mails inventados', () => {
+    for (let i = 0; i < MAX_REGISTROS + 50; i++) registrarErro(`inventado${i}@exemplo.com`)
+
+    expect(totalRegistros()).toBeLessThanOrEqual(MAX_REGISTROS)
   })
 })

@@ -17,7 +17,10 @@ export async function gerarHashSenha(senha: string) {
 
 export async function conferirSenha(senha: string, guardado: string) {
   const [algoritmo, salHex, hashHex] = guardado.split('$')
-  if (algoritmo !== 'scrypt' || !salHex || !hashHex) return false
+  // tamanho exato: um valor corrompido (hash vazio) não pode virar "senha certa"
+  if (algoritmo !== 'scrypt' || salHex?.length !== 32 || hashHex?.length !== TAMANHO_HASH * 2) {
+    return false
+  }
   const esperado = Buffer.from(hashHex, 'hex')
   const hash = await scryptAsync(senha, Buffer.from(salHex, 'hex'), esperado.length)
   // comparação em tempo constante: o tempo da resposta não dá pista da senha

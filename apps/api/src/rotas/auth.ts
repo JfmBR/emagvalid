@@ -31,7 +31,8 @@ rotasAuth.post('/cadastro', async (req, res) => {
   const campos: Campos = {}
   if (!nome) campos.nome = 'Digite seu nome.'
   else if (nome.length > 100) campos.nome = 'Use até 100 caracteres no nome.'
-  if (!EMAIL_VALIDO.test(email) || email.length > 254) campos.email = MSG_EMAIL
+  // o tamanho vem antes da regex: com texto enorme a regex fica lenta e trava a API
+  if (email.length > 254 || !EMAIL_VALIDO.test(email)) campos.email = MSG_EMAIL
   if (senha.length < 8) campos.senha = 'A senha precisa ter pelo menos 8 caracteres.'
   else if (senha.length > 128) campos.senha = 'Use até 128 caracteres na senha.'
   if (Object.keys(campos).length > 0) {
@@ -65,15 +66,22 @@ rotasAuth.post('/entrar', async (req, res) => {
   const email = texto(req.body?.email).trim().toLowerCase()
   const senha = texto(req.body?.senha)
 
+  // tamanhos que o cadastro não aceita: recusa antes do limitador (não vira chave na memória)
+  if (email.length > 254 || senha.length > 128) {
+    res.status(401).json({ erro: MSG_LOGIN })
+    return
+  }
   if (bloqueado(email)) {
     res.status(429).json({ erro: 'Muitas tentativas. Tente de novo em 15 minutos.' })
     return
   }
+  // conta a tentativa antes de esperar o banco: pedidos simultâneos não furam o limite.
+  // Se a senha estiver certa, a contagem é zerada logo abaixo.
+  registrarErro(email)
 
   const usuario = await db.usuario.findUnique({ where: { email } })
   const senhaCerta = await conferirSenha(senha, usuario?.senhaHash ?? (await HASH_FALSO))
   if (!usuario || !senhaCerta) {
-    registrarErro(email)
     res.status(401).json({ erro: MSG_LOGIN })
     return
   }

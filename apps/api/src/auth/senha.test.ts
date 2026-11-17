@@ -23,4 +23,9 @@ describe('senha', () => {
   it('recusa um valor guardado em formato desconhecido', async () => {
     expect(await conferirSenha('qualquer', 'texto-sem-formato')).toBe(false)
   })
+
+  it('recusa um hash guardado de tamanho errado (dado corrompido não abre a conta)', async () => {
+    expect(await conferirSenha('x', 'scrypt$ab$zz')).toBe(false)
+    expect(await conferirSenha('x', 'scrypt$$')).toBe(false)
+  })
 })
