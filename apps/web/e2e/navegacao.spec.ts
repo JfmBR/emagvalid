@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
 test.beforeEach(async ({ page }) => {
-  await page.route('**/api/saude', (rota) => rota.fulfill({ status: 503 }))
+  await page.route('**/api/auth/eu', (rota) => rota.fulfill({ status: 401, json: {} }))
 })
 
 test('endereço desconhecido mostra a página não encontrada, sem violações sérias', async ({

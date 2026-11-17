@@ -2,10 +2,23 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import request from 'supertest'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { criarApp } from './app.js'
 
 describe('API', () => {
+  it('JSON malformado responde 400 e não escreve o corpo (que pode ter senha) no log', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const resposta = await request(criarApp())
+      .post('/api/saude')
+      .set('Content-Type', 'application/json')
+      .send('{"email":"a@b.com","senha":"segredo-123"')
+
+    expect(resposta.status).toBe(400)
+    expect(JSON.stringify(log.mock.calls)).not.toContain('segredo-123')
+    log.mockRestore()
+  })
+
   it('responde ok em /api/saude', async () => {
     const resposta = await request(criarApp()).get('/api/saude')
 
@@ -17,6 +30,15 @@ describe('API', () => {
     const resposta = await request(criarApp()).get('/api/nao-existe')
 
     expect(resposta.status).toBe(404)
+  })
+
+  it('manda os cabeçalhos de segurança (CSP, nosniff, sem iframe de outro site)', async () => {
+    const resposta = await request(criarApp()).get('/api/saude')
+
+    expect(resposta.headers['content-security-policy']).toContain("frame-ancestors 'none'")
+    expect(resposta.headers['content-security-policy']).toContain("default-src 'self'")
+    expect(resposta.headers['x-content-type-options']).toBe('nosniff')
+    expect(resposta.headers['referrer-policy']).toBe('strict-origin-when-cross-origin')
   })
 })
 

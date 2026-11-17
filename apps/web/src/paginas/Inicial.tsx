@@ -1,37 +1,38 @@
-import { useEffect, useState } from 'react'
+import { Link } from 'react-router'
 import { Aviso } from '../componentes/Aviso.tsx'
+import { useSessao } from '../sessao.tsx'
 
-type EstadoApi = 'verificando' | 'ok' | 'indisponivel'
-
-const textoEstado: Record<EstadoApi, string> = {
-  verificando: 'Verificando a conexão com a API…',
-  ok: 'API conectada.',
-  indisponivel: 'API indisponível. Confira se ela está rodando (npm run dev:api).',
-}
-
-// Tela 1 provisória: confirma que o front-end fala com a API ("API conectada." é a conferência
-// da publicação em docs/instalacao.md). O conteúdo da Tela 1 entra no Passo 5.
+// Tela 1 · Inicial. Texto do protótipo beta (projeto/docs/prototipo/beta/), sem o que fica fora do MVP.
 export function Inicial() {
-  const [estado, setEstado] = useState<EstadoApi>('verificando')
-
-  useEffect(() => {
-    fetch('/api/saude')
-      .then((resposta) => setEstado(resposta.ok ? 'ok' : 'indisponivel'))
-      .catch(() => setEstado('indisponivel'))
-  }, [])
+  const { usuario, carregando } = useSessao()
 
   return (
     <div className="tela">
       <title>AcessaWeb</title>
-      <h1>Auditoria de acessibilidade pelo eMAG 3.1</h1>
+      <div className="cabeca">
+        <p className="sobre">Mais inclusão, mais oportunidades.</p>
+        <h1>Acessibilidade digital, com orientação para quem precisa fazer acontecer.</h1>
+        <p>
+          Analisamos a página do seu site com base no eMAG 3.1, mostramos as barreiras de acesso e
+          sugerimos como corrigir cada uma.
+        </p>
+      </div>
       <Aviso>
         <p>
           A nota e as orientações complementam a avaliação humana. Não são certificação de
           conformidade.
         </p>
       </Aviso>
-      {/* <output> é anunciado pelo leitor de tela quando o texto muda */}
-      <output className="estado-api">{textoEstado[estado]}</output>
+      {carregando || usuario ? null : (
+        <p className="acoes">
+          <Link className="btn" to="/cadastro">
+            Criar conta
+          </Link>
+          <Link className="btn sec" to="/entrar">
+            Entrar
+          </Link>
+        </p>
+      )}
     </div>
   )
 }

@@ -20,8 +20,23 @@ model Usuario {
   senhaHash  String // nunca a senha em texto (RNF04)
   criadoEm   DateTime    @default(now())
   avaliacoes Avaliacao[]
+  sessoes    Sessao[]
 
   @@map("usuarios")
+}
+
+// Sessão de quem entrou (RNF04). O cookie leva um código aleatório; aqui fica só o hash dele,
+// para um vazamento do banco não entregar sessões válidas. "Sair" apaga a linha.
+model Sessao {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  usuarioId String
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  criadaEm  DateTime @default(now())
+  expiraEm  DateTime
+
+  @@index([usuarioId])
+  @@map("sessoes")
 }
 
 enum StatusAvaliacao {

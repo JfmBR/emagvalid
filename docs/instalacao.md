@@ -1,6 +1,6 @@
 # Guia de instalação
 
-Tudo o que é preciso instalar para rodar o AcessaWeb no seu computador, do zero até a tela "API conectada.". Escrito em 05/11/2026; links e versões conferidos nos sites oficiais nessa data.
+Tudo o que é preciso instalar para rodar o AcessaWeb no seu computador, do zero até a tela inicial com a API respondendo. Escrito em 05/11/2026; links e versões conferidos nos sites oficiais nessa data.
 
 - [Windows](#windows)
 - [Linux (Debian 13 e Ubuntu 24.04)](#linux-debian-13-e-ubuntu-2404)
@@ -140,7 +140,7 @@ O que cada linha faz:
 
 ### 10. Conferir
 
-1. Abra [http://localhost:5173](http://localhost:5173): deve aparecer **"API conectada."**
+1. Abra [http://localhost:5173](http://localhost:5173): deve aparecer a tela inicial do AcessaWeb. Depois abra [http://localhost:5173/api/saude](http://localhost:5173/api/saude): deve aparecer `{"status":"ok"}`, sinal de que a API está no ar.
 2. Para parar, `Ctrl+C` no PowerShell; para desligar o banco, `npm run db:down`.
 3. Para conferir as versões instaladas:
 
@@ -321,7 +321,7 @@ No Linux, o `--with-deps` é necessário: sem ele, o Chromium do Playwright pode
 
 ### 9. Conferir
 
-1. Abra [http://localhost:5173](http://localhost:5173): deve aparecer **"API conectada."**
+1. Abra [http://localhost:5173](http://localhost:5173): deve aparecer a tela inicial do AcessaWeb. Depois abra [http://localhost:5173/api/saude](http://localhost:5173/api/saude): deve aparecer `{"status":"ok"}`, sinal de que a API está no ar.
 2. Para parar, `Ctrl+C` no terminal; para desligar o banco, `npm run db:down`.
 3. Versões instaladas:
 
@@ -370,6 +370,6 @@ Feito uma vez pelo João; depois disso, o Render publica de novo a cada commit n
 
 ### 3. Conferir
 
-1. Abra o endereço `https://<nome>.onrender.com`: deve aparecer "API conectada.".
-2. No DBeaver, crie uma conexão PostgreSQL colando a string do Neon e confira as tabelas `usuarios`, `avaliacoes` e `falhas`.
+1. Abra o endereço `https://<nome>.onrender.com/api/saude`: deve aparecer `{"status":"ok"}`. Sem `/api/saude`, abre a tela inicial do AcessaWeb.
+2. No DBeaver, crie uma conexão PostgreSQL colando a string do Neon e confira as tabelas `usuarios`, `avaliacoes`, `falhas` e `sessoes`.
 3. O plano gratuito hiberna depois de 15 minutos sem acesso. Para medir quanto a página leva para abrir de novo, rode `curl -o /dev/null -s -w "%{http_code} %{time_total}s\n" https://<nome>.onrender.com/` depois desse tempo. Esse tempo inclui o `prisma migrate deploy`, que roda a cada partida. A medição de 16/11/2026 está no Passo 3 do `docs/passo-a-passo-mvp.md`.
