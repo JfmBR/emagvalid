@@ -1,8 +1,14 @@
-import { Router } from 'express'
+import { Router, type Request } from 'express'
 import { Prisma } from '../../generated/prisma/client.js'
 import { conferirSenha, gerarHashSenha } from '../auth/senha.js'
+import { chaveDoIp } from '../auth/ip.js'
 import { abrirSessao, exigirLogin, fecharSessao, type UsuarioDaSessao } from '../auth/sessao.js'
-import { bloqueado, limparTentativas, registrarErro } from '../auth/tentativas.js'
+import {
+  limiteCadastroPorIp,
+  limiteLogin,
+  limiteLoginPorEmail,
+  limiteLoginPorIp,
+} from '../auth/tentativas.js'
 import { db } from '../db.js'
 
 export const rotasAuth = Router()
@@ -10,6 +16,7 @@ export const rotasAuth = Router()
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MSG_EMAIL = 'Digite um e-mail válido, como nome@empresa.com.br.'
 const MSG_LOGIN = 'E-mail ou senha incorretos.'
+const MSG_MUITAS_TENTATIVAS = 'Muitas tentativas. Tente de novo em 15 minutos.'
 // hash de uma senha qualquer: quem tenta um e-mail sem conta espera o mesmo tempo de quem erra a senha
 const HASH_FALSO = gerarHashSenha('senha-que-ninguem-usa')
 
@@ -21,6 +28,11 @@ function texto(valor: unknown) {
 
 function publico({ nome, email }: UsuarioDaSessao) {
   return { nome, email }
+}
+
+// IP de quem acessa, já com o trust proxy do app.ts (medido no Render); IPv6 conta pelo /64
+function ipDe(req: Request) {
+  return chaveDoIp(req.ip ?? 'desconhecido')
 }
 
 rotasAuth.post('/cadastro', async (req, res) => {
@@ -40,6 +52,14 @@ rotasAuth.post('/cadastro', async (req, res) => {
     return
   }
 
+  const ip = ipDe(req)
+  if (limiteCadastroPorIp.bloqueado(ip)) {
+    res.status(429).json({ erro: 'Muitas contas criadas desta rede. Tente de novo em 1 hora.' })
+    return
+  }
+  // conta antes de esperar o banco: pedidos simultâneos não furam o limite
+  limiteCadastroPorIp.registrar(ip)
+
   try {
     const usuario = await db.usuario.create({
       data: { nome, email, senhaHash: await gerarHashSenha(senha) },
@@ -58,6 +78,8 @@ rotasAuth.post('/cadastro', async (req, res) => {
       })
       return
     }
+    // falha do servidor (ex.: banco fora do ar) não gasta a vaga de quem tentou
+    limiteCadastroPorIp.descontar(ip)
     throw erro
   }
 })
@@ -71,22 +93,44 @@ rotasAuth.post('/entrar', async (req, res) => {
     res.status(401).json({ erro: MSG_LOGIN })
     return
   }
-  if (bloqueado(email)) {
-    res.status(429).json({ erro: 'Muitas tentativas. Tente de novo em 15 minutos.' })
+  // e-mail + IP: errar a senha de outra pessoa não trava o dono, que entra de outro IP
+  const ip = ipDe(req)
+  const chave = `${email}|${ip}`
+  if (limiteLogin.bloqueado(chave) || limiteLoginPorIp.bloqueado(ip)) {
+    res.status(429).json({ erro: MSG_MUITAS_TENTATIVAS })
+    return
+  }
+  if (limiteLoginPorEmail.bloqueado(email)) {
+    res.status(429).json({ erro: 'Muitas tentativas nesta conta. Tente de novo em 1 hora.' })
     return
   }
   // conta a tentativa antes de esperar o banco: pedidos simultâneos não furam o limite.
-  // Se a senha estiver certa, a contagem é zerada logo abaixo.
-  registrarErro(email)
+  // Se a senha estiver certa, as contagens são desfeitas logo abaixo.
+  limiteLogin.registrar(chave)
+  limiteLoginPorIp.registrar(ip)
+  limiteLoginPorEmail.registrar(email)
 
-  const usuario = await db.usuario.findUnique({ where: { email } })
-  const senhaCerta = await conferirSenha(senha, usuario?.senhaHash ?? (await HASH_FALSO))
+  let usuario: Awaited<ReturnType<typeof db.usuario.findUnique>>
+  let senhaCerta: boolean
+  try {
+    usuario = await db.usuario.findUnique({ where: { email } })
+    senhaCerta = await conferirSenha(senha, usuario?.senhaHash ?? (await HASH_FALSO))
+  } catch (erro) {
+    // falha do servidor (ex.: banco fora do ar) não conta como tentativa errada
+    limiteLogin.descontar(chave)
+    limiteLoginPorIp.descontar(ip)
+    limiteLoginPorEmail.descontar(email)
+    throw erro
+  }
   if (!usuario || !senhaCerta) {
     res.status(401).json({ erro: MSG_LOGIN })
     return
   }
 
-  limparTentativas(email)
+  limiteLogin.limpar(chave)
+  limiteLoginPorIp.descontar(ip)
+  // desconta só este login: o dono entrar não apaga os erros de quem ataca a conta
+  limiteLoginPorEmail.descontar(email)
   await abrirSessao(res, usuario.id)
   res.json({ usuario: publico(usuario) })
 })

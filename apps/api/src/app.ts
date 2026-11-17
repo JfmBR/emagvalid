@@ -2,8 +2,12 @@ import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import express, { type ErrorRequestHandler, type RequestHandler } from 'express'
 import { rotasAuth } from './rotas/auth.js'
-import { rotasDiagnostico } from './rotas/diagnostico.js'
 import { rotasSaude } from './rotas/saude.js'
+
+// Proxies na frente da API no Render, medidos em 17/11/2026: Cloudflare, balanceador do Render e um
+// proxy local. Com 3, req.ip é o IP real de quem acessa, e um X-Forwarded-For inventado é ignorado.
+// Se o Render mudar a rede, medir de novo: número maior deixa falsificar o IP; menor junta todos num IP só.
+const PROXIES_NA_FRENTE = 3
 
 // Contra CSRF: pedido que muda dado só vale vindo das próprias telas do AcessaWeb.
 // Navegadores atuais mandam Sec-Fetch-Site; os antigos, só Origin. Sem nenhum dos dois (curl, testes), passa.
@@ -57,6 +61,7 @@ const cabecalhosDeSeguranca: RequestHandler = (_req, res, next) => {
 export function criarApp(pastaWeb?: string) {
   const app = express()
   app.disable('x-powered-by')
+  app.set('trust proxy', PROXIES_NA_FRENTE)
   app.use(cabecalhosDeSeguranca)
 
   // 10 kB bastam para os formulários; corpo maior é recusado com 413 antes das rotas
@@ -64,7 +69,6 @@ export function criarApp(pastaWeb?: string) {
   app.use('/api', exigirMesmaOrigem)
   app.use('/api/saude', rotasSaude)
   app.use('/api/auth', rotasAuth)
-  app.use('/api/diagnostico', rotasDiagnostico) // temporária: ver rotas/diagnostico.ts
 
   app.use('/api', (_req, res) => {
     res.status(404).json({ erro: 'Rota não encontrada.' })

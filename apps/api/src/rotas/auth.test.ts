@@ -1,7 +1,19 @@
 import request from 'supertest'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { criarApp } from '../app.js'
-import { MAX_TENTATIVAS } from '../auth/tentativas.js'
+import {
+  limiteCadastroPorIp,
+  limiteLogin,
+  limiteLoginPorEmail,
+  limiteLoginPorIp,
+} from '../auth/tentativas.js'
+
+const MAX_TENTATIVAS = limiteLogin.maximo
+
+// Simula o pedido como chega no Render: X-Forwarded-For = "<cliente>, <Cloudflare>, <Render>"
+function vindoDe(ip: string) {
+  return { 'X-Forwarded-For': `${ip}, 172.70.34.61, 10.27.253.132` }
+}
 
 type UsuarioFalso = { id: string; nome: string; email: string; senhaHash: string }
 type SessaoFalsa = { id: string; tokenHash: string; usuarioId: string; expiraEm: Date }
@@ -60,6 +72,10 @@ function cadastrar(agente: ReturnType<typeof request.agent>, dados: object = hel
 beforeEach(() => {
   banco.usuarios = []
   banco.sessoes = []
+  limiteLogin.zerar()
+  limiteLoginPorIp.zerar()
+  limiteLoginPorEmail.zerar()
+  limiteCadastroPorIp.zerar()
 })
 
 describe('cadastro', () => {
@@ -173,6 +189,134 @@ describe('sessão', () => {
 
     expect((await agente.get('/api/auth/eu')).status).toBe(401)
     expect(banco.sessoes).toHaveLength(0)
+  })
+})
+
+// Limites por IP aprovados pelo João em 16/11/2026; trust proxy medido no Render em 17/11/2026
+describe('limites por IP', () => {
+  async function entrar(
+    app: ReturnType<typeof criarApp>,
+    ip: string,
+    email: string,
+    senha: string,
+  ) {
+    return request(app).post('/api/auth/entrar').set(vindoDe(ip)).send({ email, senha })
+  }
+
+  it('quem erra a senha de outra pessoa não trava o dono, que entra de outro IP', async () => {
+    await cadastrar(request.agent(criarApp()))
+    const app = criarApp()
+    for (let i = 0; i < MAX_TENTATIVAS; i++) {
+      await entrar(app, '198.51.100.1', helena.email, 'errada-123')
+    }
+
+    expect((await entrar(app, '198.51.100.1', helena.email, helena.senha)).status).toBe(429)
+    expect((await entrar(app, '203.0.113.5', helena.email, helena.senha)).status).toBe(200)
+  })
+
+  it('X-Forwarded-For inventado não engana o limite', async () => {
+    await cadastrar(request.agent(criarApp()))
+    const app = criarApp()
+    for (let i = 0; i < MAX_TENTATIVAS; i++) {
+      await request(app)
+        .post('/api/auth/entrar')
+        .set({ 'X-Forwarded-For': `10.0.0.${i}, ${vindoDe('198.51.100.1')['X-Forwarded-For']}` })
+        .send({ email: helena.email, senha: 'errada-123' })
+    }
+
+    expect((await entrar(app, '198.51.100.1', helena.email, helena.senha)).status).toBe(429)
+  })
+
+  it(`um IP que erra em muitas contas é barrado depois de ${limiteLoginPorIp.maximo} erros`, async () => {
+    const app = criarApp()
+    for (let i = 0; i < limiteLoginPorIp.maximo; i++) {
+      await entrar(app, '198.51.100.2', `alvo${i}@empresa.com.br`, 'senha-comum-1')
+    }
+
+    const resposta = await entrar(app, '198.51.100.2', 'outro@empresa.com.br', 'senha-comum-1')
+    expect(resposta.status).toBe(429)
+  })
+
+  it('login certo não conta como erro do IP (escritório com muita gente)', async () => {
+    await cadastrar(request.agent(criarApp()))
+    const app = criarApp()
+    for (let i = 0; i <= limiteLoginPorIp.maximo; i++) {
+      expect((await entrar(app, '203.0.113.9', helena.email, helena.senha)).status).toBe(200)
+    }
+  })
+
+  it('um login certo desconta só a si mesmo: não zera os erros do IP', async () => {
+    await cadastrar(request.agent(criarApp()))
+    const app = criarApp()
+    const ip = '198.51.100.4'
+    for (let i = 0; i < limiteLoginPorIp.maximo - 1; i++) {
+      await entrar(app, ip, `alvo${i}@empresa.com.br`, 'senha-comum-1')
+    }
+    expect((await entrar(app, ip, helena.email, helena.senha)).status).toBe(200)
+
+    expect((await entrar(app, ip, 'mais-um@empresa.com.br', 'senha-comum-1')).status).toBe(401)
+    expect((await entrar(app, ip, 'outro@empresa.com.br', 'senha-comum-1')).status).toBe(429)
+  })
+
+  it(`ataque de muitos IPs a uma conta para em ${limiteLoginPorEmail.maximo} erros por hora`, async () => {
+    await cadastrar(request.agent(criarApp()))
+    const app = criarApp()
+    for (let i = 0; i < limiteLoginPorEmail.maximo; i++) {
+      await entrar(app, `198.51.${100 + Math.floor(i / 250)}.${i % 250}`, helena.email, 'errada-1')
+    }
+
+    const resposta = await entrar(app, '203.0.113.20', helena.email, helena.senha)
+    expect(resposta.status).toBe(429)
+    expect(resposta.body.erro).toMatch(/Tente de novo em 1 hora/)
+  })
+
+  it('IPv6: trocar de endereço dentro do mesmo /64 não fura o limite', async () => {
+    await cadastrar(request.agent(criarApp()))
+    const app = criarApp()
+    for (let i = 1; i <= MAX_TENTATIVAS; i++) {
+      await entrar(app, `2001:db8::${i}`, helena.email, 'errada-123')
+    }
+
+    expect((await entrar(app, '2001:db8::99', helena.email, helena.senha)).status).toBe(429)
+  })
+
+  it('banco fora do ar não conta como tentativa errada', async () => {
+    const { db } = await import('../db.js')
+    const original = db.usuario.findUnique
+    db.usuario.findUnique = (() => Promise.reject(new Error('banco fora do ar'))) as never
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const app = criarApp()
+    for (let i = 0; i < MAX_TENTATIVAS; i++) {
+      expect((await entrar(app, '198.51.100.5', helena.email, 'qualquer-1')).status).toBe(500)
+    }
+    db.usuario.findUnique = original
+    log.mockRestore()
+    await cadastrar(request.agent(criarApp()))
+
+    expect((await entrar(app, '198.51.100.5', helena.email, helena.senha)).status).toBe(200)
+  })
+
+  it(`cadastro: até ${limiteCadastroPorIp.maximo} contas por IP por hora`, async () => {
+    const app = criarApp()
+    for (let i = 0; i < limiteCadastroPorIp.maximo; i++) {
+      const resposta = await request(app)
+        .post('/api/auth/cadastro')
+        .set(vindoDe('198.51.100.3'))
+        .send({ ...helena, email: `conta${i}@empresa.com.br` })
+      expect(resposta.status).toBe(201)
+    }
+
+    const bloqueada = await request(app)
+      .post('/api/auth/cadastro')
+      .set(vindoDe('198.51.100.3'))
+      .send({ ...helena, email: 'mais-uma@empresa.com.br' })
+    const outroIp = await request(app)
+      .post('/api/auth/cadastro')
+      .set(vindoDe('203.0.113.4'))
+      .send({ ...helena, email: 'mais-uma@empresa.com.br' })
+    expect(bloqueada.status).toBe(429)
+    expect(bloqueada.body.erro).toMatch(/Tente de novo em 1 hora/)
+    expect(outroIp.status).toBe(201)
   })
 })
 
