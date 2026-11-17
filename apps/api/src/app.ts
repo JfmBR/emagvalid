@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import express, { type ErrorRequestHandler, type RequestHandler } from 'express'
 import { rotasAuth } from './rotas/auth.js'
+import { rotasDiagnostico } from './rotas/diagnostico.js'
 import { rotasSaude } from './rotas/saude.js'
 
 // Contra CSRF: pedido que muda dado só vale vindo das próprias telas do AcessaWeb.
@@ -63,6 +64,7 @@ export function criarApp(pastaWeb?: string) {
   app.use('/api', exigirMesmaOrigem)
   app.use('/api/saude', rotasSaude)
   app.use('/api/auth', rotasAuth)
+  app.use('/api/diagnostico', rotasDiagnostico) // temporária: ver rotas/diagnostico.ts
 
   app.use('/api', (_req, res) => {
     res.status(404).json({ erro: 'Rota não encontrada.' })
