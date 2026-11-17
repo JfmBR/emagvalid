@@ -2,8 +2,9 @@ import type { ReactNode } from 'react'
 
 type Props = {
   tipo?: 'info' | 'alerta'
-  // 'note' para informação fixa; 'status' quando o aviso aparece por causa de uma ação
-  papel?: 'note' | 'status'
+  // 'note' para informação fixa; 'status' quando o aviso aparece por causa de uma ação;
+  // 'alert' para erro que surge na tela: o leitor de tela anuncia mesmo se o aviso nascer já preenchido
+  papel?: 'note' | 'status' | 'alert'
   children: ReactNode
 }
 

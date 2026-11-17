@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import express, { type ErrorRequestHandler } from 'express'
+import { rotasAuth } from './rotas/auth.js'
 import { rotasSaude } from './rotas/saude.js'
 
 // pastaWeb: build do front-end (apps/web/dist), servido pela própria API em produção.
@@ -11,6 +12,7 @@ export function criarApp(pastaWeb?: string) {
 
   app.use(express.json())
   app.use('/api/saude', rotasSaude)
+  app.use('/api/auth', rotasAuth)
 
   app.use('/api', (_req, res) => {
     res.status(404).json({ erro: 'Rota não encontrada.' })

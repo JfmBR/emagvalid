@@ -1,5 +1,8 @@
 import { useEffect, useRef } from 'react'
-import { Link, Outlet, useLocation } from 'react-router'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router'
+import { enviar } from '../api.ts'
+import { useSessao } from '../sessao.tsx'
+import { Botao } from './Botao.tsx'
 
 const iconeMarca = (
   <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
@@ -15,11 +18,20 @@ const iconeMarca = (
   </svg>
 )
 
-// Estrutura comum das telas (design-system/components/AppHeader). A navegação entra com o login (Passo 5).
+// Estrutura comum das telas (design-system/components/AppHeader)
 export function Layout() {
   const { pathname } = useLocation()
+  const navegar = useNavigate()
+  const { usuario, carregando, definirUsuario } = useSessao()
   const principal = useRef<HTMLElement>(null)
   const rotaAnterior = useRef(pathname)
+
+  function focarTitulo() {
+    const titulo = principal.current?.querySelector('h1')
+    if (!titulo) return
+    titulo.setAttribute('tabindex', '-1')
+    titulo.focus()
+  }
 
   // Ao trocar de tela, o foco vai para o h1, para o leitor de tela anunciar a tela nova.
   // Na primeira carga o foco fica no começo da página, como o navegador faz. Comparar com a rota
@@ -27,11 +39,17 @@ export function Layout() {
   useEffect(() => {
     if (rotaAnterior.current === pathname) return
     rotaAnterior.current = pathname
-    const titulo = principal.current?.querySelector('h1')
-    if (!titulo) return
-    titulo.setAttribute('tabindex', '-1')
-    titulo.focus()
+    focarTitulo()
   }, [pathname])
+
+  async function sair() {
+    const { status } = await enviar('/api/auth/sair')
+    if (status !== 204) return
+    definirUsuario(null)
+    // o botão Sair some da tela: o foco vai para o título, mesmo sem trocar de rota
+    if (pathname === '/') focarTitulo()
+    else void navegar('/')
+  }
 
   return (
     <>
@@ -44,11 +62,30 @@ export function Layout() {
             {iconeMarca}
             AcessaWeb
           </Link>
+          {carregando ? null : (
+            <nav aria-label="Principal">
+              {usuario ? (
+                <>
+                  <span className="ola">Olá, {usuario.nome.split(' ')[0]}</span>
+                  <Botao variante="txt" onClick={() => void sair()}>
+                    Sair
+                  </Botao>
+                </>
+              ) : (
+                <Link className="btn txt" to="/entrar">
+                  Entrar
+                </Link>
+              )}
+            </nav>
+          )}
         </div>
       </header>
       <main id="conteudo" tabIndex={-1} className="wrap" ref={principal}>
         <Outlet />
       </main>
+      <footer className="wrap rodape">
+        <Link to="/privacidade">Privacidade</Link>
+      </footer>
     </>
   )
 }

@@ -1,13 +1,14 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
-// Sem API rodando: por padrão /api/saude responde 503; os testes que precisam de outra resposta registram a sua
+// Sem API rodando: por padrão ninguém entrou (/api/auth/eu responde 401)
 test.beforeEach(async ({ page }) => {
-  await page.route('**/api/saude', (rota) => rota.fulfill({ status: 503 }))
+  await page.route('**/api/auth/eu', (rota) => rota.fulfill({ status: 401, json: {} }))
 })
 
 test('tela inicial sem violações sérias de acessibilidade', async ({ page }) => {
   await page.goto('/')
+  await expect(page.getByRole('link', { name: 'Criar conta' })).toBeVisible()
   const resultado = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
     .analyze()
@@ -23,15 +24,4 @@ test('link pular para o conteúdo leva o foco ao main', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'Pular para o conteúdo' })).toBeFocused()
   await page.keyboard.press('Enter')
   await expect(page.locator('main#conteudo')).toBeFocused()
-})
-
-test('sem a API, a tela avisa que ela está indisponível', async ({ page }) => {
-  await page.goto('/')
-  await expect(page.getByRole('status')).toHaveText(/API indisponível/)
-})
-
-test('com a API no ar, a tela diz que ela está conectada', async ({ page }) => {
-  await page.route('**/api/saude', (rota) => rota.fulfill({ json: { status: 'ok' } }))
-  await page.goto('/')
-  await expect(page.getByRole('status')).toHaveText('API conectada.')
 })
