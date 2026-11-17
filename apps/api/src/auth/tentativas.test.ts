@@ -1,37 +1,34 @@
 import { describe, expect, it } from 'vitest'
-import {
-  JANELA_MS,
-  MAX_REGISTROS,
-  MAX_TENTATIVAS,
-  bloqueado,
-  limparTentativas,
-  registrarErro,
-  totalRegistros,
-} from './tentativas.js'
+import { MAX_REGISTROS, criarLimite } from './tentativas.js'
 
-describe('tentativas de login', () => {
-  it(`bloqueia depois de ${MAX_TENTATIVAS} erros e libera quando a janela passa`, () => {
-    const email = 'bloqueio@exemplo.com'
+describe('limite de tentativas', () => {
+  it('bloqueia ao chegar no máximo e libera quando a janela passa', () => {
+    const limite = criarLimite(5, 1000)
     const inicio = 1_000_000
-    for (let i = 0; i < MAX_TENTATIVAS - 1; i++) registrarErro(email, inicio)
-    expect(bloqueado(email, inicio)).toBe(false)
+    for (let i = 0; i < 4; i++) limite.registrar('chave', inicio)
+    expect(limite.bloqueado('chave', inicio)).toBe(false)
 
-    registrarErro(email, inicio)
-    expect(bloqueado(email, inicio)).toBe(true)
-    expect(bloqueado(email, inicio + JANELA_MS)).toBe(false)
+    limite.registrar('chave', inicio)
+    expect(limite.bloqueado('chave', inicio)).toBe(true)
+    expect(limite.bloqueado('chave', inicio + 1000)).toBe(false)
   })
 
-  it('um login certo zera os erros', () => {
-    const email = 'zera@exemplo.com'
-    for (let i = 0; i < MAX_TENTATIVAS; i++) registrarErro(email)
-    limparTentativas(email)
+  it('cada chave conta separado, e limpar zera só a sua', () => {
+    const limite = criarLimite(2, 1000)
+    limite.registrar('a')
+    limite.registrar('a')
+    limite.registrar('b')
 
-    expect(bloqueado(email)).toBe(false)
+    expect(limite.bloqueado('a')).toBe(true)
+    expect(limite.bloqueado('b')).toBe(false)
+    limite.limpar('a')
+    expect(limite.bloqueado('a')).toBe(false)
   })
 
-  it('a memória tem teto, mesmo com muitos e-mails inventados', () => {
-    for (let i = 0; i < MAX_REGISTROS + 50; i++) registrarErro(`inventado${i}@exemplo.com`)
+  it('a memória tem teto, mesmo com muitas chaves inventadas', () => {
+    const limite = criarLimite(5, 60_000)
+    for (let i = 0; i < MAX_REGISTROS + 50; i++) limite.registrar(`inventado${i}`)
 
-    expect(totalRegistros()).toBeLessThanOrEqual(MAX_REGISTROS)
+    expect(limite.total()).toBeLessThanOrEqual(MAX_REGISTROS)
   })
 })

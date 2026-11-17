@@ -41,14 +41,8 @@ describe('API', () => {
     expect(resposta.headers['referrer-policy']).toBe('strict-origin-when-cross-origin')
   })
 
-  it('diagnóstico temporário devolve os cabeçalhos de IP do próprio pedido', async () => {
-    const resposta = await request(criarApp())
-      .get('/api/diagnostico/ip')
-      .set('X-Forwarded-For', '203.0.113.7')
-
-    expect(resposta.status).toBe(200)
-    expect(resposta.body.xForwardedFor).toBe('203.0.113.7')
-    expect(resposta.body.remoto).toBeTruthy()
+  it('a rota temporária de diagnóstico de IP saiu', async () => {
+    expect((await request(criarApp()).get('/api/diagnostico/ip')).status).toBe(404)
   })
 })
 
