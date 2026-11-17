@@ -1,77 +1,19 @@
+/* Só o que o design-system/ não cobre. Cores, fontes e componentes vêm de tokens.css e bundle.css. */
+
+/* campos e barras de rolagem nativos seguem o tema claro ou escuro dos tokens */
 :root {
-  --cor-fundo: #ffffff;
-  --cor-texto: #1a1a1a;
-  --cor-marca: #1b4f9c;
-  --cor-foco: #b35c00;
-
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  font-size: 100%;
-  line-height: 1.5;
-  color: var(--cor-texto);
-  background: var(--cor-fundo);
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+  color-scheme: light dark;
 }
 
 body {
   margin: 0;
 }
 
-main {
-  max-width: 60rem;
-  margin: 0 auto;
-  padding: 1.5rem 1rem;
-}
-
-.cabecalho {
-  padding: 1rem;
-  background: var(--cor-marca);
-  color: #ffffff;
-}
-
+/* A marca é um link: alvo de 44 px (RNF02); o ícone sozinho tem 28 px */
 .marca {
-  margin: 0;
-  font-weight: 700;
-  font-size: 1.25rem;
+  min-height: 44px;
 }
 
 .estado-api {
   display: block;
-}
-
-/* Foco sempre visível (RNF01) */
-:focus-visible {
-  outline: 3px solid var(--cor-foco);
-  outline-offset: 2px;
-}
-
-.pular-para-conteudo {
-  position: absolute;
-  left: 1rem;
-  top: -100%;
-  padding: 0.75rem 1rem;
-  background: #ffffff;
-  color: var(--cor-marca);
-  z-index: 1;
-}
-
-.pular-para-conteudo:focus {
-  top: 1rem;
-}
-
-/* Alvos de clique de 44 px ou mais (RNF02) */
-button,
-a,
-input,
-select {
-  min-height: 44px;
 }

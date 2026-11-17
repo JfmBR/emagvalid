@@ -135,9 +135,9 @@ Publicar cedo evita a surpresa de descobrir na última semana que algo não roda
 
 ## Passo 4 · Base das telas (12–13/11)
 
-- [ ] Instalar as rotas de página (sugestão: React Router) para as 8 telas
-- [ ] Criar os componentes do protótipo em `apps/web/src/componentes/`: `Botao` (primário e secundário, 44 px), `Campo` (rótulo visível, ajuda e erro), `Selo` (prioridade e origem, com texto e cor), `Aviso`, `Layout` (cabeçalho, "Pular para o conteúdo", `main`)
-- [ ] Copiar cores e tipografia do protótipo para `index.css`
+- [x] Instalar as rotas de página (React Router, aprovado em 16/11/2026). Por ora só a Tela 1 e a página não encontrada; cada passo acrescenta a rota da sua tela, para o endereço público não mostrar telas vazias
+- [x] Criar os componentes do protótipo em `apps/web/src/componentes/`: `Botao` (primário e secundário, 44 px), `Campo` (rótulo visível, ajuda e erro), `Selo` (prioridade e origem, com texto e cor), `Aviso`, `Layout` (cabeçalho, "Pular para o conteúdo", `main`)
+- [x] Cores e tipografia: o app importa `design-system/tokens.css` e `components/bundle.css` (fonte única do visual desde 11/11/2026), em vez de copiar para `index.css`
 - [ ] Testar cada componente com teclado e leitor de tela (NVDA no Windows, Orca no Linux)
 
 **Terminou quando:** os componentes estão prontos e iguais aos do protótipo.
