@@ -31,6 +31,15 @@ describe('API', () => {
 
     expect(resposta.status).toBe(404)
   })
+
+  it('manda os cabeçalhos de segurança (CSP, nosniff, sem iframe de outro site)', async () => {
+    const resposta = await request(criarApp()).get('/api/saude')
+
+    expect(resposta.headers['content-security-policy']).toContain("frame-ancestors 'none'")
+    expect(resposta.headers['content-security-policy']).toContain("default-src 'self'")
+    expect(resposta.headers['x-content-type-options']).toBe('nosniff')
+    expect(resposta.headers['referrer-policy']).toBe('strict-origin-when-cross-origin')
+  })
 })
 
 describe('front-end pronto (produção)', () => {

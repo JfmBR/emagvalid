@@ -29,11 +29,34 @@ const exigirMesmaOrigem: RequestHandler = (req, res, next) => {
   next()
 }
 
+// Cabeçalhos de segurança, sem dependência nova. A CSP só libera o próprio site e as fontes do
+// Google (design-system/components/bundle.css); frame-ancestors impede pôr as telas dentro de outro site.
+const CSP = [
+  "default-src 'self'",
+  "style-src 'self' https://fonts.googleapis.com",
+  'font-src https://fonts.gstatic.com',
+  "img-src 'self' data:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join('; ')
+
+const cabecalhosDeSeguranca: RequestHandler = (_req, res, next) => {
+  res.set({
+    'Content-Security-Policy': CSP,
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+  })
+  next()
+}
+
 // pastaWeb: build do front-end (apps/web/dist), servido pela própria API em produção.
 // Em desenvolvimento fica vazia: o Vite serve as telas e repassa /api para cá.
 export function criarApp(pastaWeb?: string) {
   const app = express()
   app.disable('x-powered-by')
+  app.use(cabecalhosDeSeguranca)
 
   // 10 kB bastam para os formulários; corpo maior é recusado com 413 antes das rotas
   app.use(express.json({ limit: '10kb' }))
