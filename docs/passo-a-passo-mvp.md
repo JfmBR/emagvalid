@@ -152,7 +152,7 @@ Requisitos: RF01, RF09 (aviso da Tela 1), RNF03, RNF04, RNF05.
 - [x] Senha com hash (o `crypto.scrypt` do próprio Node basta); sessão em cookie `httpOnly`, guardada na tabela `sessoes` (só o hash do código). Limite de 5 logins errados por e-mail em 15 minutos
 - [x] Rotas de avaliação só para quem entrou: `exigirLogin` (`apps/api/src/auth/sessao.ts`) pronto para o Passo 6
 - [x] Tela 1 · Inicial: texto do protótipo beta para o público novo (os dois blocos do protótipo antigo eram para o auditor), o aviso fixo e os botões "Criar conta" e "Entrar"
-- [x] Tela 2 · Cadastro e login: 3 campos, "mostrar senha", regra de 8 caracteres, mensagens de erro do protótipo; o foco vai para o primeiro campo com erro
+- [x] Tela 2 · Cadastro e login: 3 campos, "mostrar senha", regra de 8 caracteres (com letra e número desde 17/11/2026), mensagens de erro do protótipo; o foco vai para o primeiro campo com erro
 - [x] Página curta de privacidade: que dados guardamos e o que vai para a IA (RNF05: só o trecho da página pública com a falha, sem dado do usuário)
 - [ ] Conectar o DBeaver ao banco local (ver `README.md`, "Como rodar") e conferir em `usuarios` que a conta foi gravada com a senha em hash, nunca em texto. Conferido pelo agente com `psql` em 17/11/2026 (`scrypt$…`, 168 caracteres); falta a conferência do João no DBeaver
 

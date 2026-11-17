@@ -73,7 +73,7 @@ export function Cadastro() {
           rotulo="Senha"
           name="senha"
           autoComplete="new-password"
-          dica="Mínimo de 8 caracteres."
+          dica="Mínimo de 8 caracteres, com pelo menos uma letra e um número."
           erro={erros.senha}
         />
         <p className="acoes">
