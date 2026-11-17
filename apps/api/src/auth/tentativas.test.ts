@@ -13,6 +13,19 @@ describe('limite de tentativas', () => {
     expect(limite.bloqueado('chave', inicio + 1000)).toBe(false)
   })
 
+  it('descontar tira uma contagem só e nunca fica negativo', () => {
+    const limite = criarLimite(2, 1000)
+    limite.registrar('a')
+    limite.registrar('a')
+    limite.descontar('a')
+    expect(limite.bloqueado('a')).toBe(false)
+
+    limite.registrar('a')
+    expect(limite.bloqueado('a')).toBe(true)
+    limite.descontar('nunca-vista')
+    expect(limite.total()).toBe(1)
+  })
+
   it('cada chave conta separado, e limpar zera só a sua', () => {
     const limite = criarLimite(2, 1000)
     limite.registrar('a')

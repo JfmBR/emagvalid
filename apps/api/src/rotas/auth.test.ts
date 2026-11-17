@@ -239,6 +239,45 @@ describe('limites por IP', () => {
     }
   })
 
+  it('um login certo desconta só a si mesmo: não zera os erros do IP', async () => {
+    await cadastrar(request.agent(criarApp()))
+    const app = criarApp()
+    const ip = '198.51.100.4'
+    for (let i = 0; i < limiteLoginPorIp.maximo - 1; i++) {
+      await entrar(app, ip, `alvo${i}@empresa.com.br`, 'senha-comum-1')
+    }
+    expect((await entrar(app, ip, helena.email, helena.senha)).status).toBe(200)
+
+    expect((await entrar(app, ip, 'mais-um@empresa.com.br', 'senha-comum-1')).status).toBe(401)
+    expect((await entrar(app, ip, 'outro@empresa.com.br', 'senha-comum-1')).status).toBe(429)
+  })
+
+  it('IPv6: trocar de endereço dentro do mesmo /64 não fura o limite', async () => {
+    await cadastrar(request.agent(criarApp()))
+    const app = criarApp()
+    for (let i = 1; i <= MAX_TENTATIVAS; i++) {
+      await entrar(app, `2001:db8::${i}`, helena.email, 'errada-123')
+    }
+
+    expect((await entrar(app, '2001:db8::99', helena.email, helena.senha)).status).toBe(429)
+  })
+
+  it('banco fora do ar não conta como tentativa errada', async () => {
+    const { db } = await import('../db.js')
+    const original = db.usuario.findUnique
+    db.usuario.findUnique = (() => Promise.reject(new Error('banco fora do ar'))) as never
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const app = criarApp()
+    for (let i = 0; i < MAX_TENTATIVAS; i++) {
+      expect((await entrar(app, '198.51.100.5', helena.email, 'qualquer-1')).status).toBe(500)
+    }
+    db.usuario.findUnique = original
+    log.mockRestore()
+    await cadastrar(request.agent(criarApp()))
+
+    expect((await entrar(app, '198.51.100.5', helena.email, helena.senha)).status).toBe(200)
+  })
+
   it(`cadastro: até ${limiteCadastroPorIp.maximo} contas por IP por hora`, async () => {
     const app = criarApp()
     for (let i = 0; i < limiteCadastroPorIp.maximo; i++) {

@@ -1,6 +1,7 @@
 import { Router, type Request } from 'express'
 import { Prisma } from '../../generated/prisma/client.js'
 import { conferirSenha, gerarHashSenha } from '../auth/senha.js'
+import { chaveDoIp } from '../auth/ip.js'
 import { abrirSessao, exigirLogin, fecharSessao, type UsuarioDaSessao } from '../auth/sessao.js'
 import { limiteCadastroPorIp, limiteLogin, limiteLoginPorIp } from '../auth/tentativas.js'
 import { db } from '../db.js'
@@ -24,9 +25,9 @@ function publico({ nome, email }: UsuarioDaSessao) {
   return { nome, email }
 }
 
-// IP de quem acessa, já com o trust proxy do app.ts (medido no Render)
+// IP de quem acessa, já com o trust proxy do app.ts (medido no Render); IPv6 conta pelo /64
 function ipDe(req: Request) {
-  return req.ip ?? 'desconhecido'
+  return chaveDoIp(req.ip ?? 'desconhecido')
 }
 
 rotasAuth.post('/cadastro', async (req, res) => {
@@ -72,6 +73,8 @@ rotasAuth.post('/cadastro', async (req, res) => {
       })
       return
     }
+    // falha do servidor (ex.: banco fora do ar) não gasta a vaga de quem tentou
+    limiteCadastroPorIp.descontar(ip)
     throw erro
   }
 })
@@ -97,8 +100,17 @@ rotasAuth.post('/entrar', async (req, res) => {
   limiteLogin.registrar(chave)
   limiteLoginPorIp.registrar(ip)
 
-  const usuario = await db.usuario.findUnique({ where: { email } })
-  const senhaCerta = await conferirSenha(senha, usuario?.senhaHash ?? (await HASH_FALSO))
+  let usuario: Awaited<ReturnType<typeof db.usuario.findUnique>>
+  let senhaCerta: boolean
+  try {
+    usuario = await db.usuario.findUnique({ where: { email } })
+    senhaCerta = await conferirSenha(senha, usuario?.senhaHash ?? (await HASH_FALSO))
+  } catch (erro) {
+    // falha do servidor (ex.: banco fora do ar) não conta como tentativa errada
+    limiteLogin.descontar(chave)
+    limiteLoginPorIp.descontar(ip)
+    throw erro
+  }
   if (!usuario || !senhaCerta) {
     res.status(401).json({ erro: MSG_LOGIN })
     return
