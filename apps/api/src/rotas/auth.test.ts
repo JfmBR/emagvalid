@@ -1,7 +1,12 @@
 import request from 'supertest'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { criarApp } from '../app.js'
-import { limiteCadastroPorIp, limiteLogin, limiteLoginPorIp } from '../auth/tentativas.js'
+import {
+  limiteCadastroPorIp,
+  limiteLogin,
+  limiteLoginPorEmail,
+  limiteLoginPorIp,
+} from '../auth/tentativas.js'
 
 const MAX_TENTATIVAS = limiteLogin.maximo
 
@@ -69,6 +74,7 @@ beforeEach(() => {
   banco.sessoes = []
   limiteLogin.zerar()
   limiteLoginPorIp.zerar()
+  limiteLoginPorEmail.zerar()
   limiteCadastroPorIp.zerar()
 })
 
@@ -250,6 +256,18 @@ describe('limites por IP', () => {
 
     expect((await entrar(app, ip, 'mais-um@empresa.com.br', 'senha-comum-1')).status).toBe(401)
     expect((await entrar(app, ip, 'outro@empresa.com.br', 'senha-comum-1')).status).toBe(429)
+  })
+
+  it(`ataque de muitos IPs a uma conta para em ${limiteLoginPorEmail.maximo} erros por hora`, async () => {
+    await cadastrar(request.agent(criarApp()))
+    const app = criarApp()
+    for (let i = 0; i < limiteLoginPorEmail.maximo; i++) {
+      await entrar(app, `198.51.${100 + Math.floor(i / 250)}.${i % 250}`, helena.email, 'errada-1')
+    }
+
+    const resposta = await entrar(app, '203.0.113.20', helena.email, helena.senha)
+    expect(resposta.status).toBe(429)
+    expect(resposta.body.erro).toMatch(/Tente de novo em 1 hora/)
   })
 
   it('IPv6: trocar de endereço dentro do mesmo /64 não fura o limite', async () => {

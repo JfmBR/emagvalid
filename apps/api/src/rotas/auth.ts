@@ -3,7 +3,12 @@ import { Prisma } from '../../generated/prisma/client.js'
 import { conferirSenha, gerarHashSenha } from '../auth/senha.js'
 import { chaveDoIp } from '../auth/ip.js'
 import { abrirSessao, exigirLogin, fecharSessao, type UsuarioDaSessao } from '../auth/sessao.js'
-import { limiteCadastroPorIp, limiteLogin, limiteLoginPorIp } from '../auth/tentativas.js'
+import {
+  limiteCadastroPorIp,
+  limiteLogin,
+  limiteLoginPorEmail,
+  limiteLoginPorIp,
+} from '../auth/tentativas.js'
 import { db } from '../db.js'
 
 export const rotasAuth = Router()
@@ -95,10 +100,15 @@ rotasAuth.post('/entrar', async (req, res) => {
     res.status(429).json({ erro: MSG_MUITAS_TENTATIVAS })
     return
   }
+  if (limiteLoginPorEmail.bloqueado(email)) {
+    res.status(429).json({ erro: 'Muitas tentativas nesta conta. Tente de novo em 1 hora.' })
+    return
+  }
   // conta a tentativa antes de esperar o banco: pedidos simultâneos não furam o limite.
   // Se a senha estiver certa, as contagens são desfeitas logo abaixo.
   limiteLogin.registrar(chave)
   limiteLoginPorIp.registrar(ip)
+  limiteLoginPorEmail.registrar(email)
 
   let usuario: Awaited<ReturnType<typeof db.usuario.findUnique>>
   let senhaCerta: boolean
@@ -109,6 +119,7 @@ rotasAuth.post('/entrar', async (req, res) => {
     // falha do servidor (ex.: banco fora do ar) não conta como tentativa errada
     limiteLogin.descontar(chave)
     limiteLoginPorIp.descontar(ip)
+    limiteLoginPorEmail.descontar(email)
     throw erro
   }
   if (!usuario || !senhaCerta) {
@@ -118,6 +129,8 @@ rotasAuth.post('/entrar', async (req, res) => {
 
   limiteLogin.limpar(chave)
   limiteLoginPorIp.descontar(ip)
+  // desconta só este login: o dono entrar não apaga os erros de quem ataca a conta
+  limiteLoginPorEmail.descontar(email)
   await abrirSessao(res, usuario.id)
   res.json({ usuario: publico(usuario) })
 })

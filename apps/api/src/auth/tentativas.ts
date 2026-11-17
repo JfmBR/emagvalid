@@ -62,5 +62,8 @@ const UMA_HORA = 60 * 60 * 1000
 export const limiteLogin = criarLimite(5, QUINZE_MINUTOS)
 // Logins errados por IP, somando todos os e-mails: segura quem testa poucas senhas em muitas contas
 export const limiteLoginPorIp = criarLimite(20, QUINZE_MINUTOS)
+// Logins errados por e-mail, somando todos os IPs: teto alto contra ataque de muitos IPs a uma conta
+// (decisão do João, 17/11/2026). Só trava o dono se alguém errar 50 vezes a senha dele em uma hora.
+export const limiteLoginPorEmail = criarLimite(50, UMA_HORA)
 // Contas criadas por IP
 export const limiteCadastroPorIp = criarLimite(10, UMA_HORA)
