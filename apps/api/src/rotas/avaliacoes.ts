@@ -49,14 +49,16 @@ rotasAvaliacoes.post('/', exigirLogin, async (req, res) => {
   criando.add(usuarioId)
   try {
     // conta pelo banco, não pela memória: o limite vale depois de o Render reiniciar
-    const pendentes = await db.avaliacao.count({
-      where: {
-        usuarioId,
-        status: { in: ['NA_FILA', 'ANALISANDO'] },
-        criadaEm: { gte: new Date(Date.now() - PRAZO_PENDENTE_MS) },
-      },
+    const pendentes = await db.avaliacao.findMany({
+      where: { usuarioId, status: { in: ['NA_FILA', 'ANALISANDO'] } },
+      select: { id: true, criadaEm: true },
     })
-    if (pendentes > 0) {
+    // viva: ainda na fila desta instância (a que está rodando também) ou recente demais para ter morrido
+    const recente = Date.now() - PRAZO_PENDENTE_MS
+    const viva = pendentes.some(
+      (p) => fila.posicao(p.id) !== null || p.criadaEm.getTime() >= recente,
+    )
+    if (viva) {
       res.status(409).json({ erro: MSG_PENDENTE })
       return
     }

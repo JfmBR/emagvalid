@@ -58,6 +58,12 @@ vi.mock('../db.js', () => {
           await banco.espera
           return banco.avaliacoes.filter((a) => confere(a, where)).length
         },
+        findMany: async ({ where }: { where: Filtro }) => {
+          await banco.espera
+          return banco.avaliacoes
+            .filter((a) => confere(a, where))
+            .map(({ id, criadaEm }) => ({ id, criadaEm }))
+        },
         findFirst: async ({ where }: { where: Filtro }) =>
           banco.avaliacoes.find((a) => confere(a, where)) ?? null,
       },
@@ -223,6 +229,13 @@ describe('POST /api/avaliacoes', () => {
     semear({ status: 'ANALISANDO', criadaEm: new Date(Date.now() - 16 * 60_000) })
 
     expect((await pedir('u1', 'https://www.loja.com.br')).status).toBe(202)
+  })
+
+  it('pendente com mais de 15 min que ainda está na fila continua bloqueando', async () => {
+    const antiga = semear({ status: 'NA_FILA', criadaEm: new Date(Date.now() - 40 * 60_000) })
+    vi.mocked(fila.posicao).mockImplementation((id) => (id === antiga.id ? 20 : null))
+
+    expect((await pedir('u1', 'https://www.loja.com.br')).status).toBe(409)
   })
 
   it('pendente de outra conta não bloqueia', async () => {
