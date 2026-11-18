@@ -9,12 +9,15 @@ if (!url) {
 }
 
 const inicio = Date.now()
-const violacoes = await analisar(url)
+let elementos = 0
+const { violacoes, urlFinal } = await analisar(url, { aoCarregar: (n) => (elementos = n) })
 const escrever = (texto: string) => process.stdout.write(`${texto}\n`)
 
 escrever(
-  `${url}: ${violacoes.length} regra(s) com falha em ${((Date.now() - inicio) / 1000).toFixed(1)} s\n`,
+  `${url}: ${violacoes.length} regra(s) com falha em ${((Date.now() - inicio) / 1000).toFixed(1)} s`,
 )
+escrever(`Endereço final: ${urlFinal}`)
+escrever(`Elementos na página: ${elementos}\n`)
 
 for (const v of violacoes) {
   const emag = requisitosDaRegra(v.regra)

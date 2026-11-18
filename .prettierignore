@@ -10,3 +10,6 @@ skills-lock.json
 
 # Gerado por scripts/gerar-tokens-css.mjs
 design-system/tokens.css
+
+# Rascunho local dos agentes (fora do git)
+.superpowers/

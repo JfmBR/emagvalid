@@ -23,7 +23,13 @@ export function Inicial() {
           conformidade.
         </p>
       </Aviso>
-      {carregando || usuario ? null : (
+      {carregando ? null : usuario ? (
+        <p className="acoes">
+          <Link className="btn" to="/avaliacoes/nova">
+            Nova avaliação
+          </Link>
+        </p>
+      ) : (
         <p className="acoes">
           <Link className="btn" to="/cadastro">
             Criar conta

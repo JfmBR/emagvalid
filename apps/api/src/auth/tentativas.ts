@@ -67,3 +67,8 @@ export const limiteLoginPorIp = criarLimite(20, QUINZE_MINUTOS)
 export const limiteLoginPorEmail = criarLimite(50, UMA_HORA)
 // Contas criadas por IP
 export const limiteCadastroPorIp = criarLimite(10, UMA_HORA)
+// Pedidos de nova avaliação por conta, aceitos ou recusados: o pedido recusado não grava linha, então o
+// count do banco não o vê; este limite segura quem testa endereços para descobrir o DNS interno (RNF10)
+export const limiteAvaliacaoPorConta = criarLimite(30, QUINZE_MINUTOS)
+// O mesmo por IP, somando todas as contas: criar contas novas não zera a conta
+export const limiteAvaliacaoPorIp = criarLimite(60, QUINZE_MINUTOS)

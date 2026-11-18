@@ -162,14 +162,14 @@ Requisitos: RF01, RF09 (aviso da Tela 1), RNF03, RNF04, RNF05.
 
 Requisitos: RF02, RF03, RF04, RF17, RNF06. **Checkpoint 19/11.**
 
-- [ ] API: `POST /api/avaliacoes` valida a URL, cria a avaliação e dispara a análise do Passo 1 em segundo plano
-- [ ] API: `GET /api/avaliacoes/:id` devolve o status e, quando pronta, as falhas
-- [ ] Gravar as falhas com requisito, seletor, trecho e prioridade
-- [ ] Tela 3: campo da URL com exemplo e ajuda curta ("Uma página pública por vez…")
-- [ ] Tela 4: progresso em 3 passos, perguntando à API a cada 2 s; 4b (URL inválida) e 4c (demorou demais)
-- [ ] Tempo máximo da análise: 60 s por página, já com as orientações (RNF06)
-- [ ] Página grande (R7): logo depois de o Chromium abrir a página, contar os elementos; acima de um limite, a Tela 4 mostra "Por ser uma página grande, a análise pode demorar mais de 1 minuto." e a análise continua. O limite sai de medições com páginas reais
-- [ ] Conferir no DBeaver as linhas de `avaliacoes` e `falhas` de uma análise real
+- [x] API: `POST /api/avaliacoes` valida a URL, cria a avaliação e dispara a análise do Passo 1 em segundo plano
+- [x] API: `GET /api/avaliacoes/:id` devolve o status e, quando pronta, as falhas
+- [x] Gravar as falhas com requisito, seletor, trecho e prioridade
+- [x] Tela 3: campo da URL com exemplo e ajuda curta ("Uma página pública por vez…")
+- [x] Tela 4: progresso em 3 passos, perguntando à API a cada 2 s; 4b (URL inválida) e 4c (demorou demais)
+- [x] Tempo máximo da análise: 60 s por página (RNF06). As orientações da IA entram no Passo 8 e terão de caber nesse tempo
+- [x] Página grande (R7): logo depois de o Chromium abrir a página, contar os elementos; acima de um limite, a Tela 4 mostra "Por ser uma página grande, a análise pode demorar mais de 1 minuto." e a análise continua. O limite sai de medições com páginas reais (17/11/2026: 10.000 elementos, em `LIMITE_PAGINA_GRANDE`; poucas medições, rever com o tempo real no Render)
+- [x] Conferir as linhas de `avaliacoes` e `falhas` de uma análise real. Conferido pelo agente com `psql` em 18/11/2026 (`www.python.org`: `CONCLUIDA`, `urlFinal` preenchida, 100 falhas em 5 requisitos, todas com seletor); para ver os dados sem SQL, `npm run db:studio -w apps/api`
 
 **Terminou quando:** você digita uma URL real e as falhas ficam salvas no banco.
 

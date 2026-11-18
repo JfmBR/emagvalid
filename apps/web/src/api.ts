@@ -1,18 +1,28 @@
 export type Resposta<T> = { status: number; corpo: T }
 
-// POST com JSON para a API. Status 0 = sem conexão com o servidor.
-export async function enviar<T>(caminho: string, dados?: unknown): Promise<Resposta<Partial<T>>> {
+// Status 0 = sem conexão com o servidor.
+async function pedir<T>(caminho: string, opcoes?: RequestInit): Promise<Resposta<Partial<T>>> {
   try {
-    const resposta = await fetch(caminho, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: dados === undefined ? undefined : JSON.stringify(dados),
-    })
+    const resposta = await fetch(caminho, opcoes)
     const corpo = resposta.status === 204 ? {} : await resposta.json().catch(() => ({}))
     return { status: resposta.status, corpo }
   } catch {
     return { status: 0, corpo: {} }
   }
+}
+
+// POST com JSON para a API
+export function enviar<T>(caminho: string, dados?: unknown) {
+  return pedir<T>(caminho, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: dados === undefined ? undefined : JSON.stringify(dados),
+  })
+}
+
+// GET na API, no mesmo formato de `enviar`
+export function buscar<T>(caminho: string) {
+  return pedir<T>(caminho)
 }
 
 // Mensagem para erros que não são de um campo (RF17: dizer o que fazer)

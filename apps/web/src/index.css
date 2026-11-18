@@ -39,3 +39,13 @@ body {
   align-items: center;
   min-height: 44px;
 }
+
+/* texto só para leitor de tela: a lista de passos da Tela 4 diz qual passo acabou e qual está em curso */
+.so-leitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
