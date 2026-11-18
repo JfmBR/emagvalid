@@ -169,7 +169,7 @@ Requisitos: RF02, RF03, RF04, RF17, RNF06. **Checkpoint 19/11.**
 - [x] Tela 4: progresso em 3 passos, perguntando à API a cada 2 s; 4b (URL inválida) e 4c (demorou demais)
 - [x] Tempo máximo da análise: 60 s por página (RNF06). As orientações da IA entram no Passo 8 e terão de caber nesse tempo
 - [x] Página grande (R7): logo depois de o Chromium abrir a página, contar os elementos; acima de um limite, a Tela 4 mostra "Por ser uma página grande, a análise pode demorar mais de 1 minuto." e a análise continua. O limite sai de medições com páginas reais (17/11/2026: 10.000 elementos, em `LIMITE_PAGINA_GRANDE`; poucas medições, rever com o tempo real no Render)
-- [ ] Conferir no DBeaver as linhas de `avaliacoes` e `falhas` de uma análise real
+- [x] Conferir as linhas de `avaliacoes` e `falhas` de uma análise real. Conferido pelo agente com `psql` em 18/11/2026 (`www.python.org`: `CONCLUIDA`, `urlFinal` preenchida, 100 falhas em 5 requisitos, todas com seletor); para ver os dados sem SQL, `npm run db:studio -w apps/api`
 
 **Terminou quando:** você digita uma URL real e as falhas ficam salvas no banco.
 

@@ -53,9 +53,11 @@ Antes de retomar, confira os arquivos, o `git status`, as checagens e os process
 
 **Do João**
 
-- Conferir no DBeaver as linhas de `avaliacoes` e `falhas` da análise real (último item do Passo 6).
-- Decidir se apaga a conta de teste `teste.passo6.32166@exemplo.com` e a avaliação dela no banco local.
-- Registrar em `projeto/contexto_agente/07-pendencias-e-decisoes.md`, seção D, as decisões de 17/11: fila com uma análise por vez; 10 análises por hora por conta; tempo de acordar do Render como está; senha com letra e número; "Excluir minha conta" depois do Passo 6; limites por IP de login e cadastro mantidos; exceção da lista de bloqueio contra SSRF.
+- Registrar em `projeto/contexto_agente/07-pendencias-e-decisoes.md`, seção D, as decisões de 17/11: fila com uma análise por vez; 10 análises por hora por conta; tempo de acordar do Render como está; "Excluir minha conta" depois do Passo 6; limites por IP de login e cadastro mantidos; exceção da lista de bloqueio contra SSRF. E a de 18/11: senha com maiúscula, minúscula, número e símbolo (#22), no lugar de "letra e número" (#21).
+- Teste manual da branch depois da revisão final e do rebase (pedido do João, 18/11).
+
+Feito em 18/11: linhas de `avaliacoes` e `falhas` conferidas pelo agente com `psql` (o João não usa mais o DBeaver; para ver os dados, `npm run db:studio -w apps/api`); conta `teste.passo6.32166@exemplo.com` apagada do banco local, com a avaliação e as falhas (cascade).
+
 - Levar ao mentor o tempo de acordar do Render e o DEMOROU dos sites lentos (RNF06, R7).
 
 **Depois do Passo 6:** função "Excluir minha conta" (LGPD). **Depois do MVP** (`07`, seção D, 16/11): o cadastro diz quando o e-mail já tem conta; `scrypt` com N=2^14; limpeza das sessões vencidas; confirmação de e-mail; imagem sem dependências de desenvolvimento; papel do banco só para a API.
