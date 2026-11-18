@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 
 const pasta = resolve(dirname(fileURLToPath(import.meta.url)), '../design-system')
 const tokens = JSON.parse(readFileSync(resolve(pasta, 'tokens.json'), 'utf8'))
-const [claro, escuro] = tokens.color.themes.map((tema) => tema.id)
+const [claro, escuro, contraste] = tokens.color.themes.map((tema) => tema.id)
 
 // Alias "{accent}" vira var(--accent); valor simples vale para todos os temas
 const valor = (v) => String(v).replace(/^\{(.+)\}$/, 'var(--$1)')
@@ -21,6 +21,7 @@ const medidas = ['spacing', 'radius', 'shadow', 'size'].flatMap((familia) =>
 )
 // No escuro só entram as cores que mudam
 const mudaNoEscuro = cores(escuro).filter(([, v], i) => v !== cores(claro)[i][1])
+const mudaNoContraste = cores(contraste).filter(([, v], i) => v !== cores(claro)[i][1])
 
 const css = `/* ${tokens.name} — gerado de tokens.json por scripts/gerar-tokens-css.mjs. Não edite à mão. */
 :root {
@@ -28,13 +29,19 @@ ${linhas([...cores(claro), ...fontes, ...medidas])}
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='${claro}']) {
+  :root:not([data-theme='${claro}']):not([data-theme='${contraste}']) {
   ${linhas(mudaNoEscuro).replaceAll('\n', '\n  ')}
   }
 }
 
 :root[data-theme='${escuro}'] {
 ${linhas(mudaNoEscuro)}
+}
+
+/* Alto contraste (eMAG 3.1, seção 4.2): vem por último e vence o tema do sistema */
+:root[data-theme='${contraste}'] {
+  color-scheme: dark;
+${linhas(mudaNoContraste)}
 }
 `
 

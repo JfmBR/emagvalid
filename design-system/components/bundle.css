@@ -49,6 +49,13 @@ a {
   color: var(--accent);
   text-underline-offset: 3px;
 }
+a:hover {
+  text-decoration-thickness: 3px;
+}
+/* Alto contraste (eMAG 4.2): links sublinhados em todos os estados */
+[data-theme='contraste'] a:not(.btn) {
+  text-decoration: underline;
+}
 :focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
@@ -146,6 +153,38 @@ a {
 .btn[disabled] {
   opacity: 0.5;
   cursor: not-allowed;
+}
+/* Resposta ao mouse e ao clique; botão desabilitado não reage */
+.btn {
+  transition:
+    background-color 120ms,
+    color 120ms;
+}
+.btn:not([disabled]):hover {
+  background: color-mix(in srgb, var(--accent) 85%, var(--ink));
+  border-color: color-mix(in srgb, var(--accent) 85%, var(--ink));
+}
+.btn.sec:not([disabled]):hover,
+.btn.txt:not([disabled]):hover {
+  background: var(--accent-soft);
+}
+.btn.sec:not([disabled]):hover {
+  border-color: var(--accent);
+}
+.btn.txt:not([disabled]):hover {
+  border-color: transparent;
+}
+.btn.perigo:not([disabled]):hover {
+  background: var(--alta-bg);
+  border-color: var(--alta);
+}
+.btn:not([disabled]):active {
+  transform: translateY(1px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn {
+    transition: none;
+  }
 }
 .acoes {
   display: flex;
