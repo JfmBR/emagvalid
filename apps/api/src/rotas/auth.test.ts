@@ -63,7 +63,7 @@ vi.mock('../db.js', async () => {
   }
 })
 
-const helena = { nome: 'Helena Souza', email: 'Helena@Empresa.com.br', senha: 'senha-forte-1' }
+const helena = { nome: 'Helena Souza', email: 'Helena@Empresa.com.br', senha: 'Senha-forte-1' }
 
 function cadastrar(agente: ReturnType<typeof request.agent>, dados: object = helena) {
   return agente.post('/api/auth/cadastro').send(dados)
@@ -111,18 +111,21 @@ describe('cadastro', () => {
     expect(banco.usuarios).toHaveLength(0)
   })
 
-  it('exige pelo menos uma letra e um número na senha', async () => {
+  it('exige maiúscula, minúscula, número e símbolo na senha', async () => {
     const app = criarApp()
-    for (const senha of ['12345678', 'senhasemnumero', '--------']) {
+    const fracas = ['senha-forte-1', 'SENHA-FORTE-1', 'Senha-forte', 'Senhaforte1', '12345678']
+    for (const senha of fracas) {
       const resposta = await cadastrar(request.agent(app), { ...helena, senha })
 
       expect(resposta.status).toBe(400)
-      expect(resposta.body.campos).toEqual({ senha: 'Use pelo menos uma letra e um número.' })
+      expect(resposta.body.campos).toEqual({
+        senha: 'Use pelo menos uma letra maiúscula, uma minúscula, um número e um símbolo.',
+      })
     }
     expect(banco.usuarios).toHaveLength(0)
 
     // letra acentuada conta como letra
-    expect((await cadastrar(request.agent(app), { ...helena, senha: 'ção12345' })).status).toBe(201)
+    expect((await cadastrar(request.agent(app), { ...helena, senha: 'Ção!1234' })).status).toBe(201)
   })
 
   it('recusa e-mail já cadastrado, mesmo com letras maiúsculas diferentes', async () => {

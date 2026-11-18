@@ -101,13 +101,13 @@ describe('Tela 2 · cadastro', () => {
     abrir('/cadastro')
     preencher('Nome', helena.nome)
     preencher('E-mail', helena.email)
-    preencher('Senha', 'senha-forte-1')
+    preencher('Senha', 'Senha-forte-1')
 
     fireEvent.click(screen.getByRole('button', { name: 'Criar conta' }))
 
     expect(await screen.findByText('Olá, Helena')).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Acessibilidade digital')
-    expect(enviados['/api/auth/cadastro']).toEqual({ ...helena, senha: 'senha-forte-1' })
+    expect(enviados['/api/auth/cadastro']).toEqual({ ...helena, senha: 'Senha-forte-1' })
   })
 
   it('"Mostrar senha" troca o campo para texto e volta', () => {
