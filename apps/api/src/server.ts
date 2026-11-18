@@ -1,6 +1,15 @@
 import { criarApp } from './app.js'
+import { recuperarInterrompidas } from './analise/executar.js'
 
 const porta = Number(process.env.PORT ?? 3000)
+
+// Análises pendentes de antes do reinício viram ERRO; se o banco falhar, o servidor sobe mesmo assim
+try {
+  await recuperarInterrompidas()
+} catch (erro) {
+  // oxlint-disable-next-line no-console
+  console.error('Não foi possível recuperar as análises interrompidas', erro)
+}
 
 const servidor = criarApp(process.env.PASTA_WEB).listen(porta, () => {
   // única saída esperada no terminal: avisa onde a API subiu (ainda não há logger)
