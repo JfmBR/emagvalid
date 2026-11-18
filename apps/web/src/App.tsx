@@ -4,6 +4,7 @@ import { Cadastro } from './paginas/Cadastro.tsx'
 import { Entrar } from './paginas/Entrar.tsx'
 import { Inicial } from './paginas/Inicial.tsx'
 import { NaoEncontrada } from './paginas/NaoEncontrada.tsx'
+import { NovaAvaliacao } from './paginas/NovaAvaliacao.tsx'
 import { Privacidade } from './paginas/Privacidade.tsx'
 import { ProvedorSessao } from './sessao.tsx'
 
@@ -16,6 +17,7 @@ export default function App() {
           <Route index element={<Inicial />} />
           <Route path="cadastro" element={<Cadastro />} />
           <Route path="entrar" element={<Entrar />} />
+          <Route path="avaliacoes/nova" element={<NovaAvaliacao />} />
           <Route path="privacidade" element={<Privacidade />} />
           <Route path="*" element={<NaoEncontrada />} />
         </Route>

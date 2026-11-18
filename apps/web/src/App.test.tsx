@@ -166,3 +166,108 @@ describe('Tela 2 · entrar e sair', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveFocus()
   })
 })
+
+describe('Tela 3 · nova avaliação', () => {
+  const logada = { '/api/auth/eu': { status: 200, corpo: { usuario: helena } } }
+  const titulo = 'Qual página você quer avaliar?'
+
+  it('sem login, /avaliacoes/nova leva para /entrar', async () => {
+    simularApi()
+    abrir('/avaliacoes/nova')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Entrar' })).toBeInTheDocument()
+  })
+
+  it('quem entrou vê "Nova avaliação" na Tela 1', async () => {
+    simularApi(logada)
+    abrir('/')
+
+    expect(await screen.findByRole('link', { name: 'Nova avaliação' })).toHaveAttribute(
+      'href',
+      '/avaliacoes/nova',
+    )
+  })
+
+  it('envia a URL e vai para a Tela 4', async () => {
+    const enviados = simularApi({
+      ...logada,
+      '/api/avaliacoes': { status: 202, corpo: { avaliacao: { id: 'a1' } } },
+    })
+    abrir('/avaliacoes/nova')
+    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent(titulo)
+    preencher('Endereço da página (URL)', 'https://www.suaempresa.com.br/contato')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Avaliar página' }))
+
+    await waitFor(() => expect(screen.queryByText(titulo)).not.toBeInTheDocument())
+    expect(enviados['/api/avaliacoes']).toEqual({ url: 'https://www.suaempresa.com.br/contato' })
+  })
+
+  it('erro do campo aparece no campo e recebe o foco', async () => {
+    simularApi({
+      ...logada,
+      '/api/avaliacoes': {
+        status: 400,
+        corpo: {
+          erro: 'Confira os campos marcados.',
+          campos: { url: 'Digite um endereço válido.' },
+        },
+      },
+    })
+    abrir('/avaliacoes/nova')
+    preencher('Endereço da página (URL)', 'oi')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Avaliar página' }))
+
+    const url = screen.getByLabelText('Endereço da página (URL)')
+    await waitFor(() => expect(url).toHaveFocus())
+    expect(url).toBeInvalid()
+    expect(url).toHaveAccessibleDescription(/Digite um endereço válido/)
+  })
+
+  it('409 e 429 aparecem no aviso de erro', async () => {
+    simularApi({
+      ...logada,
+      '/api/avaliacoes': { status: 409, corpo: { erro: 'Você já tem uma análise em andamento.' } },
+    })
+    abrir('/avaliacoes/nova')
+    fireEvent.click(await screen.findByRole('button', { name: 'Avaliar página' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Você já tem uma análise em andamento.',
+    )
+
+    simularApi({
+      ...logada,
+      '/api/avaliacoes': { status: 429, corpo: { erro: 'Limite de 10 análises por hora.' } },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Avaliar página' }))
+    await waitFor(() =>
+      expect(screen.getByRole('alert')).toHaveTextContent('Limite de 10 análises por hora.'),
+    )
+  })
+
+  it('?url= vem preenchido', async () => {
+    simularApi(logada)
+    abrir('/avaliacoes/nova?url=https://www.loja.com.br/')
+
+    expect(await screen.findByLabelText('Endereço da página (URL)')).toHaveValue(
+      'https://www.loja.com.br/',
+    )
+  })
+
+  it('dois cliques mandam um pedido só', async () => {
+    simularApi({
+      ...logada,
+      '/api/avaliacoes': { status: 202, corpo: { avaliacao: { id: 'a1' } } },
+    })
+    abrir('/avaliacoes/nova')
+    const botao = await screen.findByRole('button', { name: 'Avaliar página' })
+
+    fireEvent.click(botao)
+    fireEvent.click(botao)
+
+    await waitFor(() => expect(screen.queryByText(titulo)).not.toBeInTheDocument())
+    const pedidos = vi.mocked(fetch).mock.calls.filter(([caminho]) => caminho === '/api/avaliacoes')
+    expect(pedidos).toHaveLength(1)
+  })
+})
