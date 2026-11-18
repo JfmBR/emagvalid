@@ -17,14 +17,19 @@ function abrir(endereco: string) {
 
 type RespostaFalsa = { status: number; corpo?: unknown }
 
-// API falsa: cada caminho responde o que o teste mandar; o resto responde 401 (ninguém entrou)
-function simularApi(rotas: Record<string, RespostaFalsa> = {}) {
+// API falsa: cada caminho responde o que o teste mandar (ou uma função, para mudar a resposta
+// com o tempo); o resto responde 401 (ninguém entrou)
+function simularApi(rotas: Record<string, RespostaFalsa | (() => RespostaFalsa)> = {}) {
   const enviados: Record<string, unknown> = {}
   vi.stubGlobal(
     'fetch',
     vi.fn(async (caminho: string, opcoes?: RequestInit) => {
       if (opcoes?.body) enviados[caminho] = JSON.parse(String(opcoes.body))
-      const { status, corpo } = rotas[caminho] ?? { status: 401, corpo: { erro: 'Entre.' } }
+      const rota = rotas[caminho]
+      const { status, corpo } = (typeof rota === 'function' ? rota() : rota) ?? {
+        status: 401,
+        corpo: { erro: 'Entre.' },
+      }
       return new Response(status === 204 ? null : JSON.stringify(corpo ?? {}), { status })
     }),
   )
@@ -39,6 +44,7 @@ function preencher(rotulo: string, valor: string) {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.useRealTimers()
 })
 
 describe('Tela 1 e navegação', () => {
@@ -269,5 +275,256 @@ describe('Tela 3 · nova avaliação', () => {
     await waitFor(() => expect(screen.queryByText(titulo)).not.toBeInTheDocument())
     const pedidos = vi.mocked(fetch).mock.calls.filter(([caminho]) => caminho === '/api/avaliacoes')
     expect(pedidos).toHaveLength(1)
+  })
+})
+
+describe('Tela 3 · sessão expirada', () => {
+  it('401 ao enviar leva para /entrar', async () => {
+    simularApi({
+      '/api/auth/eu': { status: 200, corpo: { usuario: helena } },
+      '/api/avaliacoes': { status: 401, corpo: { erro: 'Entre.' } },
+    })
+    abrir('/avaliacoes/nova')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Avaliar página' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Entrar' })).toBeInTheDocument()
+  })
+})
+
+describe('Tela 4 · análise', () => {
+  const logada = { '/api/auth/eu': { status: 200, corpo: { usuario: helena } } }
+  const url = 'https://www.loja.com.br/'
+  const base = {
+    id: 'a1',
+    url,
+    urlFinal: null,
+    status: 'ANALISANDO',
+    etapa: 2,
+    posicaoNaFila: null,
+    paginaGrande: false,
+    mensagemErro: null,
+    falhas: [],
+  }
+  const falha = (requisitoEmag: string) => ({
+    requisitoEmag,
+    descricao: 'Descrição',
+    prioridade: 'ALTA',
+    seletor: 'img',
+    trecho: '<img>',
+    revisaoHumana: false,
+  })
+  const resposta = (avaliacao: object) => ({ status: 200, corpo: { avaliacao } })
+  const chamadasDoGet = () =>
+    vi.mocked(fetch).mock.calls.filter(([caminho]) => caminho === '/api/avaliacoes/a1').length
+
+  it('enviar a URL na Tela 3 leva à Tela 4 da avaliação criada', async () => {
+    simularApi({
+      ...logada,
+      '/api/avaliacoes': { status: 202, corpo: { avaliacao: { id: 'a1' } } },
+      '/api/avaliacoes/a1': resposta(base),
+    })
+    abrir('/avaliacoes/nova')
+    preencher('Endereço da página (URL)', url)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Avaliar página' }))
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Avaliando a página' }),
+    ).toBeInTheDocument()
+    expect(await screen.findByText(url)).toBeInTheDocument()
+  })
+
+  it('sem login, leva para /entrar', async () => {
+    simularApi()
+    abrir('/avaliacoes/a1')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Entrar' })).toBeInTheDocument()
+  })
+
+  it('401 da API (sessão expirou) leva para /entrar', async () => {
+    simularApi({ ...logada, '/api/avaliacoes/a1': { status: 401, corpo: { erro: 'Entre.' } } })
+    abrir('/avaliacoes/a1')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Entrar' })).toBeInTheDocument()
+  })
+
+  it('NA_FILA mostra quantas análises estão antes', async () => {
+    simularApi({
+      ...logada,
+      '/api/avaliacoes/a1': resposta({ ...base, status: 'NA_FILA', etapa: null, posicaoNaFila: 2 }),
+    })
+    abrir('/avaliacoes/a1')
+
+    expect(await screen.findByText('Na fila: 2 análises antes da sua.')).toBeInTheDocument()
+    expect(screen.queryByRole('listitem', { current: 'step' })).not.toBeInTheDocument()
+  })
+
+  it('NA_FILA com 1 análise antes usa o singular', async () => {
+    simularApi({
+      ...logada,
+      '/api/avaliacoes/a1': resposta({ ...base, status: 'NA_FILA', etapa: null, posicaoNaFila: 1 }),
+    })
+    abrir('/avaliacoes/a1')
+
+    expect(await screen.findByText('Na fila: 1 análise antes da sua.')).toBeInTheDocument()
+  })
+
+  it('ANALISANDO marca a etapa atual com aria-current="step"', async () => {
+    simularApi({ ...logada, '/api/avaliacoes/a1': resposta(base) })
+    abrir('/avaliacoes/a1')
+
+    const atual = await screen.findByRole('listitem', { current: 'step' })
+    expect(atual).toHaveTextContent('Verificando as recomendações do eMAG 3.1')
+    expect(screen.getAllByRole('listitem')).toHaveLength(3)
+    expect(screen.getByRole('list')).toHaveAttribute('aria-live', 'polite')
+  })
+
+  it('pergunta de novo a cada 2 s e para quando conclui', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    let avaliacao: object = base
+    simularApi({ ...logada, '/api/avaliacoes/a1': () => resposta(avaliacao) })
+    abrir('/avaliacoes/a1')
+    await screen.findByRole('heading', { level: 1, name: 'Avaliando a página' })
+    const inicio = chamadasDoGet()
+
+    await vi.advanceTimersByTimeAsync(1_000)
+    expect(chamadasDoGet()).toBe(inicio)
+    await vi.advanceTimersByTimeAsync(1_000)
+    expect(chamadasDoGet()).toBe(inicio + 1)
+
+    avaliacao = { ...base, status: 'CONCLUIDA', etapa: null, falhas: [falha('3.5.1')] }
+    await vi.advanceTimersByTimeAsync(2_000)
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Análise concluída' }),
+    ).toBeVisible()
+    const depois = chamadasDoGet()
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(chamadasDoGet()).toBe(depois)
+  })
+
+  it('sair da tela cancela as perguntas', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    simularApi({ ...logada, '/api/avaliacoes/a1': resposta(base) })
+    abrir('/avaliacoes/a1')
+    await screen.findByRole('heading', { level: 1, name: 'Avaliando a página' })
+
+    fireEvent.click(screen.getByRole('link', { name: /AcessaWeb/ }))
+    const depois = chamadasDoGet()
+    await vi.advanceTimersByTimeAsync(6_000)
+
+    expect(chamadasDoGet()).toBe(depois)
+  })
+
+  it('paginaGrande mostra o aviso de demora', async () => {
+    simularApi({ ...logada, '/api/avaliacoes/a1': resposta({ ...base, paginaGrande: true }) })
+    abrir('/avaliacoes/a1')
+
+    expect(
+      await screen.findByText(
+        'Por ser uma página grande, a análise pode demorar mais de 1 minuto.',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('sem conexão, continua perguntando e avisa para conferir a internet', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    let caiu = true
+    simularApi(logada)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (caminho: string) => {
+        if (caminho === '/api/auth/eu')
+          return new Response(JSON.stringify({ usuario: helena }), { status: 200 })
+        if (caiu) throw new TypeError('Failed to fetch')
+        return new Response(JSON.stringify({ avaliacao: base }), { status: 200 })
+      }),
+    )
+    abrir('/avaliacoes/a1')
+
+    expect(await screen.findByRole('status')).toHaveTextContent(/Confira sua internet/)
+    caiu = false
+    await vi.advanceTimersByTimeAsync(2_000)
+    await waitFor(() => expect(screen.queryByText(/Confira sua internet/)).not.toBeInTheDocument())
+  })
+
+  it('ERRO mostra a mensagem da API e "Corrigir o endereço" leva à Tela 3 preenchida', async () => {
+    simularApi({
+      ...logada,
+      '/api/avaliacoes/a1': resposta({
+        ...base,
+        status: 'ERRO',
+        etapa: null,
+        mensagemErro: 'Não conseguimos abrir essa página. Confira o endereço.',
+      }),
+    })
+    abrir('/avaliacoes/a1')
+
+    const titulo = await screen.findByRole('heading', {
+      level: 1,
+      name: 'Não conseguimos avaliar essa página.',
+    })
+    await waitFor(() => expect(titulo).toHaveFocus())
+    expect(screen.getByText('Não conseguimos abrir essa página. Confira o endereço.')).toBeVisible()
+    expect(screen.getByText('Erro')).toBeVisible()
+    expect(screen.getByText(/Endereço digitado:/)).toHaveTextContent(url)
+    const corrigir = screen.getByRole('link', { name: 'Corrigir o endereço' })
+    expect(corrigir).toHaveAttribute('href', `/avaliacoes/nova?url=${encodeURIComponent(url)}`)
+
+    fireEvent.click(corrigir)
+
+    expect(await screen.findByLabelText('Endereço da página (URL)')).toHaveValue(url)
+  })
+
+  it('CONCLUIDA mostra o resumo e "Nova avaliação"', async () => {
+    simularApi({
+      ...logada,
+      '/api/avaliacoes/a1': resposta({
+        ...base,
+        status: 'CONCLUIDA',
+        etapa: null,
+        urlFinal: 'https://www.loja.com.br/inicio',
+        falhas: [falha('3.5.1'), falha('3.5.1'), falha('1.2')],
+      }),
+    })
+    abrir('/avaliacoes/a1')
+
+    const titulo = await screen.findByRole('heading', { level: 1, name: 'Análise concluída' })
+    await waitFor(() => expect(titulo).toHaveFocus())
+    expect(
+      screen.getByText('Encontramos 3 falhas em 2 recomendações do eMAG 3.1.'),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Avaliamos/)).toHaveTextContent('https://www.loja.com.br/inicio')
+    expect(screen.getByRole('link', { name: 'Nova avaliação' })).toHaveAttribute(
+      'href',
+      '/avaliacoes/nova',
+    )
+  })
+
+  it('CONCLUIDA sem falhas pede a revisão humana', async () => {
+    simularApi({
+      ...logada,
+      '/api/avaliacoes/a1': resposta({ ...base, status: 'CONCLUIDA', etapa: null }),
+    })
+    abrir('/avaliacoes/a1')
+
+    expect(
+      await screen.findByText(
+        'Não encontramos falhas automáticas. Ainda assim, faça a revisão humana.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/Avaliamos/)).not.toBeInTheDocument()
+  })
+
+  it('404 mostra "Avaliação não encontrada."', async () => {
+    simularApi({
+      ...logada,
+      '/api/avaliacoes/a1': { status: 404, corpo: { erro: 'Avaliação não encontrada.' } },
+    })
+    abrir('/avaliacoes/a1')
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Avaliação não encontrada.' }),
+    ).toBeInTheDocument()
   })
 })

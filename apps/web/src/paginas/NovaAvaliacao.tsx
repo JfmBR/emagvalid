@@ -11,7 +11,7 @@ type RespostaAvaliacao = { avaliacao: { id: string }; erro: string; campos: Camp
 
 // Tela 3 · Nova avaliação (RF02, RF17). Texto do protótipo beta (projeto/docs/prototipo/beta/).
 export function NovaAvaliacao() {
-  const { usuario, carregando } = useSessao()
+  const { usuario, carregando, definirUsuario } = useSessao()
   const navegar = useNavigate()
   const [parametros] = useSearchParams()
   const formulario = useRef<HTMLFormElement>(null)
@@ -33,6 +33,10 @@ export function NovaAvaliacao() {
     const dados = Object.fromEntries(new FormData(evento.currentTarget))
     const { status, corpo } = await enviar<RespostaAvaliacao>('/api/avaliacoes', dados)
     setEnviando(false)
+    if (status === 401) {
+      definirUsuario(null) // sessão expirou: a tela leva para /entrar
+      return
+    }
     if (status === 202 && corpo.avaliacao) {
       void navegar(`/avaliacoes/${corpo.avaliacao.id}`)
       return
