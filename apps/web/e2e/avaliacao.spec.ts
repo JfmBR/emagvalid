@@ -49,9 +49,9 @@ test('só com teclado: pedir a avaliação, acompanhar e ver a análise concluí
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Qual página você quer avaliar?')
   await semViolacoesSerias(page)
 
-  // Tab até o link "Pular", Enter leva ao conteúdo e o próximo Tab chega ao campo
+  // Tab até "Ir para o conteúdo [1]", Enter leva ao conteúdo e o próximo Tab chega ao campo
   await page.keyboard.press('Tab')
-  await expect(page.getByRole('link', { name: 'Pular para o conteúdo' })).toBeFocused()
+  await expect(page.getByRole('link', { name: 'Ir para o conteúdo [1]' })).toBeFocused()
   await page.keyboard.press('Enter')
   await page.keyboard.press('Tab')
   await expect(page.getByLabel('Endereço da página (URL)')).toBeFocused()
