@@ -138,7 +138,7 @@ Publicar cedo evita a surpresa de descobrir na última semana que algo não roda
 - [x] Instalar as rotas de página (React Router, aprovado em 16/11/2026). Por ora só a Tela 1 e a página não encontrada; cada passo acrescenta a rota da sua tela, para o endereço público não mostrar telas vazias
 - [x] Criar os componentes do protótipo em `apps/web/src/componentes/`: `Botao` (primário e secundário, 44 px), `Campo` (rótulo visível, ajuda e erro), `Selo` (prioridade e origem, com texto e cor), `Aviso`, `Layout` (cabeçalho, "Pular para o conteúdo", `main`)
 - [x] Cores e tipografia: o app importa `design-system/tokens.css` e `components/bundle.css` (fonte única do visual desde 11/11/2026), em vez de copiar para `index.css`
-- [ ] Testar cada componente com teclado e leitor de tela (NVDA no Windows, Orca no Linux)
+- [x] Testar cada componente com teclado e leitor de tela (NVDA no Windows, Orca no Linux). Conferido pelo João com o Orca em 17/11/2026
 
 **Terminou quando:** os componentes estão prontos e iguais aos do protótipo.
 
@@ -154,7 +154,7 @@ Requisitos: RF01, RF09 (aviso da Tela 1), RNF03, RNF04, RNF05.
 - [x] Tela 1 · Inicial: texto do protótipo beta para o público novo (os dois blocos do protótipo antigo eram para o auditor), o aviso fixo e os botões "Criar conta" e "Entrar"
 - [x] Tela 2 · Cadastro e login: 3 campos, "mostrar senha", regra de 8 caracteres (com letra e número desde 17/11/2026), mensagens de erro do protótipo; o foco vai para o primeiro campo com erro
 - [x] Página curta de privacidade: que dados guardamos e o que vai para a IA (RNF05: só o trecho da página pública com a falha, sem dado do usuário)
-- [ ] Conectar o DBeaver ao banco local (ver `README.md`, "Como rodar") e conferir em `usuarios` que a conta foi gravada com a senha em hash, nunca em texto. Conferido pelo agente com `psql` em 17/11/2026 (`scrypt$…`, 168 caracteres); falta a conferência do João no DBeaver
+- [x] Conectar o DBeaver ao banco local (ver `README.md`, "Como rodar") e conferir em `usuarios` que a conta foi gravada com a senha em hash, nunca em texto. Conferido pelo agente com `psql` e pelo João no DBeaver em 17/11/2026 (`scrypt$…`, 168 caracteres)
 
 **Terminou quando:** dá para criar conta, sair e entrar de novo, só com teclado.
 
