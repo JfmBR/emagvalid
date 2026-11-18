@@ -47,6 +47,10 @@ rotasAuth.post('/cadastro', async (req, res) => {
   if (email.length > 254 || !EMAIL_VALIDO.test(email)) campos.email = MSG_EMAIL
   if (senha.length < 8) campos.senha = 'A senha precisa ter pelo menos 8 caracteres.'
   else if (senha.length > 128) campos.senha = 'Use até 128 caracteres na senha.'
+  // \p{L}: qualquer letra, inclusive acentuada (decisão do João, 17/11/2026)
+  else if (!/\p{L}/u.test(senha) || !/\d/.test(senha)) {
+    campos.senha = 'Use pelo menos uma letra e um número.'
+  }
   if (Object.keys(campos).length > 0) {
     res.status(400).json({ erro: 'Confira os campos marcados.', campos })
     return

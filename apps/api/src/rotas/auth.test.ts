@@ -111,6 +111,20 @@ describe('cadastro', () => {
     expect(banco.usuarios).toHaveLength(0)
   })
 
+  it('exige pelo menos uma letra e um número na senha', async () => {
+    const app = criarApp()
+    for (const senha of ['12345678', 'senhasemnumero', '--------']) {
+      const resposta = await cadastrar(request.agent(app), { ...helena, senha })
+
+      expect(resposta.status).toBe(400)
+      expect(resposta.body.campos).toEqual({ senha: 'Use pelo menos uma letra e um número.' })
+    }
+    expect(banco.usuarios).toHaveLength(0)
+
+    // letra acentuada conta como letra
+    expect((await cadastrar(request.agent(app), { ...helena, senha: 'ção12345' })).status).toBe(201)
+  })
+
   it('recusa e-mail já cadastrado, mesmo com letras maiúsculas diferentes', async () => {
     await cadastrar(request.agent(criarApp()))
     const resposta = await cadastrar(request.agent(criarApp()), {
