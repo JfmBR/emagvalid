@@ -106,7 +106,10 @@ describe('Tela 2 · cadastro', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Criar conta' }))
 
     expect(await screen.findByText('Olá, Helena')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Acessibilidade digital')
+    // a troca de rota chega depois da saudação: espera o título da Inicial
+    expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent(
+      'Acessibilidade digital',
+    )
     expect(enviados['/api/auth/cadastro']).toEqual({ ...helena, senha: 'Senha-forte-1' })
   })
 
