@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router'
 import { enviar } from '../api.ts'
 import { useSessao } from '../sessao.tsx'
+import { BarraAcessibilidade } from './BarraAcessibilidade.tsx'
 import { Botao } from './Botao.tsx'
 
 const iconeMarca = (
@@ -53,9 +54,7 @@ export function Layout() {
 
   return (
     <>
-      <a className="pular" href="#conteudo">
-        Pular para o conteúdo
-      </a>
+      <BarraAcessibilidade />
       <header className="topo">
         <div className="wrap">
           <Link className="marca" to="/" translate="no">
@@ -63,7 +62,7 @@ export function Layout() {
             AcessaWeb
           </Link>
           {carregando ? null : (
-            <nav aria-label="Principal">
+            <nav id="menu" tabIndex={-1} aria-label="Principal">
               {usuario ? (
                 <>
                   <span className="ola">Olá, {usuario.nome.split(' ')[0]}</span>
@@ -83,7 +82,7 @@ export function Layout() {
       <main id="conteudo" tabIndex={-1} className="wrap" ref={principal}>
         <Outlet />
       </main>
-      <footer className="wrap rodape">
+      <footer id="rodape" tabIndex={-1} className="wrap rodape">
         <Link to="/privacidade">Privacidade</Link>
       </footer>
     </>

@@ -18,10 +18,12 @@ test('tela inicial sem violações sérias de acessibilidade', async ({ page }) 
   expect(graves).toEqual([])
 })
 
-test('link pular para o conteúdo leva o foco ao main', async ({ page }) => {
+test('o primeiro Tab cai em "Ir para o conteúdo [1]", que leva o foco ao main', async ({
+  page,
+}) => {
   await page.goto('/')
   await page.keyboard.press('Tab')
-  await expect(page.getByRole('link', { name: 'Pular para o conteúdo' })).toBeFocused()
+  await expect(page.getByRole('link', { name: 'Ir para o conteúdo [1]' })).toBeFocused()
   await page.keyboard.press('Enter')
   await expect(page.locator('main#conteudo')).toBeFocused()
 })

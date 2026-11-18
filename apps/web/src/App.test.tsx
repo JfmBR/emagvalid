@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { StrictMode } from 'react'
 import { MemoryRouter } from 'react-router'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App.tsx'
 
 // StrictMode como no main.tsx: em desenvolvimento ele roda cada efeito duas vezes
@@ -526,5 +526,77 @@ describe('Tela 4 · análise', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Avaliação não encontrada.' }),
     ).toBeInTheDocument()
+  })
+})
+
+describe('barra de acessibilidade (eMAG 3.1, seção 4.3)', () => {
+  const raiz = document.documentElement
+  // simula o tema do sistema (o jsdom não tem matchMedia)
+  function sistemaEm(escuro: boolean) {
+    vi.stubGlobal('matchMedia', (consulta: string) => ({ matches: escuro, media: consulta }))
+  }
+
+  beforeEach(() => {
+    localStorage.clear()
+    delete raiz.dataset.theme
+  })
+
+  it('"Alto contraste" liga e desliga o tema e guarda a escolha', () => {
+    simularApi()
+    abrir('/')
+    const botao = screen.getByRole('button', { name: 'Alto contraste' })
+    expect(botao).toHaveAttribute('aria-pressed', 'false')
+
+    fireEvent.click(botao)
+    expect(botao).toHaveAttribute('aria-pressed', 'true')
+    expect(raiz.dataset.theme).toBe('contraste')
+    expect(localStorage.getItem('acessaweb-contraste')).toBe('sim')
+
+    fireEvent.click(botao)
+    expect(botao).toHaveAttribute('aria-pressed', 'false')
+    expect(raiz.dataset.theme).toBeUndefined()
+    expect(localStorage.getItem('acessaweb-contraste')).toBeNull()
+  })
+
+  it('"Modo escuro" com o sistema claro liga o escuro', () => {
+    sistemaEm(false)
+    simularApi()
+    abrir('/')
+    const botao = screen.getByRole('button', { name: 'Modo escuro' })
+    expect(botao).toHaveAttribute('aria-pressed', 'false')
+
+    fireEvent.click(botao)
+    expect(botao).toHaveAttribute('aria-pressed', 'true')
+    expect(raiz.dataset.theme).toBe('escuro')
+    expect(localStorage.getItem('acessaweb-tema')).toBe('escuro')
+  })
+
+  it('"Modo escuro" com o sistema escuro já começa ligado e o clique vai para o claro', () => {
+    sistemaEm(true)
+    simularApi()
+    abrir('/')
+    const botao = screen.getByRole('button', { name: 'Modo escuro' })
+    expect(botao).toHaveAttribute('aria-pressed', 'true')
+
+    fireEvent.click(botao)
+    expect(botao).toHaveAttribute('aria-pressed', 'false')
+    expect(raiz.dataset.theme).toBe('claro')
+    expect(localStorage.getItem('acessaweb-tema')).toBe('claro')
+  })
+
+  it('atalhos para o conteúdo, o menu e o rodapé com as teclas 1, 2 e 4', () => {
+    simularApi()
+    abrir('/')
+    const atalhos = [
+      ['Ir para o conteúdo [1]', '#conteudo', '1'],
+      ['Ir para o menu [2]', '#menu', '2'],
+      ['Ir para o rodapé [4]', '#rodape', '4'],
+    ]
+    for (const [nome, destino, tecla] of atalhos) {
+      const link = screen.getByRole('link', { name: nome })
+      expect(link).toHaveAttribute('href', destino)
+      expect(link).toHaveAttribute('accesskey', tecla)
+    }
+    expect(document.getElementById('rodape')?.tagName).toBe('FOOTER')
   })
 })
