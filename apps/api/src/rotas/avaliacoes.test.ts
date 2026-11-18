@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { andamento, fila } from '../analise/executar.js'
 import { classificarEndereco, MSG_URL, type TipoEndereco } from '../analise/endereco.js'
 import { criarApp } from '../app.js'
+import { limiteAvaliacaoPorConta, limiteAvaliacaoPorIp } from '../auth/tentativas.js'
 
 type AvaliacaoFalsa = {
   id: string
@@ -24,7 +25,11 @@ type Filtro = {
 }
 
 // O CI não tem banco: as rotas rodam de verdade, com um db em memória no lugar do Prisma
-const banco = vi.hoisted(() => ({ avaliacoes: [] as AvaliacaoFalsa[] }))
+const banco = vi.hoisted(() => ({
+  avaliacoes: [] as AvaliacaoFalsa[],
+  // quando preenchida, o count espera por ela (simula um banco lento)
+  espera: null as Promise<void> | null,
+}))
 
 vi.mock('../db.js', () => {
   const confere = (a: AvaliacaoFalsa, where: Filtro) =>
@@ -49,8 +54,10 @@ vi.mock('../db.js', () => {
           banco.avaliacoes.push(avaliacao)
           return { id: avaliacao.id }
         },
-        count: async ({ where }: { where: Filtro }) =>
-          banco.avaliacoes.filter((a) => confere(a, where)).length,
+        count: async ({ where }: { where: Filtro }) => {
+          await banco.espera
+          return banco.avaliacoes.filter((a) => confere(a, where)).length
+        },
         findFirst: async ({ where }: { where: Filtro }) =>
           banco.avaliacoes.find((a) => confere(a, where)) ?? null,
       },
@@ -120,6 +127,9 @@ function semear(dados: Partial<AvaliacaoFalsa> = {}) {
 
 beforeEach(() => {
   banco.avaliacoes = []
+  banco.espera = null
+  limiteAvaliacaoPorConta.zerar()
+  limiteAvaliacaoPorIp.zerar()
   andamento.clear()
   vi.mocked(fila.adicionar).mockReset()
   vi.mocked(fila.posicao).mockReset().mockReturnValue(null)
@@ -206,6 +216,7 @@ describe('POST /api/avaliacoes', () => {
     expect(resposta.status).toBe(409)
     expect(resposta.body).toEqual({ erro: MSG_PENDENTE })
     expect(fila.adicionar).not.toHaveBeenCalled()
+    expect(classificarEndereco).not.toHaveBeenCalled()
   })
 
   it('pendente de outra conta não bloqueia', async () => {
@@ -214,18 +225,27 @@ describe('POST /api/avaliacoes', () => {
     expect((await pedir('u1', 'https://www.loja.com.br')).status).toBe(202)
   })
 
-  it('dois pedidos ao mesmo tempo → um 202 e um 409', async () => {
+  it('dois pedidos ao mesmo tempo → um 202 e um 409, que só pode vir da trava em memória', async () => {
+    // o primeiro pedido fica preso no count do banco; o 409 do segundo, então, não vem do banco
+    let liberar!: () => void
+    banco.espera = new Promise<void>((resolver) => (liberar = resolver))
     const app = criarApp()
     const enviar = () =>
       request(app).post('/api/avaliacoes').set('x-usuario', 'u1').send({ url: 'www.loja.com.br' })
+    const primeiro = enviar().then((r) => r)
+    const segundo = enviar().then((r) => r)
+    const demora = new Promise<'demorou'>((resolver) => setTimeout(() => resolver('demorou'), 1000))
 
-    const respostas = await Promise.all([enviar(), enviar()])
+    const [rapido] = await Promise.all([Promise.race([primeiro, segundo, demora])])
+    liberar()
+    const respostas = await Promise.all([primeiro, segundo])
 
+    expect(rapido).not.toBe('demorou')
     expect(respostas.map((r) => r.status).sort()).toEqual([202, 409])
     expect(banco.avaliacoes).toHaveLength(1)
   })
 
-  it('11ª análise na mesma hora → 429', async () => {
+  it('11ª análise na mesma hora → 429, sem consultar o DNS', async () => {
     for (let i = 0; i < 10; i++) semear()
 
     const resposta = await pedir('u1', 'https://www.loja.com.br')
@@ -233,6 +253,39 @@ describe('POST /api/avaliacoes', () => {
     expect(resposta.status).toBe(429)
     expect(resposta.body).toEqual({ erro: MSG_LIMITE })
     expect(fila.adicionar).not.toHaveBeenCalled()
+    expect(classificarEndereco).not.toHaveBeenCalled()
+  })
+
+  it('31º pedido da mesma conta em 15 min → 429, mesmo com URL interna e sem consultar o DNS', async () => {
+    vi.mocked(classificarEndereco).mockResolvedValue('inexistente')
+    for (let i = 0; i < limiteAvaliacaoPorConta.maximo; i++) {
+      expect((await pedir('u1', 'https://nao-existe.exemplo')).status).toBe(400)
+    }
+    vi.mocked(classificarEndereco).mockClear().mockResolvedValue('interno')
+
+    const resposta = await pedir('u1', 'https://alvo.exemplo')
+
+    expect(resposta.status).toBe(429)
+    expect(resposta.body).toEqual({ erro: 'Muitas tentativas. Tente de novo em 15 minutos.' })
+    expect(classificarEndereco).not.toHaveBeenCalled()
+  })
+
+  it('61º pedido do mesmo IP com contas diferentes → 429', async () => {
+    vi.mocked(classificarEndereco).mockResolvedValue('inexistente')
+    for (let i = 0; i < limiteAvaliacaoPorIp.maximo; i++) {
+      expect((await pedir(`conta${i}`, 'https://nao-existe.exemplo')).status).toBe(400)
+    }
+
+    const resposta = await pedir('conta-nova', 'https://nao-existe.exemplo')
+
+    expect(resposta.status).toBe(429)
+    expect(resposta.body.erro).toMatch(/Tente de novo em 15 minutos/)
+  })
+
+  it('URL mal formada não gasta o limite', async () => {
+    for (let i = 0; i < limiteAvaliacaoPorConta.maximo + 1; i++) await pedir('u1', 'ftp://x')
+
+    expect((await pedir('u1', 'https://www.loja.com.br')).status).toBe(202)
   })
 
   it('análises de mais de 1 hora atrás e de outras contas não entram no limite', async () => {
@@ -261,6 +314,16 @@ describe('GET /api/avaliacoes/:id', () => {
       expect(resposta.status).toBe(404)
       expect(resposta.body).toEqual({ erro: 'Avaliação não encontrada.' })
     }
+  })
+
+  it('id em maiúsculas vale como o id em minúsculas (andamento e fila usam minúsculas)', async () => {
+    const avaliacao = semear({ status: 'ANALISANDO' })
+    andamento.set(avaliacao.id, { etapa: 3, paginaGrande: false })
+
+    const resposta = await buscar('u1', avaliacao.id.toUpperCase())
+
+    expect(resposta.status).toBe(200)
+    expect(resposta.body.avaliacao).toMatchObject({ id: avaliacao.id, etapa: 3 })
   })
 
   it('na fila traz a posição, sem etapa', async () => {

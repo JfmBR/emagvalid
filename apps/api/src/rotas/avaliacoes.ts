@@ -1,7 +1,9 @@
 import { Router } from 'express'
 import { classificarEndereco, MSG_URL, prepararUrl } from '../analise/endereco.js'
 import { andamento, fila } from '../analise/executar.js'
+import { chaveDoIp } from '../auth/ip.js'
 import { exigirLogin, type UsuarioDaSessao } from '../auth/sessao.js'
+import { limiteAvaliacaoPorConta, limiteAvaliacaoPorIp } from '../auth/tentativas.js'
 import { db } from '../db.js'
 
 export const rotasAvaliacoes = Router()
@@ -10,6 +12,7 @@ const MAX_POR_HORA = 10 // RNF10
 const UMA_HORA_MS = 60 * 60 * 1000
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const MSG_PENDENTE = 'Você já tem uma análise em andamento. Espere ela terminar para começar outra.'
+const MSG_MUITOS_PEDIDOS = 'Muitas tentativas. Tente de novo em 15 minutos.'
 const MSG_LIMITE = `Você chegou ao limite de ${MAX_POR_HORA} análises por hora. Tente de novo mais tarde.`
 
 // shortcut: a trava vive na memória de uma instância só, como a fila; com mais de uma instância, o count do banco ainda barra o caso comum
@@ -26,16 +29,15 @@ rotasAvaliacoes.post('/', exigirLogin, async (req, res) => {
   }
   const { url } = preparada
 
-  const tipo = await classificarEndereco(url.hostname)
-  if (tipo !== 'publico') {
-    if (tipo === 'interno') {
-      // Log de segurança (decisão 13): a conta e o host, nunca a URL completa
-      // oxlint-disable-next-line no-console
-      console.error(`Endereço interno recusado: conta ${usuarioId}, host ${url.hostname}`)
-    }
-    res.status(400).json({ erro: 'Confira os campos marcados.', campos: { url: MSG_URL[tipo] } })
+  // Todo pedido com URL bem formada conta, mesmo o recusado depois: sem isso, as respostas diferentes
+  // (interno, inexistente, ok) serviriam de oráculo do DNS interno. Conta antes de qualquer await.
+  const ip = chaveDoIp(req.ip ?? 'desconhecido')
+  if (limiteAvaliacaoPorConta.bloqueado(usuarioId) || limiteAvaliacaoPorIp.bloqueado(ip)) {
+    res.status(429).json({ erro: MSG_MUITOS_PEDIDOS })
     return
   }
+  limiteAvaliacaoPorConta.registrar(usuarioId)
+  limiteAvaliacaoPorIp.registrar(ip)
 
   // dois cliques rápidos: o segundo pedido chega antes de o primeiro gravar, então o count sozinho não vê
   if (criando.has(usuarioId)) {
@@ -60,6 +62,18 @@ rotasAvaliacoes.post('/', exigirLogin, async (req, res) => {
       return
     }
 
+    // o DNS só roda depois de todas as recusas baratas
+    const tipo = await classificarEndereco(url.hostname)
+    if (tipo !== 'publico') {
+      if (tipo === 'interno') {
+        // Log de segurança (decisão 13): a conta e o host, nunca a URL completa
+        // oxlint-disable-next-line no-console
+        console.error(`Endereço interno recusado: conta ${usuarioId}, host ${url.hostname}`)
+      }
+      res.status(400).json({ erro: 'Confira os campos marcados.', campos: { url: MSG_URL[tipo] } })
+      return
+    }
+
     const { id } = await db.avaliacao.create({
       data: { usuarioId, url: url.href },
       select: { id: true },
@@ -73,10 +87,11 @@ rotasAvaliacoes.post('/', exigirLogin, async (req, res) => {
 
 rotasAvaliacoes.get('/:id', exigirLogin, async (req, res) => {
   const { id: usuarioId } = res.locals.usuario as UsuarioDaSessao
-  const id = req.params.id
+  // minúsculas: o banco, a fila e o andamento guardam o UUID assim
+  const id = typeof req.params.id === 'string' ? req.params.id.toLowerCase() : ''
   const naoEncontrada = () => res.status(404).json({ erro: 'Avaliação não encontrada.' })
   // texto que não é UUID nem chega ao banco
-  if (typeof id !== 'string' || !UUID.test(id)) return naoEncontrada()
+  if (!UUID.test(id)) return naoEncontrada()
 
   // a avaliação de outra conta também dá 404: não revela que o id existe
   const avaliacao = await db.avaliacao.findFirst({
