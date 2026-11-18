@@ -219,6 +219,12 @@ describe('POST /api/avaliacoes', () => {
     expect(classificarEndereco).not.toHaveBeenCalled()
   })
 
+  it('pendente criada há mais de 15 min não bloqueia (análise que morreu sem dono)', async () => {
+    semear({ status: 'ANALISANDO', criadaEm: new Date(Date.now() - 16 * 60_000) })
+
+    expect((await pedir('u1', 'https://www.loja.com.br')).status).toBe(202)
+  })
+
   it('pendente de outra conta não bloqueia', async () => {
     semear({ usuarioId: 'u2', status: 'NA_FILA' })
 

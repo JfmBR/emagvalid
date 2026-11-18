@@ -1,4 +1,4 @@
-import { lookup } from 'node:dns/promises'
+import { Resolver } from 'node:dns/promises'
 import { BlockList, isIP } from 'node:net'
 
 export const MSG_URL = {
@@ -88,9 +88,19 @@ export function ipBloqueado(ip: string): boolean {
   }
 }
 
+// c-ares, fora do threadpool do Node (que o scrypt do login e o zlib usam), com prazo por consulta.
+// Não lê o /etc/hosts: só nomes públicos interessam (revisão final, 18/11/2026)
+const resolvedor = new Resolver({ timeout: 3000, tries: 1 })
+
 export async function resolverNome(host: string): Promise<string[]> {
-  const enderecos = await lookup(host, { all: true })
-  return enderecos.map((e) => e.address)
+  const respostas = await Promise.allSettled([resolvedor.resolve4(host), resolvedor.resolve6(host)])
+  const ips = respostas.flatMap((r) => (r.status === 'fulfilled' ? r.value : []))
+  const falhas = respostas.flatMap((r) =>
+    r.status === 'rejected' ? [r.reason as { code?: string }] : [],
+  )
+  if (ips.length > 0 || falhas.length === 0) return ips
+  // "não existe" só quando nenhuma das duas falhou por outro motivo (prazo, servidor fora)
+  throw falhas.find((e) => e.code !== 'ENOTFOUND' && e.code !== 'ENODATA') ?? falhas[0]
 }
 
 // O argumento deve vir de URL.hostname (já normalizado).

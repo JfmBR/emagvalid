@@ -113,6 +113,15 @@ describe('falhasDaAnalise', () => {
     )
     expect(falhas.every((f) => f.trecho.length === MAX_TRECHO)).toBe(true)
   })
+
+  it('seletor de até 1.000 caracteres e sem caractere nulo, que o Postgres recusa', () => {
+    // a página cria ids enormes por JavaScript, sem gastar rede (revisão final, 18/11/2026)
+    const ocorrencias = [{ seletor: `#${'a'.repeat(100_000)}`, trecho: '<img\u0000 src="x">' }]
+    const [falha] = falhasDaAnalise([{ ...imagemSemAlt, ocorrencias }])
+
+    expect(falha?.seletor).toHaveLength(MAX_TRECHO)
+    expect(falha?.trecho).toBe('<img src="x">')
+  })
 })
 
 describe('executarAvaliacao', () => {

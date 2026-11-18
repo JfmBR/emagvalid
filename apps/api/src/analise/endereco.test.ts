@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import { classificarEndereco, ipBloqueado, MSG_URL, prepararUrl } from './endereco.js'
+import { Resolver } from 'node:dns/promises'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { classificarEndereco, ipBloqueado, MSG_URL, prepararUrl, resolverNome } from './endereco.js'
 
 // Devolve o href do resultado ou falha o teste
 function ok(resultado: ReturnType<typeof prepararUrl>): string {
@@ -91,5 +92,35 @@ describe('classificarEndereco', () => {
         throw new Error('falha qualquer')
       }),
     ).toBe('interno')
+  })
+})
+
+// resolverNome usa o resolvedor c-ares (fora do threadpool, com prazo); os testes trocam as respostas
+describe('resolverNome', () => {
+  const erroDns = (code: string) => Object.assign(new Error(code), { code })
+  afterEach(() => vi.restoreAllMocks())
+
+  it('junta os IPs de IPv4 e de IPv6', async () => {
+    vi.spyOn(Resolver.prototype, 'resolve4').mockResolvedValue(['203.0.113.1'])
+    vi.spyOn(Resolver.prototype, 'resolve6').mockResolvedValue(['2001:db8::1'])
+    expect(await resolverNome('x.teste')).toEqual(['203.0.113.1', '2001:db8::1'])
+  })
+
+  it('nome só com IPv4 devolve o IPv4', async () => {
+    vi.spyOn(Resolver.prototype, 'resolve4').mockResolvedValue(['203.0.113.1'])
+    vi.spyOn(Resolver.prototype, 'resolve6').mockRejectedValue(erroDns('ENODATA'))
+    expect(await resolverNome('x.teste')).toEqual(['203.0.113.1'])
+  })
+
+  it('nome sem nenhum registro vira inexistente', async () => {
+    vi.spyOn(Resolver.prototype, 'resolve4').mockRejectedValue(erroDns('ENOTFOUND'))
+    vi.spyOn(Resolver.prototype, 'resolve6').mockRejectedValue(erroDns('ENOTFOUND'))
+    expect(await classificarEndereco('x.teste')).toBe('inexistente')
+  })
+
+  it('prazo esgotado sem nenhum IP bloqueia, na dúvida', async () => {
+    vi.spyOn(Resolver.prototype, 'resolve4').mockRejectedValue(erroDns('ETIMEOUT'))
+    vi.spyOn(Resolver.prototype, 'resolve6').mockRejectedValue(erroDns('ENODATA'))
+    expect(await classificarEndereco('x.teste')).toBe('interno')
   })
 })

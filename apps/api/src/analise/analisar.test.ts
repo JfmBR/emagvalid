@@ -3,7 +3,13 @@ import { createServer, type Server } from 'node:http'
 import { createServer as criarServidorTcp, type AddressInfo } from 'node:net'
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { ambienteDoNavegador, analisar, TAMANHO_MAXIMO, type CodigoErro } from './analisar.js'
+import {
+  ambienteDoNavegador,
+  analisar,
+  MAX_HOSTS_POR_ANALISE,
+  TAMANHO_MAXIMO,
+  type CodigoErro,
+} from './analisar.js'
 
 // Página local com uma falha conhecida (imagem sem alt) e título e idioma corretos
 const html = `<!doctype html><html lang="pt-BR"><head><title>Teste</title></head>
@@ -61,6 +67,15 @@ beforeAll(async () => {
           html.replace(
             '<img src="x.png">',
             [1, 2, 3].map((n) => `<img src="/peso?${n}">`).join(''),
+          ),
+        )
+        return
+      case '/muitos-hosts':
+        res.setHeader('content-type', 'text/html')
+        res.end(
+          html.replace(
+            '<img src="x.png">',
+            Array.from({ length: 80 }, (_, n) => `<img src="http://h${n}.test/x.png">`).join(''),
           ),
         )
         return
@@ -350,6 +365,16 @@ describe('analisar', { timeout: 20_000 }, () => {
         }),
       ),
     ).toBe('INDISPONIVEL')
+  })
+
+  it('confere no máximo MAX_HOSTS_POR_ANALISE hosts; os outros são bloqueados sem DNS', async () => {
+    const conferidos: string[] = []
+    const conferir = async (hostname: string) => {
+      conferidos.push(hostname)
+      return hostname === '127.0.0.1'
+    }
+    await analisar(`${url}/muitos-hosts`, { conferirEndereco: conferir })
+    expect(conferidos).toHaveLength(MAX_HOSTS_POR_ANALISE)
   })
 
   it('307 mantém método e corpo; 303 vira GET sem corpo', async () => {

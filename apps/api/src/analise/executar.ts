@@ -47,8 +47,9 @@ export function falhasDaAnalise(violacoes: Violacao[]): FalhaNova[] {
           requisitoEmag: requisito.numero,
           descricao: violacao.ajuda,
           prioridade: requisito.prioridade,
-          seletor: ocorrencia.seletor,
-          trecho: ocorrencia.trecho.slice(0, MAX_TRECHO),
+          // a página controla os dois (ids enormes por JavaScript); o Postgres recusa o caractere nulo
+          seletor: ocorrencia.seletor.replaceAll('\u0000', '').slice(0, MAX_TRECHO),
+          trecho: ocorrencia.trecho.replaceAll('\u0000', '').slice(0, MAX_TRECHO),
           revisaoHumana: requisito.cobertura === 'parcial',
         })
       }

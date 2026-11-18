@@ -60,6 +60,8 @@ export interface ResultadoAnalise {
 export const TAMANHO_MAXIMO = 5 * 1024 * 1024
 // Teto da soma de todas as respostas de uma análise
 export const TAMANHO_MAXIMO_TOTAL = 50 * 1024 * 1024
+// Teto de hosts distintos por análise: cada um custa uma consulta de DNS
+export const MAX_HOSTS_POR_ANALISE = 50
 
 // o mesmo limite de saltos do Chromium
 const MAX_SALTOS = 20
@@ -110,6 +112,7 @@ export async function analisar(
   const classificar = (hostname: string) => {
     let tipo = conferidos.get(hostname)
     if (!tipo) {
+      if (conferidos.size >= MAX_HOSTS_POR_ANALISE) return Promise.resolve<TipoEndereco>('interno')
       tipo = conferirEndereco
         ? conferirEndereco(hostname).then((ok) => (ok ? 'publico' : 'interno'))
         : classificarEndereco(hostname, resolver)

@@ -10,6 +10,8 @@ export const rotasAvaliacoes = Router()
 
 const MAX_POR_HORA = 10 // RNF10
 const UMA_HORA_MS = 60 * 60 * 1000
+// pendente mais velha que isso morreu sem dono (deploy ou banco fora) e não trava mais a conta
+const PRAZO_PENDENTE_MS = 15 * 60 * 1000
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const MSG_PENDENTE = 'Você já tem uma análise em andamento. Espere ela terminar para começar outra.'
 const MSG_MUITOS_PEDIDOS = 'Muitas tentativas. Tente de novo em 15 minutos.'
@@ -48,7 +50,11 @@ rotasAvaliacoes.post('/', exigirLogin, async (req, res) => {
   try {
     // conta pelo banco, não pela memória: o limite vale depois de o Render reiniciar
     const pendentes = await db.avaliacao.count({
-      where: { usuarioId, status: { in: ['NA_FILA', 'ANALISANDO'] } },
+      where: {
+        usuarioId,
+        status: { in: ['NA_FILA', 'ANALISANDO'] },
+        criadaEm: { gte: new Date(Date.now() - PRAZO_PENDENTE_MS) },
+      },
     })
     if (pendentes > 0) {
       res.status(409).json({ erro: MSG_PENDENTE })
