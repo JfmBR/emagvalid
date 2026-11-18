@@ -85,3 +85,13 @@ test('só com teclado: liga o alto contraste pela barra', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'contraste')
   await expect(botao).toHaveAttribute('aria-pressed', 'true')
 })
+
+test('botão ligado da barra se distingue do desligado, sem o mouse em cima', async ({ page }) => {
+  await page.goto('/')
+  const borda = (nome: string) =>
+    page.getByRole('button', { name: nome }).evaluate((el) => getComputedStyle(el).borderTopColor)
+  await page.getByRole('button', { name: 'Modo escuro' }).click()
+  await page.mouse.move(0, 600)
+  // depois do clique o tema é escuro: compara os dois botões no mesmo tema
+  expect(await borda('Modo escuro')).not.toBe(await borda('Alto contraste'))
+})

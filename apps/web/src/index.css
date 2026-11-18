@@ -70,6 +70,12 @@ body {
   gap: 4px 8px;
 }
 
+/* botão ligado: borda e fundo mostram o estado a quem enxerga (aria-pressed já avisa o leitor de tela) */
+.barra-opcoes .btn.txt[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
 /* links da barra: alvo de 44 px */
 .barra-acessibilidade a {
   display: inline-flex;
