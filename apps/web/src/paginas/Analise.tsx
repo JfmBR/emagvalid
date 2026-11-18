@@ -109,7 +109,7 @@ export function Analise() {
       </div>
 
       {aviso ? (
-        <Aviso tipo="alerta" papel="status">
+        <Aviso tipo="alerta" papel="alert">
           <p>{aviso}</p>
         </Aviso>
       ) : null}

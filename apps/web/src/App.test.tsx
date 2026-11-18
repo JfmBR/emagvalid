@@ -442,7 +442,7 @@ describe('Tela 4 · análise', () => {
     )
     abrir('/avaliacoes/a1')
 
-    expect(await screen.findByRole('status')).toHaveTextContent(/Confira sua internet/)
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Confira sua internet/)
     caiu = false
     await vi.advanceTimersByTimeAsync(2_000)
     await waitFor(() => expect(screen.queryByText(/Confira sua internet/)).not.toBeInTheDocument())
