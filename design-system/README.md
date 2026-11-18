@@ -27,7 +27,7 @@ Interface para auditoras e auditores de acessibilidade (persona: Helena, analist
 
 ## Cor
 
-Dois temas, os dois do protótipo: **Claro** e **Escuro** (`prefers-color-scheme`, com `data-theme` para forçar).
+Três temas: **Claro** e **Escuro**, os dois do protótipo (`prefers-color-scheme`, com `data-theme` para forçar), e **Alto contraste** (`data-theme='contraste'`, eMAG 3.1 seção 4.2: fundo `#000000`, texto, linhas e contornos `#ffffff`, links e foco `#fff333`, links sublinhados em todos os estados). O contraste vence o tema do sistema; a barra de acessibilidade do app liga os temas.
 
 | Papel                     | Tokens                                                            | Uso                                                       |
 | ------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------- |
@@ -41,7 +41,7 @@ Dois temas, os dois do protótipo: **Claro** e **Escuro** (`prefers-color-scheme
 
 Regras:
 
-- Todo par de texto do protótipo passa 4.5:1 nos dois temas (menor: `ok` sobre `ok-bg`, 5.7:1).
+- Todo par de texto do protótipo passa 4.5:1 nos dois temas (menor: `ok` sobre `ok-bg`, 5.7:1). No alto contraste, todo par passa 7:1 (menor: `alta` sobre preto, 9.2:1).
 - Cor nunca é a única pista: prioridade e decisão sempre escritas no selo.
 - Borda de campo usa `line-strong` (3.5:1 ou mais nos dois temas, WCAG 1.4.11). O protótipo usava `line` (1.4:1); ao portar telas do protótipo, troque. `line` fica só para divisórias.
 - O app atual (`apps/web/src/index.css`) ainda usa outra paleta (`#1b4f9c`, foco `#b35c00`); ao construir as telas, troque pelos tokens daqui.
@@ -67,7 +67,8 @@ Corpo 17px com entrelinha 1.55 (16px abaixo de 560px). `h1` fluido de 25.6 a 36.
 ## Interação
 
 - Tudo funciona só com teclado, em ordem lógica.
-- "Pular para o conteúdo" é o primeiro link; ao trocar de tela, o foco vai para o `h1`.
+- "Ir para o conteúdo [1]", na barra de acessibilidade, é o primeiro link; ao trocar de tela, o foco vai para o `h1`.
+- Resposta ao mouse (`bundle.css`): o botão principal escurece no claro e clareia no escuro (`color-mix` de `accent` com `ink`; texto a 8.8:1 ou mais); secundário e de texto ganham fundo `accent-soft` (`accent` sobre ele: 6.6:1 no claro, 6.3:1 no escuro, 11.2:1 no contraste); perigo ganha `alta-bg`; link engrossa o sublinhado; no clique o botão desce 1px. Botão desabilitado não reage. Transição de 120ms só na cor, desligada com `prefers-reduced-motion`.
 - Andamento anunciado com `aria-live="polite"`, sem roubar o foco (RNF06). Animação para com `prefers-reduced-motion`.
 - Antes de entregar uma tela: e2e com axe, navegação só por teclado e teste com leitor de tela (Orca + Firefox; NVDA no Windows) — ver `docs/design.md`.
 

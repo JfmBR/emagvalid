@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router'
 import { Layout } from './componentes/Layout.tsx'
+import { Acessibilidade } from './paginas/Acessibilidade.tsx'
 import { Analise } from './paginas/Analise.tsx'
 import { Cadastro } from './paginas/Cadastro.tsx'
 import { Entrar } from './paginas/Entrar.tsx'
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="avaliacoes/nova" element={<NovaAvaliacao />} />
           <Route path="avaliacoes/:id" element={<Analise />} />
           <Route path="privacidade" element={<Privacidade />} />
+          <Route path="acessibilidade" element={<Acessibilidade />} />
           <Route path="*" element={<NaoEncontrada />} />
         </Route>
       </Routes>

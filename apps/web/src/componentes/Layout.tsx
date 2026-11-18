@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router'
 import { enviar } from '../api.ts'
 import { useSessao } from '../sessao.tsx'
+import { BarraAcessibilidade } from './BarraAcessibilidade.tsx'
 import { Botao } from './Botao.tsx'
 
 const iconeMarca = (
@@ -53,37 +54,34 @@ export function Layout() {
 
   return (
     <>
-      <a className="pular" href="#conteudo">
-        Pular para o conteúdo
-      </a>
+      <BarraAcessibilidade />
       <header className="topo">
         <div className="wrap">
           <Link className="marca" to="/" translate="no">
             {iconeMarca}
             AcessaWeb
           </Link>
-          {carregando ? null : (
-            <nav aria-label="Principal">
-              {usuario ? (
-                <>
-                  <span className="ola">Olá, {usuario.nome.split(' ')[0]}</span>
-                  <Botao variante="txt" onClick={() => void sair()}>
-                    Sair
-                  </Botao>
-                </>
-              ) : (
-                <Link className="btn txt" to="/entrar">
-                  Entrar
-                </Link>
-              )}
-            </nav>
-          )}
+          {/* o nav existe sempre: é o destino do atalho "Ir para o menu [2]"; só o conteúdo espera a sessão */}
+          <nav id="menu" tabIndex={-1} aria-label="Principal">
+            {carregando ? null : usuario ? (
+              <>
+                <span className="ola">Olá, {usuario.nome.split(' ')[0]}</span>
+                <Botao variante="txt" onClick={() => void sair()}>
+                  Sair
+                </Botao>
+              </>
+            ) : (
+              <Link className="btn txt" to="/entrar">
+                Entrar
+              </Link>
+            )}
+          </nav>
         </div>
       </header>
       <main id="conteudo" tabIndex={-1} className="wrap" ref={principal}>
         <Outlet />
       </main>
-      <footer className="wrap rodape">
+      <footer id="rodape" tabIndex={-1} className="wrap rodape">
         <Link to="/privacidade">Privacidade</Link>
       </footer>
     </>

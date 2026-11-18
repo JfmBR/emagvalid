@@ -49,3 +49,41 @@ body {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* Barra de acessibilidade (eMAG 4.3): no topo de toda tela; quebra linha em tela estreita */
+.barra-acessibilidade {
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  font-size: 0.94rem;
+}
+
+.barra-acessibilidade .wrap,
+.barra-opcoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+}
+
+.barra-opcoes {
+  margin-left: auto;
+  gap: 4px 8px;
+}
+
+/* botão ligado: borda e fundo mostram o estado a quem enxerga (aria-pressed já avisa o leitor de tela) */
+.barra-opcoes .btn.txt[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ligado, o fundo já é o do hover: a resposta ao mouse é o sublinhado */
+.barra-opcoes .btn.txt[aria-pressed='true']:hover {
+  text-decoration: underline;
+}
+
+/* links da barra: alvo de 44 px */
+.barra-acessibilidade a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}

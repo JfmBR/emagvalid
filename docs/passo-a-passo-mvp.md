@@ -139,6 +139,7 @@ Publicar cedo evita a surpresa de descobrir na última semana que algo não roda
 - [x] Criar os componentes do protótipo em `apps/web/src/componentes/`: `Botao` (primário e secundário, 44 px), `Campo` (rótulo visível, ajuda e erro), `Selo` (prioridade e origem, com texto e cor), `Aviso`, `Layout` (cabeçalho, "Pular para o conteúdo", `main`)
 - [x] Cores e tipografia: o app importa `design-system/tokens.css` e `components/bundle.css` (fonte única do visual desde 11/11/2026), em vez de copiar para `index.css`
 - [x] Testar cada componente com teclado e leitor de tela (NVDA no Windows, Orca no Linux). Conferido pelo João com o Orca em 17/11/2026
+- [x] Barra de acessibilidade do eMAG 3.1 (atalhos 1, 2 e 4, alto contraste, modo escuro e página `/acessibilidade`), resposta ao mouse nos botões e zoom de 200% sem rolagem horizontal (pedido do João depois do teste manual, 18/11/2026; e2e em `apps/web/e2e/acessibilidade.spec.ts`). Falta ouvir a barra no Orca
 
 **Terminou quando:** os componentes estão prontos e iguais aos do protótipo.
 

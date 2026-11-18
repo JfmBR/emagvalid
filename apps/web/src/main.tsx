@@ -6,6 +6,7 @@ import '../../../design-system/components/bundle.css'
 import './index.css'
 import App from './App.tsx'
 
+// o tema salvo já foi aplicado por public/tema-inicial.js, no <head>, antes de a página aparecer
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>

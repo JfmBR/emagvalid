@@ -46,7 +46,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='claro']) {
+  :root:not([data-theme='claro']):not([data-theme='contraste']) {
     --bg: #0f141b;
     --surface: #161d27;
     --ink: #e6eaf0;
@@ -83,4 +83,25 @@
   --ok: #7fd39b;
   --ok-bg: #12301e;
   --code-bg: #1c2532;
+}
+
+/* Alto contraste (eMAG 3.1, seção 4.2): vem por último e vence o tema do sistema */
+:root[data-theme='contraste'] {
+  color-scheme: dark;
+  --bg: #000000;
+  --surface: #000000;
+  --ink: #ffffff;
+  --muted: #ffffff;
+  --line: #ffffff;
+  --line-strong: #ffffff;
+  --accent: #fff333;
+  --accent-ink: #000000;
+  --accent-soft: #333300;
+  --alta: #ff8a80;
+  --alta-bg: #000000;
+  --media: #fff333;
+  --media-bg: #000000;
+  --ok: #69f0ae;
+  --ok-bg: #000000;
+  --code-bg: #000000;
 }
