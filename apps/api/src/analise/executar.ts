@@ -56,6 +56,13 @@ export function falhasDaAnalise(violacoes: Violacao[]): FalhaNova[] {
 // shortcut: o andamento vive na memória de uma instância só, como a fila; a Tela 4 lê daqui
 export const andamento = new Map<string, { etapa: 1 | 2 | 3; paginaGrande: boolean }>()
 
+// Para o log: o nome do erro e o `code` (ex.: P2002 do Prisma). Nunca a message, que pode levar URL ou host do banco.
+export function diagnostico(erro: unknown): string[] {
+  const nome = erro instanceof Error ? erro.name : typeof erro
+  const code = (erro as { code?: unknown } | null)?.code
+  return typeof code === 'string' ? [nome, code] : [nome]
+}
+
 export async function executarAvaliacao(id: string): Promise<void> {
   const avaliacao = await db.avaliacao.findUnique({ where: { id } })
   if (!avaliacao) return
@@ -98,9 +105,13 @@ export async function executarAvaliacao(id: string): Promise<void> {
         avaliacao.usuarioId,
         URL.parse(avaliacao.url)?.hostname,
       )
-    } else {
+    } else if (erro instanceof ErroDeAnalise) {
       // oxlint-disable-next-line no-console
       console.error('Análise com erro:', codigo)
+    } else {
+      // erro de fora do analisar (banco, bug): o diagnóstico é o nome e o code, nunca a mensagem
+      // oxlint-disable-next-line no-console
+      console.error('Análise com erro:', codigo, ...diagnostico(erro))
     }
     await db.avaliacao.update({
       where: { id },

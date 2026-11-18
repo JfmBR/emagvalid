@@ -7,6 +7,7 @@ import {
   MAX_TRECHO,
   MENSAGEM_ERRO,
   andamento,
+  diagnostico,
   executarAvaliacao,
   falhasDaAnalise,
   recuperarInterrompidas,
@@ -208,6 +209,36 @@ describe('executarAvaliacao', () => {
     log.mockRestore()
   })
 
+  it('erro desconhecido loga só o nome e o code, nunca a mensagem nem a URL', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const erro = Object.assign(new Error('falha em postgres://u:senha@db.interno:5432/app'), {
+      name: 'PrismaClientKnownRequestError',
+      code: 'P2002',
+    })
+    analisar.mockRejectedValue(erro)
+
+    await executarAvaliacao('a1')
+
+    expect(log).toHaveBeenCalledWith(
+      'Análise com erro:',
+      'FALHOU',
+      'PrismaClientKnownRequestError',
+      'P2002',
+    )
+    expect(JSON.stringify(log.mock.calls)).not.toMatch(/postgres|senha|db\.interno/)
+    log.mockRestore()
+  })
+
+  it('erro desconhecido que não é Error loga o typeof', async () => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+    analisar.mockRejectedValue('texto solto com http://interno')
+
+    await executarAvaliacao('a1')
+
+    expect(log).toHaveBeenCalledWith('Análise com erro:', 'FALHOU', 'string')
+    log.mockRestore()
+  })
+
   it('avaliação que sumiu: não faz nada', async () => {
     banco.avaliacao = null
 
@@ -215,6 +246,15 @@ describe('executarAvaliacao', () => {
 
     expect(analisar).not.toHaveBeenCalled()
     expect(banco.atualizacoes).toEqual([])
+  })
+})
+
+describe('diagnostico', () => {
+  it('devolve nome e code; sem code, só o nome; nunca a message', () => {
+    const comCode = Object.assign(new Error('host db.interno:5432'), { code: 'ECONNREFUSED' })
+    expect(diagnostico(comCode)).toEqual(['Error', 'ECONNREFUSED'])
+    expect(diagnostico(new TypeError('x'))).toEqual(['TypeError'])
+    expect(diagnostico(null)).toEqual(['object'])
   })
 })
 

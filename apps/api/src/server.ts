@@ -1,5 +1,5 @@
 import { criarApp } from './app.js'
-import { recuperarInterrompidas } from './analise/executar.js'
+import { diagnostico, recuperarInterrompidas } from './analise/executar.js'
 
 const porta = Number(process.env.PORT ?? 3000)
 
@@ -8,7 +8,7 @@ try {
   await recuperarInterrompidas()
 } catch (erro) {
   // oxlint-disable-next-line no-console
-  console.error('Não foi possível recuperar as análises interrompidas', erro)
+  console.error('Não foi possível recuperar as análises interrompidas', ...diagnostico(erro))
 }
 
 const servidor = criarApp(process.env.PASTA_WEB).listen(porta, () => {
