@@ -72,7 +72,7 @@ Ondas: **A** = 1, 2, 4, 7 · **B** = 3, 8 · **C** = 5 · **D** = 6 · **E** = 9
 
 ---
 
-### Tarefa 1: Endereço público (SSRF, RNF10)
+### Task 1: Endereço público (SSRF, RNF10)
 
 **Arquivos:**
 
@@ -173,7 +173,7 @@ export const MSG_URL = {
 
 ---
 
-### Tarefa 2: Migração `urlFinal` e `paginaGrande`
+### Task 2: Migração `urlFinal` e `paginaGrande`
 
 **Arquivos:** `apps/api/prisma/schema.prisma` (modelo `Avaliacao`), migração nova.
 
@@ -187,7 +187,7 @@ export const MSG_URL = {
 
 ---
 
-### Tarefa 3: Análise protegida (RNF10, RF17, RNF06)
+### Task 3: Análise protegida (RNF10, RF17, RNF06)
 
 **Arquivos:**
 
@@ -248,7 +248,7 @@ it('o Chromium não recebe DATABASE_URL nem chaves', () => {
 
 ---
 
-### Tarefa 4: Fila de uma análise por vez
+### Task 4: Fila de uma análise por vez
 
 **Arquivos:** criar `apps/api/src/analise/fila.ts` e `fila.test.ts`.
 
@@ -269,7 +269,7 @@ it('um erro em uma não para a fila', ...)              // 'a' rejeita, 'b' roda
 
 ---
 
-### Tarefa 5: Executar a avaliação e gravar as falhas (RF03, RF04)
+### Task 5: Executar a avaliação e gravar as falhas (RF03, RF04)
 
 **Arquivos:**
 
@@ -338,7 +338,7 @@ it('recuperarInterrompidas troca NA_FILA e ANALISANDO por ERRO INTERROMPIDA', ..
 
 ---
 
-### Tarefa 6: Rotas `POST /api/avaliacoes` e `GET /api/avaliacoes/:id` (RF02, RNF10)
+### Task 6: Rotas `POST /api/avaliacoes` e `GET /api/avaliacoes/:id` (RF02, RNF10)
 
 **Arquivos:**
 
@@ -372,7 +372,7 @@ it('GET em andamento traz etapa, posição e paginaGrande; concluída traz as fa
 
 ---
 
-### Tarefa 7: Tela 3 · Nova avaliação
+### Task 7: Tela 3 · Nova avaliação
 
 **Arquivos:**
 
@@ -403,7 +403,7 @@ it('dois cliques mandam um pedido só', ...)
 
 ---
 
-### Tarefa 8: Tela 4 · Análise em andamento, erro (4b/4c) e concluída
+### Task 8: Tela 4 · Análise em andamento, erro (4b/4c) e concluída
 
 **Arquivos:**
 
@@ -434,7 +434,7 @@ e no e2e (API falsa por `page.route`, como em `conta.spec.ts`): Tela 3 → Tela 
 
 ---
 
-### Tarefa 9: Medição, documentação e prova com URL real
+### Task 9: Medição, documentação e prova com URL real
 
 **Arquivos:** `docs/architecture.md`, `docs/passo-a-passo-mvp.md`, `apps/api/src/analise/executar.ts` (só `LIMITE_PAGINA_GRANDE`).
 
