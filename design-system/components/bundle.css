@@ -70,19 +70,6 @@ a:hover {
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
-.pular {
-  position: absolute;
-  left: -9999px;
-  top: 0;
-  background: var(--accent);
-  color: var(--accent-ink);
-  padding: 10px 16px;
-  z-index: 50;
-}
-.pular:focus {
-  left: 16px;
-  top: 8px;
-}
 
 /* Cabeçalho da aplicação */
 .topo {
