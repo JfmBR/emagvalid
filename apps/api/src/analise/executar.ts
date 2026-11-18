@@ -3,7 +3,11 @@ import { requisitosDaRegra, type Prioridade } from '../emag/requisitos.js'
 import { ErroDeAnalise, analisar, type CodigoErro, type Violacao } from './analisar.js'
 import { criarFila } from './fila.js'
 
-export const LIMITE_PAGINA_GRANDE = 3_000 // shortcut: provisório até a medição da Tarefa 9
+// Medido em 17/11/2026 com `npm run analisar` (tempo inclui a rede): 22 elementos 1,7 s; 807 → 5,9 s;
+// 851 → 12,6 s; 5.256 → 20,8 s; 16.555 → 43,1 s (~2 s por mil elementos, 30 s perto de 10 mil).
+// Outras (gov.br, g1, sebrae, correios, bbc) deram DEMOROU por lentidão da rede, não por tamanho.
+// shortcut: poucas medições (uma por página, só neste IP); rever com o tempo real das análises no Render
+export const LIMITE_PAGINA_GRANDE = 10_000
 export const MAX_OCORRENCIAS_POR_REGRA = 50
 export const MAX_TRECHO = 1_000
 
