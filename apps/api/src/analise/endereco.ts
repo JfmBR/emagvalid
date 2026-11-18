@@ -51,13 +51,17 @@ for (const [rede, bits] of [
   bloqueados.addSubnet(rede, bits, 'ipv4')
 }
 for (const [rede, bits] of [
-  ['::', 128],
-  ['::1', 128],
+  ['::', 96], // inclui :: e ::1; IPv4-compatível (::7f00:1)
+  ['::ffff:0:0:0', 96], // SIIT
+  ['100::', 64],
   ['fc00::', 7],
   ['fe80::', 10],
   ['ff00::', 8],
+  ['2001::', 32], // Teredo
   ['2001:db8::', 32],
+  ['2002::', 16], // 6to4
   ['64:ff9b::', 96],
+  ['64:ff9b:1::', 48],
 ] as const) {
   bloqueados.addSubnet(rede, bits, 'ipv6')
 }
@@ -89,6 +93,7 @@ async function resolverNome(host: string): Promise<string[]> {
   return enderecos.map((e) => e.address)
 }
 
+// O argumento deve vir de URL.hostname (já normalizado).
 // shortcut: confere o DNS aqui e o Chromium resolve de novo ao abrir (DNS rebinding); fechar exige proxy próprio, depois do MVP
 export async function classificarEndereco(
   hostname: string,

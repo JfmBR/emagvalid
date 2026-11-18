@@ -35,6 +35,14 @@ describe('ipBloqueado', () => {
     'fe80::1',
     '::ffff:127.0.0.1',
     '::ffff:7f00:1',
+    '::7f00:1',
+    '::ffff:0:7f00:1',
+    '2002:7f00:1::1',
+    '2001:0:4136:e378::1',
+    '64:ff9b:1::1',
+    '100::1',
+    '::ffff:a9fe:a9fe',
+    '::',
   ])('%s bloqueado', (ip) => expect(ipBloqueado(ip)).toBe(true))
   it.each(['8.8.8.8', '200.160.2.3', '2001:4860:4860::8888'])('%s liberado', (ip) =>
     expect(ipBloqueado(ip)).toBe(false),
@@ -52,6 +60,9 @@ describe('classificarEndereco', () => {
   })
   it('público se todos os IPs forem públicos', async () => {
     expect(await classificarEndereco('x.teste', async () => ['8.8.8.8'])).toBe('publico')
+  })
+  it('resolver sem nenhum IP é interno, na dúvida', async () => {
+    expect(await classificarEndereco('x.teste', async () => [])).toBe('interno')
   })
   it('IP literal não passa pelo DNS', async () => {
     expect(
