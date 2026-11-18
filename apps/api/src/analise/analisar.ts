@@ -1,7 +1,18 @@
+import { Agent as AgenteHttp } from 'node:http'
+import { Agent as AgenteHttps } from 'node:https'
 import { createRequire } from 'node:module'
 import { AxeBuilder } from '@axe-core/playwright'
 import { chromium, type Route } from 'playwright'
-import { classificarEndereco } from './endereco.js'
+import { classificarEndereco, resolverNome, type TipoEndereco } from './endereco.js'
+import {
+  buscar,
+  cabecalhosDoPedido,
+  ErroDeTamanho,
+  lookupSeguro,
+  motivoDaFalha,
+  pedidoDoSalto,
+  type Pedido,
+} from './rede.js'
 
 export interface Ocorrencia {
   seletor: string
@@ -34,13 +45,21 @@ export interface OpcoesAnalise {
   aoCarregar?: (elementos: number) => void
 }
 
+// Só para os testes; a API não usa
+interface OpcoesDeTeste {
+  resolver?: (host: string) => Promise<string[]>
+  tamanhoMaximoTotal?: number
+}
+
 export interface ResultadoAnalise {
   violacoes: Violacao[]
   urlFinal: string
 }
 
-// HTML principal maior que isto não é analisado (RNF10)
+// Teto de cada resposta já descomprimida (documento principal e cada sub-recurso) (RNF10)
 export const TAMANHO_MAXIMO = 5 * 1024 * 1024
+// Teto da soma de todas as respostas de uma análise
+export const TAMANHO_MAXIMO_TOTAL = 50 * 1024 * 1024
 
 // o mesmo limite de saltos do Chromium
 const MAX_SALTOS = 20
@@ -61,10 +80,6 @@ export function ambienteDoNavegador(env: NodeJS.ProcessEnv): Record<string, stri
   return copia
 }
 
-async function enderecoPublico(hostname: string): Promise<boolean> {
-  return (await classificarEndereco(hostname)) === 'publico'
-}
-
 // Erro do goto (net::ERR_... do Chromium ou do motivo dado no route.abort) → código do RF17
 function codigoDoErro(erro: unknown): CodigoErro {
   const texto = erro instanceof Error ? `${erro.name} ${erro.message}` : String(erro)
@@ -75,60 +90,76 @@ function codigoDoErro(erro: unknown): CodigoErro {
   return 'FALHOU'
 }
 
-// Erro do pedido feito pelo route.fetch (rede do Node) → motivo que o Chromium entende
-function motivoDaFalha(erro: unknown): 'connectionfailed' | 'timedout' | 'failed' {
-  const texto = String(erro)
-  if (/ECONNREFUSED|ECONNRESET|ENOTFOUND|EAI_AGAIN|EHOSTUNREACH|ENETUNREACH/.test(texto))
-    return 'connectionfailed'
-  if (/Timeout|ETIMEDOUT/.test(texto)) return 'timedout'
-  return 'failed'
-}
-
 // Abre a página no Chromium, roda o axe-core e devolve as violações e o endereço final.
-// Cada pedido da página (inclusive cada salto de redirecionamento) só sai se o host for público (SSRF, RNF10).
-// shortcut: o host é conferido aqui e resolvido de novo na hora do pedido (DNS rebinding); fechar a janela exige proxy próprio, depois do MVP
-// shortcut: o route.fetch guarda cada resposta inteira na memória do processo, sem limite de tamanho por recurso; limitar exige o mesmo proxy próprio
-export async function analisar(url: string, opcoes: OpcoesAnalise = {}): Promise<ResultadoAnalise> {
-  const { limiteMs = 60_000, conferirEndereco = enderecoPublico, aoCarregar } = opcoes
+// Cada pedido da página (inclusive cada salto de redirecionamento) só sai se o host for público, e a
+// conexão só vai para IP público (SSRF e DNS rebinding, RNF10). Respostas têm teto de tamanho.
+export async function analisar(
+  url: string,
+  opcoes: OpcoesAnalise & OpcoesDeTeste = {},
+): Promise<ResultadoAnalise> {
+  const {
+    limiteMs = 60_000,
+    conferirEndereco,
+    aoCarregar,
+    resolver = resolverNome,
+    tamanhoMaximoTotal = TAMANHO_MAXIMO_TOTAL,
+  } = opcoes
 
   // cada host é conferido uma vez por análise; na dúvida (erro), bloqueia
-  const conferidos = new Map<string, Promise<boolean>>()
-  const publico = (hostname: string) => {
-    let resposta = conferidos.get(hostname)
-    if (!resposta) {
-      resposta = conferirEndereco(hostname).catch(() => false)
-      conferidos.set(hostname, resposta)
+  const conferidos = new Map<string, Promise<TipoEndereco>>()
+  const classificar = (hostname: string) => {
+    let tipo = conferidos.get(hostname)
+    if (!tipo) {
+      tipo = conferirEndereco
+        ? conferirEndereco(hostname).then((ok) => (ok ? 'publico' : 'interno'))
+        : classificarEndereco(hostname, resolver)
+      tipo = tipo.catch(() => 'interno' as const)
+      conferidos.set(hostname, tipo)
     }
-    return resposta
+    return tipo
   }
 
   // file:, data: e outros esquemas abririam sem passar pela rede (e sem conferência)
   const inicial = URL.parse(url)
-  if (
-    !inicial ||
-    (inicial.protocol !== 'http:' && inicial.protocol !== 'https:') ||
-    !(await publico(inicial.hostname))
-  ) {
+  if (!inicial || (inicial.protocol !== 'http:' && inicial.protocol !== 'https:')) {
     throw new ErroDeAnalise('BLOQUEADO')
   }
+  const tipoInicial = await classificar(inicial.hostname)
+  if (tipoInicial === 'inexistente') throw new ErroDeAnalise('INDISPONIVEL')
+  if (tipoInicial !== 'publico') throw new ErroDeAnalise('BLOQUEADO')
 
   const navegador = await chromium.launch({
     env: ambienteDoNavegador(process.env),
     // O Chromium fica sem rede própria: todo pedido dele vai a um proxy que não existe e falha.
-    // Só sai o que o route abaixo conferiu e buscou pelo route.fetch (rede do Node). Isso fecha o que o
-    // route não intercepta: saltos de redirecionamento, prefetch/prerender, SharedWorker. O WebRTC (UDP)
-    // não usa proxy, então fica proibido à parte.
+    // Só sai o que o route abaixo conferiu e buscou pela rede do Node. Isso fecha o que o route não
+    // intercepta: saltos de redirecionamento, prefetch/prerender, SharedWorker. O WebRTC (UDP) não usa
+    // proxy, então fica proibido à parte.
     args: [
       '--proxy-server=http://proxy.invalid:1',
       '--proxy-bypass-list=<-loopback>',
       '--force-webrtc-ip-handling-policy=disable_non_proxied_udp',
     ],
   })
-  let estourou = false
-  const relogio = setTimeout(() => {
-    estourou = true
+
+  // Relógio ou teto total encerram a análise na hora: param os pedidos e fecham o navegador
+  let encerrada: CodigoErro | null = null
+  const parar = new AbortController()
+  const encerrar = (codigo: CodigoErro) => {
+    if (encerrada) return
+    encerrada = codigo
+    parar.abort()
     navegador.close().catch(() => {})
-  }, limiteMs)
+  }
+  const relogio = setTimeout(() => encerrar('DEMOROU'), limiteMs)
+  let total = 0
+  const contar = (bytes: number) => {
+    total += bytes
+    if (total > tamanhoMaximoTotal) encerrar('GRANDE_DEMAIS')
+    return total <= tamanhoMaximoTotal
+  }
+  const lookup = lookupSeguro(resolver)
+  const agenteHttp = new AgenteHttp({ keepAlive: true })
+  const agenteHttps = new AgenteHttps({ keepAlive: true })
 
   try {
     const contexto = await navegador.newContext({ serviceWorkers: 'block' })
@@ -137,29 +168,52 @@ export async function analisar(url: string, opcoes: OpcoesAnalise = {}): Promise
     let proximoEndereco: string | null = null
 
     // O Chromium segue redirecionamentos sem chamar o route de novo (e sem rede, falharia). Por isso o
-    // pedido sai pelo route.fetch sem seguir redirecionamento, e cada salto é conferido antes de ser pedido.
+    // pedido sai pela rede do Node sem seguir redirecionamento, e cada salto é conferido antes de ser pedido.
     // No contexto (e não na página) para pegar também janelas novas e workers.
     await contexto.route('**/*', async (route: Route) => {
       const pedido = route.request()
       let alvo = new URL(pedido.url())
       if (alvo.protocol !== 'http:' && alvo.protocol !== 'https:') return route.continue()
+      let principal = false
       try {
-        const principal = pedido.isNavigationRequest() && pedido.frame() === pagina.mainFrame()
+        principal = pedido.isNavigationRequest() && pedido.frame() === pagina.mainFrame()
+        const corpo = pedido.postDataBuffer()
+        let atual: Pedido = {
+          metodo: pedido.method(),
+          cabecalhos: cabecalhosDoPedido(await pedido.allHeaders(), corpo),
+          corpo,
+        }
         for (let saltos = 0; ; saltos++) {
           if (saltos > MAX_SALTOS) return await route.abort('failed')
-          if (!(await publico(alvo.hostname))) return await route.abort('blockedbyclient')
-          const resposta = await route.fetch({ url: alvo.href, maxRedirects: 0 })
-          const destino = resposta.headers()['location']
-          if (resposta.status() < 300 || resposta.status() > 399 || !destino) {
-            return await route.fulfill({ response: resposta })
+          const tipo = await classificar(alvo.hostname)
+          if (tipo === 'inexistente') return await route.abort('namenotresolved')
+          if (tipo !== 'publico') return await route.abort('blockedbyclient')
+          const resposta = await buscar(alvo, atual, {
+            lookup,
+            agente: alvo.protocol === 'https:' ? agenteHttps : agenteHttp,
+            sinal: parar.signal,
+            limite: TAMANHO_MAXIMO,
+            contar,
+          })
+          const destino = resposta.cabecalhos['location']
+          if (resposta.status < 300 || resposta.status > 399 || !destino) {
+            return await route.fulfill({
+              status: resposta.status,
+              headers: resposta.cabecalhos,
+              body: resposta.corpo,
+            })
           }
-          alvo = new URL(destino, alvo)
+          const proximo = new URL(destino, alvo)
           if (principal) {
-            proximoEndereco = alvo.href
+            proximoEndereco = proximo.href
             return await route.fulfill({ status: 200, contentType: 'text/html', body: '' })
           }
+          atual = pedidoDoSalto(atual, resposta.status, alvo, proximo)
+          alvo = proximo
         }
       } catch (erro) {
+        // documento principal acima do teto encerra a análise; sub-recurso grande só é abortado
+        if (erro instanceof ErroDeTamanho && principal) encerrar('GRANDE_DEMAIS')
         await route.abort(motivoDaFalha(erro)).catch(() => {})
       }
     })
@@ -185,7 +239,6 @@ export async function analisar(url: string, opcoes: OpcoesAnalise = {}): Promise
     if (status >= 400) throw new ErroDeAnalise('INDISPONIVEL')
     const tipo = resposta.headers()['content-type'] ?? ''
     if (!/text\/html|application\/xhtml\+xml/i.test(tipo)) throw new ErroDeAnalise('NAO_HTML')
-    if ((await resposta.body()).length > TAMANHO_MAXIMO) throw new ErroDeAnalise('GRANDE_DEMAIS')
 
     aoCarregar?.(await pagina.locator('*').count())
     const { violations } = await new AxeBuilder({
@@ -204,10 +257,14 @@ export async function analisar(url: string, opcoes: OpcoesAnalise = {}): Promise
       urlFinal: pagina.url(),
     }
   } catch (erro) {
-    if (estourou) throw new ErroDeAnalise('DEMOROU', erro)
+    if (encerrada) throw new ErroDeAnalise(encerrada, erro)
     throw erro instanceof ErroDeAnalise ? erro : new ErroDeAnalise('FALHOU', erro)
   } finally {
     clearTimeout(relogio)
-    await navegador.close()
+    parar.abort()
+    agenteHttp.destroy()
+    agenteHttps.destroy()
+    // fechar não pode trocar o resultado nem o erro da análise
+    await navegador.close().catch(() => {})
   }
 }

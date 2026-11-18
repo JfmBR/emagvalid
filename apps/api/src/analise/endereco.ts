@@ -88,13 +88,14 @@ export function ipBloqueado(ip: string): boolean {
   }
 }
 
-async function resolverNome(host: string): Promise<string[]> {
+export async function resolverNome(host: string): Promise<string[]> {
   const enderecos = await lookup(host, { all: true })
   return enderecos.map((e) => e.address)
 }
 
 // O argumento deve vir de URL.hostname (já normalizado).
-// shortcut: confere o DNS aqui e o Chromium resolve de novo ao abrir (DNS rebinding); fechar exige proxy próprio, depois do MVP
+// Sozinha, esta conferência não fecha o DNS rebinding (o nome é resolvido de novo ao conectar);
+// a análise confere também o IP de cada conexão (lookupSeguro, em rede.ts).
 export async function classificarEndereco(
   hostname: string,
   resolver: (host: string) => Promise<string[]> = resolverNome,
