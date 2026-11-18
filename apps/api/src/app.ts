@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import express, { type ErrorRequestHandler, type RequestHandler } from 'express'
 import { rotasAuth } from './rotas/auth.js'
+import { rotasAvaliacoes } from './rotas/avaliacoes.js'
 import { rotasSaude } from './rotas/saude.js'
 
 // Proxies na frente da API no Render, medidos em 17/11/2026: Cloudflare, balanceador do Render e um
@@ -69,6 +70,7 @@ export function criarApp(pastaWeb?: string) {
   app.use('/api', exigirMesmaOrigem)
   app.use('/api/saude', rotasSaude)
   app.use('/api/auth', rotasAuth)
+  app.use('/api/avaliacoes', rotasAvaliacoes)
 
   app.use('/api', (_req, res) => {
     res.status(404).json({ erro: 'Rota não encontrada.' })

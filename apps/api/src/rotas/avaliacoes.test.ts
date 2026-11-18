@@ -1,0 +1,336 @@
+import { randomUUID } from 'node:crypto'
+import request from 'supertest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { andamento, fila } from '../analise/executar.js'
+import { classificarEndereco, MSG_URL, type TipoEndereco } from '../analise/endereco.js'
+import { criarApp } from '../app.js'
+
+type AvaliacaoFalsa = {
+  id: string
+  usuarioId: string
+  url: string
+  urlFinal: string | null
+  status: 'NA_FILA' | 'ANALISANDO' | 'CONCLUIDA' | 'ERRO'
+  mensagemErro: string | null
+  paginaGrande: boolean
+  criadaEm: Date
+  falhas: object[]
+}
+type Filtro = {
+  usuarioId?: string
+  id?: string
+  status?: { in: string[] }
+  criadaEm?: { gte: Date }
+}
+
+// O CI não tem banco: as rotas rodam de verdade, com um db em memória no lugar do Prisma
+const banco = vi.hoisted(() => ({ avaliacoes: [] as AvaliacaoFalsa[] }))
+
+vi.mock('../db.js', () => {
+  const confere = (a: AvaliacaoFalsa, where: Filtro) =>
+    (where.usuarioId === undefined || a.usuarioId === where.usuarioId) &&
+    (where.id === undefined || a.id === where.id) &&
+    (where.status === undefined || where.status.in.includes(a.status)) &&
+    (where.criadaEm === undefined || a.criadaEm >= where.criadaEm.gte)
+  return {
+    db: {
+      avaliacao: {
+        create: async ({ data }: { data: { usuarioId: string; url: string } }) => {
+          const avaliacao: AvaliacaoFalsa = {
+            id: randomUUID(),
+            ...data,
+            urlFinal: null,
+            status: 'NA_FILA',
+            mensagemErro: null,
+            paginaGrande: false,
+            criadaEm: new Date(),
+            falhas: [],
+          }
+          banco.avaliacoes.push(avaliacao)
+          return { id: avaliacao.id }
+        },
+        count: async ({ where }: { where: Filtro }) =>
+          banco.avaliacoes.filter((a) => confere(a, where)).length,
+        findFirst: async ({ where }: { where: Filtro }) =>
+          banco.avaliacoes.find((a) => confere(a, where)) ?? null,
+      },
+    },
+  }
+})
+
+vi.mock('../analise/executar.js', () => ({
+  fila: {
+    adicionar: vi.fn<(id: string) => void>(),
+    posicao: vi.fn<(id: string) => number | null>(),
+  },
+  andamento: new Map(),
+}))
+
+vi.mock('../analise/endereco.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../analise/endereco.js')>()),
+  classificarEndereco: vi.fn<(hostname: string) => Promise<TipoEndereco>>(),
+}))
+
+// o cabeçalho x-usuario faz o papel da sessão; sem ele, 401
+vi.mock('../auth/sessao.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../auth/sessao.js')>()),
+  exigirLogin: (
+    req: { get: (nome: string) => string | undefined },
+    res: {
+      locals: Record<string, unknown>
+      status: (codigo: number) => { json: (corpo: object) => void }
+    },
+    next: () => void,
+  ) => {
+    const id = req.get('x-usuario')
+    if (!id) {
+      res.status(401).json({ erro: 'Entre na sua conta para continuar.' })
+      return
+    }
+    res.locals.usuario = { id, nome: 'Teste', email: `${id}@empresa.com.br` }
+    next()
+  },
+}))
+
+const MSG_PENDENTE = 'Você já tem uma análise em andamento. Espere ela terminar para começar outra.'
+const MSG_LIMITE = 'Você chegou ao limite de 10 análises por hora. Tente de novo mais tarde.'
+
+function pedir(usuario: string | null, url: unknown) {
+  const pedido = request(criarApp()).post('/api/avaliacoes')
+  if (usuario) pedido.set('x-usuario', usuario)
+  return pedido.send({ url })
+}
+
+function semear(dados: Partial<AvaliacaoFalsa> = {}) {
+  const avaliacao: AvaliacaoFalsa = {
+    id: randomUUID(),
+    usuarioId: 'u1',
+    url: 'https://www.loja.com.br/',
+    urlFinal: null,
+    status: 'CONCLUIDA',
+    mensagemErro: null,
+    paginaGrande: false,
+    criadaEm: new Date(),
+    falhas: [],
+    ...dados,
+  }
+  banco.avaliacoes.push(avaliacao)
+  return avaliacao
+}
+
+beforeEach(() => {
+  banco.avaliacoes = []
+  andamento.clear()
+  vi.mocked(fila.adicionar).mockReset()
+  vi.mocked(fila.posicao).mockReset().mockReturnValue(null)
+  vi.mocked(classificarEndereco).mockReset().mockResolvedValue('publico')
+})
+
+describe('POST /api/avaliacoes', () => {
+  it('sem login → 401', async () => {
+    const resposta = await pedir(null, 'https://www.loja.com.br')
+
+    expect(resposta.status).toBe(401)
+    expect(banco.avaliacoes).toHaveLength(0)
+  })
+
+  it('URL inválida → 400 no campo url', async () => {
+    const resposta = await pedir('u1', 'ftp://x')
+
+    expect(resposta.status).toBe(400)
+    expect(resposta.body).toEqual({
+      erro: 'Confira os campos marcados.',
+      campos: { url: MSG_URL.invalida },
+    })
+    expect(classificarEndereco).not.toHaveBeenCalled()
+  })
+
+  it('url que não é texto → 400 com a mensagem de campo vazio', async () => {
+    const resposta = await pedir('u1', 123)
+
+    expect(resposta.status).toBe(400)
+    expect(resposta.body.campos.url).toBe(MSG_URL.vazia)
+  })
+
+  it('endereço interno → 400 e log só com a conta e o host', async () => {
+    vi.mocked(classificarEndereco).mockResolvedValue('interno')
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const resposta = await pedir('u1', 'https://alvo.exemplo/segredo?token=abc')
+
+    expect(resposta.status).toBe(400)
+    expect(resposta.body.campos.url).toBe(MSG_URL.interno)
+    expect(banco.avaliacoes).toHaveLength(0)
+    expect(fila.adicionar).not.toHaveBeenCalled()
+    // decisão 13: conta e host no log, nunca a URL completa
+    expect(log).toHaveBeenCalledExactlyOnceWith(
+      'Endereço interno recusado: conta u1, host alvo.exemplo',
+    )
+    log.mockRestore()
+  })
+
+  it('endereço inexistente → 400, sem log de segurança', async () => {
+    vi.mocked(classificarEndereco).mockResolvedValue('inexistente')
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const resposta = await pedir('u1', 'https://nao-existe.exemplo')
+
+    expect(resposta.status).toBe(400)
+    expect(resposta.body.campos.url).toBe(MSG_URL.inexistente)
+    expect(banco.avaliacoes).toHaveLength(0)
+    expect(log).not.toHaveBeenCalled()
+    log.mockRestore()
+  })
+
+  it('cria NA_FILA com a URL preparada, enfileira e responde 202', async () => {
+    const resposta = await pedir('u1', 'www.loja.com.br')
+
+    expect(resposta.status).toBe(202)
+    expect(banco.avaliacoes).toHaveLength(1)
+    const criada = banco.avaliacoes[0]!
+    expect(resposta.body).toEqual({ avaliacao: { id: criada.id } })
+    expect(criada).toMatchObject({
+      usuarioId: 'u1',
+      url: 'https://www.loja.com.br/',
+      status: 'NA_FILA',
+    })
+    expect(classificarEndereco).toHaveBeenCalledWith('www.loja.com.br')
+    expect(fila.adicionar).toHaveBeenCalledExactlyOnceWith(criada.id)
+  })
+
+  it('com análise pendente → 409', async () => {
+    semear({ status: 'ANALISANDO' })
+
+    const resposta = await pedir('u1', 'https://www.loja.com.br')
+
+    expect(resposta.status).toBe(409)
+    expect(resposta.body).toEqual({ erro: MSG_PENDENTE })
+    expect(fila.adicionar).not.toHaveBeenCalled()
+  })
+
+  it('pendente de outra conta não bloqueia', async () => {
+    semear({ usuarioId: 'u2', status: 'NA_FILA' })
+
+    expect((await pedir('u1', 'https://www.loja.com.br')).status).toBe(202)
+  })
+
+  it('dois pedidos ao mesmo tempo → um 202 e um 409', async () => {
+    const app = criarApp()
+    const enviar = () =>
+      request(app).post('/api/avaliacoes').set('x-usuario', 'u1').send({ url: 'www.loja.com.br' })
+
+    const respostas = await Promise.all([enviar(), enviar()])
+
+    expect(respostas.map((r) => r.status).sort()).toEqual([202, 409])
+    expect(banco.avaliacoes).toHaveLength(1)
+  })
+
+  it('11ª análise na mesma hora → 429', async () => {
+    for (let i = 0; i < 10; i++) semear()
+
+    const resposta = await pedir('u1', 'https://www.loja.com.br')
+
+    expect(resposta.status).toBe(429)
+    expect(resposta.body).toEqual({ erro: MSG_LIMITE })
+    expect(fila.adicionar).not.toHaveBeenCalled()
+  })
+
+  it('análises de mais de 1 hora atrás e de outras contas não entram no limite', async () => {
+    for (let i = 0; i < 10; i++) semear({ criadaEm: new Date(Date.now() - 61 * 60 * 1000) })
+    for (let i = 0; i < 10; i++) semear({ usuarioId: 'u2' })
+
+    expect((await pedir('u1', 'https://www.loja.com.br')).status).toBe(202)
+  })
+})
+
+describe('GET /api/avaliacoes/:id', () => {
+  function buscar(usuario: string | null, id: string) {
+    const pedido = request(criarApp()).get(`/api/avaliacoes/${id}`)
+    if (usuario) pedido.set('x-usuario', usuario)
+    return pedido
+  }
+
+  it('sem login → 401', async () => {
+    expect((await buscar(null, semear().id)).status).toBe(401)
+  })
+
+  it('avaliação de outra conta ou id que não é UUID → 404', async () => {
+    const dela = semear({ usuarioId: 'u2' })
+
+    for (const resposta of [await buscar('u1', dela.id), await buscar('u1', 'nao-e-uuid')]) {
+      expect(resposta.status).toBe(404)
+      expect(resposta.body).toEqual({ erro: 'Avaliação não encontrada.' })
+    }
+  })
+
+  it('na fila traz a posição, sem etapa', async () => {
+    const avaliacao = semear({ status: 'NA_FILA' })
+    vi.mocked(fila.posicao).mockReturnValue(2)
+
+    const { body } = await buscar('u1', avaliacao.id)
+
+    expect(body.avaliacao).toMatchObject({ status: 'NA_FILA', posicaoNaFila: 2, etapa: null })
+    expect(body.avaliacao.falhas).toEqual([])
+  })
+
+  it('em andamento traz etapa e paginaGrande do andamento, sem posição', async () => {
+    const avaliacao = semear({ status: 'ANALISANDO' })
+    andamento.set(avaliacao.id, { etapa: 2, paginaGrande: true })
+    vi.mocked(fila.posicao).mockReturnValue(0)
+
+    const { body } = await buscar('u1', avaliacao.id)
+
+    expect(body.avaliacao).toEqual({
+      id: avaliacao.id,
+      url: 'https://www.loja.com.br/',
+      urlFinal: null,
+      status: 'ANALISANDO',
+      etapa: 2,
+      posicaoNaFila: null,
+      paginaGrande: true,
+      mensagemErro: null,
+      falhas: [],
+    })
+  })
+
+  it('concluída traz as falhas e o paginaGrande gravado, sem etapa nem posição', async () => {
+    const falha = {
+      requisitoEmag: '3.5',
+      descricao: 'Imagem sem texto alternativo',
+      prioridade: 'ALTA',
+      seletor: 'img',
+      trecho: '<img src="a.png">',
+      revisaoHumana: false,
+    }
+    const avaliacao = semear({
+      status: 'CONCLUIDA',
+      urlFinal: 'https://www.loja.com.br/inicio',
+      paginaGrande: true,
+      falhas: [falha],
+    })
+
+    const { status, body } = await buscar('u1', avaliacao.id)
+
+    expect(status).toBe(200)
+    expect(body.avaliacao).toMatchObject({
+      status: 'CONCLUIDA',
+      urlFinal: 'https://www.loja.com.br/inicio',
+      etapa: null,
+      posicaoNaFila: null,
+      paginaGrande: true,
+      falhas: [falha],
+    })
+  })
+
+  it('com erro traz a mensagem e nenhuma falha', async () => {
+    const avaliacao = semear({ status: 'ERRO', mensagemErro: 'A página demorou demais.' })
+
+    const { body } = await buscar('u1', avaliacao.id)
+
+    expect(body.avaliacao).toMatchObject({
+      status: 'ERRO',
+      mensagemErro: 'A página demorou demais.',
+      falhas: [],
+    })
+  })
+})
