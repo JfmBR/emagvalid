@@ -584,6 +584,23 @@ describe('barra de acessibilidade (eMAG 3.1, seção 4.3)', () => {
     expect(localStorage.getItem('acessaweb-tema')).toBe('claro')
   })
 
+  it('com o contraste ligado, "Modo escuro" não fica pressionado e o clique sai do contraste', () => {
+    sistemaEm(false)
+    localStorage.setItem('acessaweb-contraste', 'sim')
+    simularApi()
+    abrir('/')
+    const escuro = screen.getByRole('button', { name: 'Modo escuro' })
+    expect(escuro).toHaveAttribute('aria-pressed', 'false')
+
+    fireEvent.click(escuro)
+    expect(raiz.dataset.theme).toBe('escuro')
+    expect(escuro).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Alto contraste' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
+  })
+
   it('atalhos para o conteúdo, o menu e o rodapé com as teclas 1, 2 e 4', () => {
     simularApi()
     abrir('/')

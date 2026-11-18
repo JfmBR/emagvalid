@@ -42,9 +42,9 @@ export function Acessibilidade() {
       <section className="cabeca">
         <h2>Como testamos</h2>
         <p>
-          Cada tela passa por uma verificação automática de acessibilidade (axe) e por um teste
-          feito só com o teclado. A conferência com leitor de tela (NVDA e Orca) faz parte da
-          entrega final.
+          Cada tela passa por uma verificação automática de acessibilidade (axe), e o uso só com o
+          teclado é testado nos fluxos principais. A conferência com leitor de tela (NVDA e Orca)
+          faz parte da entrega final.
         </p>
       </section>
     </div>

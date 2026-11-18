@@ -95,3 +95,38 @@ test('botão ligado da barra se distingue do desligado, sem o mouse em cima', as
   // depois do clique o tema é escuro: compara os dois botões no mesmo tema
   expect(await borda('Modo escuro')).not.toBe(await borda('Alto contraste'))
 })
+
+test.describe('com o alto contraste salvo', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('acessaweb-contraste', 'sim'))
+  })
+
+  test('link com cara de botão de texto ("Entrar") fica sublinhado (eMAG 4.2)', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    const entrar = page.getByRole('navigation', { name: 'Principal' }).getByRole('link')
+    await expect(entrar).toHaveCSS('text-decoration-line', 'underline')
+  })
+
+  test('o botão principal também responde ao mouse', async ({ page }) => {
+    await page.goto('/')
+    const principal = page.getByRole('link', { name: 'Criar conta' })
+    await expect(principal).toHaveCSS('text-decoration-line', 'none')
+    await principal.hover()
+    await expect(principal).toHaveCSS('text-decoration-line', 'underline')
+  })
+
+  test('vence o sistema escuro: fundo preto', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' })
+    await page.goto('/')
+    await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(0, 0, 0)')
+  })
+
+  test('o tema entra antes do React: sem piscar no tema errado', async ({ page }) => {
+    // sem o código do app, só o script do <head> pode aplicar o tema
+    await page.route('**/src/main.tsx', (rota) => rota.abort())
+    await page.goto('/')
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'contraste')
+  })
+})

@@ -52,8 +52,11 @@ a {
 a:hover {
   text-decoration-thickness: 3px;
 }
-/* Alto contraste (eMAG 4.2): links sublinhados em todos os estados */
-[data-theme='contraste'] a:not(.btn) {
+/* Alto contraste (eMAG 4.2): links sublinhados em todos os estados; o link com cara de botão de
+   texto (sem borda) também. No contraste a cor do hover quase não muda: o sublinhado é a resposta */
+[data-theme='contraste'] a:not(.btn),
+[data-theme='contraste'] a.btn.txt,
+[data-theme='contraste'] .btn:not([disabled]):hover {
   text-decoration: underline;
 }
 :focus-visible {

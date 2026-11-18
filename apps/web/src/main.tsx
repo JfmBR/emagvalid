@@ -5,11 +5,8 @@ import '../../../design-system/tokens.css'
 import '../../../design-system/components/bundle.css'
 import './index.css'
 import App from './App.tsx'
-import { aplicarTema, lerPreferencias } from './tema.ts'
 
-// antes do primeiro render: a página já abre no tema escolhido, sem piscar
-aplicarTema(lerPreferencias())
-
+// o tema salvo já foi aplicado por public/tema-inicial.js, no <head>, antes de a página aparecer
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>

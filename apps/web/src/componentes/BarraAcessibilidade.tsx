@@ -16,7 +16,10 @@ import { Botao } from './Botao.tsx'
 /* oxlint-disable jsx-a11y/no-access-key */
 export function BarraAcessibilidade() {
   const [preferencias, setPreferencias] = useState(lerPreferencias)
-  const escuro = preferencias.tema === 'escuro' || (preferencias.tema === null && sistemaEscuro())
+  // com o contraste ligado a tela não está escura: "Modo escuro" não aparece pressionado
+  const escuro =
+    !preferencias.contraste &&
+    (preferencias.tema === 'escuro' || (preferencias.tema === null && sistemaEscuro()))
 
   function mudar(novas: Preferencias) {
     salvarPreferencias(novas)
@@ -47,7 +50,7 @@ export function BarraAcessibilidade() {
           <Botao
             variante="txt"
             aria-pressed={escuro}
-            onClick={() => mudar({ ...preferencias, tema: escuro ? 'claro' : 'escuro' })}
+            onClick={() => mudar({ contraste: false, tema: escuro ? 'claro' : 'escuro' })}
           >
             Modo escuro
           </Botao>
