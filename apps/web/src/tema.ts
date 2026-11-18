@@ -51,3 +51,10 @@ export function aplicarTema(preferencias: Preferencias) {
 export function sistemaEscuro() {
   return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
 }
+
+// Avisa quando o sistema troca de tema com a página aberta (para useSyncExternalStore)
+export function assinarSistema(avisar: () => void) {
+  const consulta = window.matchMedia?.('(prefers-color-scheme: dark)')
+  consulta?.addEventListener('change', avisar)
+  return () => consulta?.removeEventListener('change', avisar)
+}

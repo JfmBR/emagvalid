@@ -76,6 +76,11 @@ body {
   background: var(--accent-soft);
 }
 
+/* ligado, o fundo já é o do hover: a resposta ao mouse é o sublinhado */
+.barra-opcoes .btn.txt[aria-pressed='true']:hover {
+  text-decoration: underline;
+}
+
 /* links da barra: alvo de 44 px */
 .barra-acessibilidade a {
   display: inline-flex;

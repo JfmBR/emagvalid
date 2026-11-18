@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import { Link } from 'react-router'
 import {
   aplicarTema,
+  assinarSistema,
   lerPreferencias,
   salvarPreferencias,
   sistemaEscuro,
@@ -16,10 +17,12 @@ import { Botao } from './Botao.tsx'
 /* oxlint-disable jsx-a11y/no-access-key */
 export function BarraAcessibilidade() {
   const [preferencias, setPreferencias] = useState(lerPreferencias)
+  // acompanha o sistema mesmo com a página aberta (modo noturno automático)
+  const sistema = useSyncExternalStore(assinarSistema, sistemaEscuro)
   // com o contraste ligado a tela não está escura: "Modo escuro" não aparece pressionado
   const escuro =
     !preferencias.contraste &&
-    (preferencias.tema === 'escuro' || (preferencias.tema === null && sistemaEscuro()))
+    (preferencias.tema === 'escuro' || (preferencias.tema === null && sistema))
 
   function mudar(novas: Preferencias) {
     salvarPreferencias(novas)

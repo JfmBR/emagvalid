@@ -94,6 +94,12 @@ test('botão ligado da barra se distingue do desligado, sem o mouse em cima', as
   await page.mouse.move(0, 600)
   // depois do clique o tema é escuro: compara os dois botões no mesmo tema
   expect(await borda('Modo escuro')).not.toBe(await borda('Alto contraste'))
+
+  // ligado, ele também responde ao mouse
+  const ligado = page.getByRole('button', { name: 'Modo escuro' })
+  await expect(ligado).toHaveCSS('text-decoration-line', 'none')
+  await ligado.hover()
+  await expect(ligado).toHaveCSS('text-decoration-line', 'underline')
 })
 
 test.describe('com o alto contraste salvo', () => {

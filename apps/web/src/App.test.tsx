@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { StrictMode } from 'react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -531,10 +531,43 @@ describe('Tela 4 · análise', () => {
 
 describe('barra de acessibilidade (eMAG 3.1, seção 4.3)', () => {
   const raiz = document.documentElement
-  // simula o tema do sistema (o jsdom não tem matchMedia)
+  // simula o tema do sistema (o jsdom não tem matchMedia); trocar() avisa quem escuta, como o navegador
   function sistemaEm(escuro: boolean) {
-    vi.stubGlobal('matchMedia', (consulta: string) => ({ matches: escuro, media: consulta }))
+    const ouvintes = new Set<() => void>()
+    const consulta = {
+      matches: escuro,
+      addEventListener: (_tipo: string, ouvinte: () => void) => ouvintes.add(ouvinte),
+      removeEventListener: (_tipo: string, ouvinte: () => void) => ouvintes.delete(ouvinte),
+    }
+    vi.stubGlobal('matchMedia', () => consulta)
+    return {
+      trocar(novo: boolean) {
+        consulta.matches = novo
+        act(() => ouvintes.forEach((ouvinte) => ouvinte()))
+      },
+    }
   }
+
+  it('o sistema muda de tema com a página aberta: "Modo escuro" acompanha', () => {
+    const sistema = sistemaEm(false)
+    simularApi()
+    abrir('/')
+    const botao = screen.getByRole('button', { name: 'Modo escuro' })
+    expect(botao).toHaveAttribute('aria-pressed', 'false')
+
+    sistema.trocar(true)
+    expect(botao).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('"Ir para o menu [2]" tem destino mesmo enquanto a sessão carrega', () => {
+    // /api/auth/eu nunca responde
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => new Promise(() => {})),
+    )
+    abrir('/')
+    expect(document.getElementById('menu')).not.toBeNull()
+  })
 
   beforeEach(() => {
     localStorage.clear()
