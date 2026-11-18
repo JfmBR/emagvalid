@@ -14,13 +14,19 @@ O AcessaWeb é uma ferramenta de acessibilidade: a própria interface precisa se
 - Valores em `design-system/tokens.json`; depois de mudar, rode `node scripts/gerar-tokens-css.mjs` para atualizar o `tokens.css`.
 - Ao construir uma tela, use `design-system/tokens.css` e as classes de `design-system/components/bundle.css`. Não crie cor, fonte ou espaçamento fora dos tokens.
 - O app importa `tokens.css` e `bundle.css` em `apps/web/src/main.tsx`; o `index.css` guarda só o que o `design-system/` não cobre. Componentes React em `apps/web/src/componentes/` (`Botao`, `Campo`, `Selo`, `Aviso`, `Layout`).
-- O `Layout` traz o link "Pular para o conteúdo", o cabeçalho com a marca e o `main`. Ao trocar de tela, o foco vai para o `h1`; cada tela define o seu `<title>`.
+- O `Layout` traz a barra de acessibilidade, o cabeçalho com a marca, o `main` e o rodapé. Ao trocar de tela, o foco vai para o `h1`; cada tela define o seu `<title>`.
+- Barra de acessibilidade (`componentes/BarraAcessibilidade.tsx`, eMAG 3.1 seção 4.3), no topo de toda tela:
+  - atalhos "Ir para o conteúdo [1]", "Ir para o menu [2]" e "Ir para o rodapé [4]" (`accesskey` 1, 2 e 4, para `#conteudo`, `#menu` e `#rodape`). O primeiro é o primeiro link da página e faz o papel do antigo "Pular para o conteúdo". Sem busca no site, não há atalho 3;
+  - botões "Alto contraste" (eMAG 4.2) e "Modo escuro", com `aria-pressed`. A escolha fica no `localStorage` (`apps/web/src/tema.ts`) e vira o `data-theme` do `<html>` antes do primeiro render. O contraste vence o modo escuro; sem escolha, a página segue o tema do sistema;
+  - link "Acessibilidade", para a página `/acessibilidade` (eMAG 4.5): atalhos por navegador, temas, zoom e como testamos.
+- Sem botões A+/A-: o eMAG 3.1 (seção 1.3) os tirou porque os navegadores já têm zoom. No lugar, toda tela continua legível e funcionando com 200% de zoom (recomendação 4.3), conferido no e2e com a janela em 640 px.
 
 ## Interação
 
 Critérios do eMAG 3.1/WCAG 2.1 AA (RNF01, RNF02):
 
 - Tudo funciona só com teclado, em ordem lógica, com foco sempre visível.
+- Botões e links respondem ao mouse e ao clique (`bundle.css`); a resposta nunca é o único sinal de que algo é clicável.
 - Todo campo tem rótulo visível; todo erro é anunciado e diz como corrigir.
 - Contraste mínimo de 4,5:1 no texto (3:1 em texto grande e componentes).
 - Alvos de clique de 44 × 44 px ou mais, com espaço entre eles.

@@ -599,4 +599,13 @@ describe('barra de acessibilidade (eMAG 3.1, seção 4.3)', () => {
     }
     expect(document.getElementById('rodape')?.tagName).toBe('FOOTER')
   })
+
+  it('o link "Acessibilidade" abre a página com os recursos (eMAG 4.5)', () => {
+    simularApi()
+    abrir('/')
+    fireEvent.click(screen.getByRole('link', { name: 'Acessibilidade' }))
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Acessibilidade')
+    expect(screen.getByRole('heading', { name: 'Atalhos de teclado' })).toBeInTheDocument()
+  })
 })
