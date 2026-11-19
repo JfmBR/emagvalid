@@ -19,6 +19,7 @@ model Usuario {
   email      String      @unique
   senhaHash  String // nunca a senha em texto (RNF04)
   criadoEm   DateTime    @default(now())
+  planoPago  Boolean     @default(false) // RF21: ligado à mão pelo grupo nas contas de demonstração e da banca
   avaliacoes Avaliacao[]
   sessoes    Sessao[]
 
