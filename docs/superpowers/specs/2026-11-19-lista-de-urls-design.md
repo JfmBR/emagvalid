@@ -22,12 +22,18 @@ O João quer avaliar várias páginas de uma vez, na mesma aba, sem repetir o pe
 - **B · Envio com identificador próprio.** Coluna nova (`envioId`) e uma tela só do envio. Custa migração e rota, e o Histórico ficaria para depois.
 - **C · Ids no endereço.** Não muda o banco, mas o acompanhamento se perde ao sair da página, e a tela perguntaria uma avaliação por vez.
 
+## Decisões depois da primeira leitura (19/11)
+
+- **Nota do conjunto:** não entra. Cada página segue com a sua nota (uma média esconderia a página pior).
+- **Paginação:** o histórico mostra 20 e tem o botão "Mostrar mais".
+- **"Avaliar de novo":** entra no histórico.
+- **PDF:** entra numa PR própria, depois desta (Passo 9). Para o RF21, a conta ganha a marcação "plano pago", ligada à mão pelo grupo nas contas de demonstração e da banca.
+
 ## Não objetivos
 
 - Nota ou relatório do conjunto de páginas.
 - Varredura de várias páginas ao mesmo tempo (o Plano mantém fora).
-- PDF e "Avaliar de novo" na Tela 8 (Passos 9 e 10).
-- Paginação do histórico.
+- PDF nesta PR.
 
 ## Como fica
 
@@ -41,8 +47,7 @@ O João quer avaliar várias páginas de uma vez, na mesma aba, sem repetir o pe
   - Sai a recusa "Você já tem uma análise em andamento". Fica a trava `criando` por conta (dois envios ao mesmo tempo da mesma conta poderiam passar juntos do limite por hora); a mensagem passa a ser "Seu envio anterior ainda está sendo processado."
   - `temAnaliseViva` continua, só para a exclusão da conta (`rotas/auth.ts`).
   - Cria as avaliações na ordem da lista e as põe na fila na mesma ordem. Responde 202 com `{ avaliacoes: [{ id }] }`.
-- **`GET /api/avaliacoes`** (novo, Passo 10 adiantado): as avaliações da conta, da mais nova para a mais antiga, com `id`, `url`, `status`, `criadaEm`, `nota`, `etapa`, `posicaoNaFila` e `mensagemErro`. A pendente que morreu sem dono vira ERRO aqui também, com a mesma regra do `GET /:id` (extraída para uma função comum).
-  - `shortcut:` sem paginação, só as 100 mais novas; paginar quando o histórico crescer.
+- **`GET /api/avaliacoes?antes=<cursor>`** (novo, Passo 10 adiantado): 20 avaliações da conta por vez, da mais nova para a mais antiga, com `id`, `url`, `status`, `criadaEm`, `nota`, `etapa`, `posicaoNaFila` e `mensagemErro`, e `proximo` (o cursor da página seguinte, ou `null`). O cursor junta `criadaEm` e `id`, para não pular nem repetir avaliações criadas no mesmo instante (as de um mesmo envio). A pendente que morreu sem dono vira ERRO aqui também, com a mesma regra do `GET /:id` (extraída para uma função comum).
 
 ### Tela 3 (`apps/web/src/paginas/NovaAvaliacao.tsx`)
 
@@ -69,17 +74,21 @@ Endereço da página 2 (URL)          [________________________] [Remover]
 O nome segue o protótipo (`projeto/docs/prototipo/prototipo_emagvalid.html`, Tela 8, "Histórico de avaliações"), no lugar do "Minhas avaliações" do esboço.
 
 ```
-Histórico de avaliações                          [Nova avaliação]
+Histórico de avaliações                                   [Nova avaliação]
 
-Data         Página              Nota   Situação
-19/11 15:02  gov.br/noticias      —     Na fila: 1 antes da sua
-19/11 15:02  gov.br/servicos      —     Analisando (passo 2 de 3)
-19/11 15:02  gov.br/contato       76    Concluída · Ver resultado
-18/11 10:40  python.org           —     Não avaliada · Ver o motivo
+Data         Página           Nota  Situação                   Ações
+19/11 15:02  gov.br/noticias   —    Na fila: 1 antes da sua    Avaliar de novo
+19/11 15:02  gov.br/servicos   —    Analisando (passo 2 de 3)  Avaliar de novo
+19/11 15:02  gov.br/contato    76   Concluída                  Ver resultado · Avaliar de novo
+18/11 10:40  python.org        —    Não avaliada               Ver o motivo · Avaliar de novo
+
+[Mostrar mais]
 ```
 
-- Pergunta à API a cada 2 s enquanto houver alguma pendente, e para quando não houver (como a Tela 4).
+- Pergunta à API a cada 2 s enquanto houver alguma pendente, e para quando não houver (como a Tela 4). Só a primeira página (20) é perguntada de novo, e as linhas são trocadas pelo `id`: as pendentes estão sempre entre as 20 mais novas, porque uma conta tem no máximo 10 por hora.
 - "Ver resultado" e "Ver o motivo" levam a `/avaliacoes/:id` (Tela 5 ou Tela 4 com o erro).
+- "Avaliar de novo" leva à Tela 3 com o endereço preenchido (`/avaliacoes/nova?url=…`), para a pessoa confirmar antes de gastar uma análise.
+- "Mostrar mais" traz as próximas 20 e leva o foco à primeira linha nova; some quando não há mais.
 - Leitor de tela: a tabela muda sem anunciar cada célula. Um `<output>` escondido diz o resumo só quando ele muda ("1 de 3 concluídas."), seguindo o ajuste de leitura de 19/11 (`docs/design.md`).
 - Sem avaliações: "Você ainda não avaliou nenhuma página." e o botão "Nova avaliação".
 - O cabeçalho ganha o link "Histórico" para quem entrou, ao lado de "Minha conta".

@@ -24,9 +24,10 @@ type AvaliacaoFalsa = {
 }
 type Filtro = {
   usuarioId?: string
-  id?: string
+  id?: string | { lt: string }
   status?: { in: string[] }
-  criadaEm?: { gte: Date }
+  criadaEm?: Date | { gte?: Date; lt?: Date }
+  OR?: Filtro[]
 }
 
 // O CI não tem banco: as rotas rodam de verdade, com um db em memória no lugar do Prisma
@@ -37,15 +38,27 @@ const banco = vi.hoisted(() => ({
 }))
 
 vi.mock('../db.js', () => {
-  const confere = (a: AvaliacaoFalsa, where: Filtro) =>
+  const confereData = (data: Date, filtro: NonNullable<Filtro['criadaEm']>) =>
+    filtro instanceof Date
+      ? data.getTime() === filtro.getTime()
+      : (filtro.gte === undefined || data >= filtro.gte) &&
+        (filtro.lt === undefined || data < filtro.lt)
+  const confere = (a: AvaliacaoFalsa, where: Filtro): boolean =>
     (where.usuarioId === undefined || a.usuarioId === where.usuarioId) &&
-    (where.id === undefined || a.id === where.id) &&
+    (where.id === undefined ||
+      (typeof where.id === 'string' ? a.id === where.id : a.id < where.id.lt)) &&
     (where.status === undefined || where.status.in.includes(a.status)) &&
-    (where.criadaEm === undefined || a.criadaEm >= where.criadaEm.gte)
+    (where.criadaEm === undefined || confereData(a.criadaEm, where.criadaEm)) &&
+    (where.OR === undefined || where.OR.some((ou) => confere(a, ou)))
+  // da mais nova para a mais antiga; empate na data, pelo id (como o orderBy da rota)
+  const ordem = (x: AvaliacaoFalsa, y: AvaliacaoFalsa) =>
+    y.criadaEm.getTime() - x.criadaEm.getTime() || (y.id > x.id ? 1 : y.id < x.id ? -1 : 0)
   return {
     db: {
+      // as operações já começaram; a transação só espera todas
+      $transaction: async (operacoes: Promise<unknown>[]) => Promise.all(operacoes),
       avaliacao: {
-        create: async ({ data }: { data: { usuarioId: string; url: string } }) => {
+        create: async ({ data }: { data: { usuarioId: string; url: string; criadaEm?: Date } }) => {
           const avaliacao: AvaliacaoFalsa = {
             id: randomUUID(),
             ...data,
@@ -53,7 +66,7 @@ vi.mock('../db.js', () => {
             status: 'NA_FILA',
             mensagemErro: null,
             paginaGrande: false,
-            criadaEm: new Date(),
+            criadaEm: data.criadaEm ?? new Date(),
             concluidaEm: null,
             nota: null,
             requisitosAplicaveis: [],
@@ -68,11 +81,13 @@ vi.mock('../db.js', () => {
           await banco.espera
           return banco.avaliacoes.filter((a) => confere(a, where)).length
         },
-        findMany: async ({ where }: { where: Filtro }) => {
+        // o select não é aplicado: devolve a linha inteira (os testes conferem com toMatchObject)
+        findMany: async ({ where, take }: { where: Filtro; take?: number }) => {
           await banco.espera
           return banco.avaliacoes
             .filter((a) => confere(a, where))
-            .map(({ id, criadaEm }) => ({ id, criadaEm }))
+            .sort(ordem)
+            .slice(0, take)
         },
         findFirst: async ({ where }: { where: Filtro }) =>
           banco.avaliacoes.find((a) => confere(a, where)) ?? null,
@@ -134,14 +149,16 @@ vi.mock('../auth/sessao.js', async (importOriginal) => ({
   },
 }))
 
-const MSG_PENDENTE = 'Você já tem uma análise em andamento. Espere ela terminar para começar outra.'
+const MSG_ENVIANDO = 'Seu envio anterior ainda está sendo processado. Espere um instante.'
 const MSG_LIMITE = 'Você chegou ao limite de 10 análises por hora. Tente de novo mais tarde.'
 
-function pedir(usuario: string | null, url: unknown) {
+// uma lista de links (RF20); `pedir` é o atalho para um link só
+function pedirLista(usuario: string | null, urls: unknown[]) {
   const pedido = request(criarApp()).post('/api/avaliacoes')
   if (usuario) pedido.set('x-usuario', usuario)
-  return pedido.send({ url })
+  return pedido.send({ urls })
 }
+const pedir = (usuario: string | null, url: unknown) => pedirLista(usuario, [url])
 
 function semear(dados: Partial<AvaliacaoFalsa> = {}) {
   const avaliacao: AvaliacaoFalsa = {
@@ -191,7 +208,7 @@ describe('POST /api/avaliacoes', () => {
     expect(resposta.status).toBe(400)
     expect(resposta.body).toEqual({
       erro: 'Confira os campos marcados.',
-      campos: { url: MSG_URL.invalida },
+      campos: { 'urls.0': MSG_URL.invalida },
     })
     expect(classificarEndereco).not.toHaveBeenCalled()
   })
@@ -200,7 +217,7 @@ describe('POST /api/avaliacoes', () => {
     const resposta = await pedir('u1', 123)
 
     expect(resposta.status).toBe(400)
-    expect(resposta.body.campos.url).toBe(MSG_URL.vazia)
+    expect(resposta.body.campos['urls.0']).toBe(MSG_URL.vazia)
   })
 
   it('endereço interno → 400 e log só com a conta e o host', async () => {
@@ -210,7 +227,7 @@ describe('POST /api/avaliacoes', () => {
     const resposta = await pedir('u1', 'https://alvo.exemplo/segredo?token=abc')
 
     expect(resposta.status).toBe(400)
-    expect(resposta.body.campos.url).toBe(MSG_URL.interno)
+    expect(resposta.body.campos['urls.0']).toBe(MSG_URL.interno)
     expect(banco.avaliacoes).toHaveLength(0)
     expect(fila.adicionar).not.toHaveBeenCalled()
     // decisão 13: conta e host no log, nunca a URL completa
@@ -227,7 +244,7 @@ describe('POST /api/avaliacoes', () => {
     const resposta = await pedir('u1', 'https://nao-existe.exemplo')
 
     expect(resposta.status).toBe(400)
-    expect(resposta.body.campos.url).toBe(MSG_URL.inexistente)
+    expect(resposta.body.campos['urls.0']).toBe(MSG_URL.inexistente)
     expect(banco.avaliacoes).toHaveLength(0)
     expect(log).not.toHaveBeenCalled()
     log.mockRestore()
@@ -239,7 +256,7 @@ describe('POST /api/avaliacoes', () => {
     expect(resposta.status).toBe(202)
     expect(banco.avaliacoes).toHaveLength(1)
     const criada = banco.avaliacoes[0]!
-    expect(resposta.body).toEqual({ avaliacao: { id: criada.id } })
+    expect(resposta.body).toEqual({ avaliacoes: [{ id: criada.id }] })
     expect(criada).toMatchObject({
       usuarioId: 'u1',
       url: 'https://www.loja.com.br/',
@@ -249,31 +266,15 @@ describe('POST /api/avaliacoes', () => {
     expect(fila.adicionar).toHaveBeenCalledExactlyOnceWith(criada.id)
   })
 
-  it('com análise pendente → 409', async () => {
+  it('com análise pendente, aceita outra (a regra de uma por conta saiu em 19/11)', async () => {
     semear({ status: 'ANALISANDO' })
-
-    const resposta = await pedir('u1', 'https://www.loja.com.br')
-
-    expect(resposta.status).toBe(409)
-    expect(resposta.body).toEqual({ erro: MSG_PENDENTE })
-    expect(fila.adicionar).not.toHaveBeenCalled()
-    expect(classificarEndereco).not.toHaveBeenCalled()
-  })
-
-  it('pendente criada há mais de 10 min não bloqueia (análise que morreu sem dono)', async () => {
-    semear({ status: 'ANALISANDO', criadaEm: new Date(Date.now() - 11 * 60_000) })
+    semear({ status: 'NA_FILA' })
 
     expect((await pedir('u1', 'https://www.loja.com.br')).status).toBe(202)
   })
 
-  it('pendente criada há 9 min, fora da fila, ainda bloqueia', async () => {
-    semear({ status: 'NA_FILA', criadaEm: new Date(Date.now() - 9 * 60_000) })
-
-    expect((await pedir('u1', 'https://www.loja.com.br')).status).toBe(409)
-  })
-
-  it('fila com 10 análises de todas as contas → 503, sem criar', async () => {
-    vi.mocked(fila.tamanho).mockReturnValue(10)
+  it('fila com 30 análises de todas as contas → 503, sem criar', async () => {
+    vi.mocked(fila.tamanho).mockReturnValue(30)
 
     const resposta = await pedir('u1', 'https://www.loja.com.br')
 
@@ -286,21 +287,8 @@ describe('POST /api/avaliacoes', () => {
     expect(classificarEndereco).not.toHaveBeenCalled()
   })
 
-  it('fila com 9 análises ainda aceita', async () => {
-    vi.mocked(fila.tamanho).mockReturnValue(9)
-
-    expect((await pedir('u1', 'https://www.loja.com.br')).status).toBe(202)
-  })
-
-  it('pendente com mais de 10 min que ainda está na fila continua bloqueando', async () => {
-    const antiga = semear({ status: 'NA_FILA', criadaEm: new Date(Date.now() - 40 * 60_000) })
-    vi.mocked(fila.posicao).mockImplementation((id) => (id === antiga.id ? 20 : null))
-
-    expect((await pedir('u1', 'https://www.loja.com.br')).status).toBe(409)
-  })
-
-  it('pendente de outra conta não bloqueia', async () => {
-    semear({ usuarioId: 'u2', status: 'NA_FILA' })
+  it('fila com 29 análises ainda aceita um link', async () => {
+    vi.mocked(fila.tamanho).mockReturnValue(29)
 
     expect((await pedir('u1', 'https://www.loja.com.br')).status).toBe(202)
   })
@@ -311,7 +299,10 @@ describe('POST /api/avaliacoes', () => {
     banco.espera = new Promise<void>((resolver) => (liberar = resolver))
     const app = criarApp()
     const enviar = () =>
-      request(app).post('/api/avaliacoes').set('x-usuario', 'u1').send({ url: 'www.loja.com.br' })
+      request(app)
+        .post('/api/avaliacoes')
+        .set('x-usuario', 'u1')
+        .send({ urls: ['www.loja.com.br'] })
     const primeiro = enviar().then((r) => r)
     const segundo = enviar().then((r) => r)
     const demora = new Promise<'demorou'>((resolver) => setTimeout(() => resolver('demorou'), 1000))
@@ -322,6 +313,7 @@ describe('POST /api/avaliacoes', () => {
 
     expect(rapido).not.toBe('demorou')
     expect(respostas.map((r) => r.status).sort()).toEqual([202, 409])
+    expect(respostas.find((r) => r.status === 409)?.body).toEqual({ erro: MSG_ENVIANDO })
     expect(banco.avaliacoes).toHaveLength(1)
   })
 
@@ -373,6 +365,165 @@ describe('POST /api/avaliacoes', () => {
     for (let i = 0; i < 10; i++) semear({ usuarioId: 'u2' })
 
     expect((await pedir('u1', 'https://www.loja.com.br')).status).toBe(202)
+  })
+
+  describe('lista de links (RF20)', () => {
+    const links = (n: number) => Array.from({ length: n }, (_, i) => `https://loja.com.br/p${i}`)
+
+    it('3 links → 3 avaliações na ordem da lista, enfileiradas na mesma ordem', async () => {
+      const resposta = await pedirLista('u1', links(3))
+
+      expect(resposta.status).toBe(202)
+      expect(banco.avaliacoes.map((a) => a.url)).toEqual([
+        'https://loja.com.br/p0',
+        'https://loja.com.br/p1',
+        'https://loja.com.br/p2',
+      ])
+      const ids = banco.avaliacoes.map((a) => a.id)
+      expect(resposta.body).toEqual({ avaliacoes: ids.map((id) => ({ id })) })
+      expect(vi.mocked(fila.adicionar).mock.calls.map(([id]) => id)).toEqual(ids)
+      // a data cresce na ordem da lista: o histórico mostra o envio na ordem
+      const datas = banco.avaliacoes.map((a) => a.criadaEm.getTime())
+      expect(datas).toEqual([...datas].sort((x, y) => x - y))
+      expect(new Set(datas).size).toBe(3)
+    })
+
+    it('10 links passam; 11 ou nenhum → 400, sem criar', async () => {
+      expect((await pedirLista('u1', links(10))).status).toBe(202)
+      banco.avaliacoes = []
+
+      for (const lista of [links(11), []]) {
+        const resposta = await pedirLista('u2', lista)
+        expect(resposta.status).toBe(400)
+        expect(resposta.body).toEqual({ erro: 'Informe de 1 a 10 endereços.' })
+      }
+      expect(banco.avaliacoes).toEqual([])
+    })
+
+    it('o erro aparece no campo do link certo, e nada é criado', async () => {
+      vi.mocked(classificarEndereco).mockImplementation(async (host) =>
+        host === 'interno.exemplo' ? 'interno' : 'publico',
+      )
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      const resposta = await pedirLista('u1', [
+        'https://loja.com.br/a',
+        'ftp://x',
+        'https://interno.exemplo/',
+      ])
+
+      expect(resposta.status).toBe(400)
+      expect(resposta.body.campos).toEqual({ 'urls.1': MSG_URL.invalida })
+      // o DNS só roda quando todos estão bem formados
+      expect(classificarEndereco).not.toHaveBeenCalled()
+
+      const segunda = await pedirLista('u1', ['https://loja.com.br/a', 'https://interno.exemplo/'])
+      expect(segunda.body.campos).toEqual({ 'urls.1': MSG_URL.interno })
+      expect(banco.avaliacoes).toEqual([])
+      vi.mocked(console.error).mockRestore()
+    })
+
+    it('link repetido na lista → erro no campo da repetição', async () => {
+      const resposta = await pedirLista('u1', ['loja.com.br', 'https://loja.com.br/'])
+
+      expect(resposta.status).toBe(400)
+      expect(resposta.body.campos).toEqual({ 'urls.1': 'Este endereço já está na lista.' })
+    })
+
+    it('lista maior que o que sobra na hora → 429 com quantas cabem, sem criar nem consultar o DNS', async () => {
+      for (let i = 0; i < 8; i++) semear()
+
+      const resposta = await pedirLista('u1', links(3))
+
+      expect(resposta.status).toBe(429)
+      expect(resposta.body).toEqual({
+        erro: 'Você pode avaliar mais 2 páginas nesta hora. Tire alguns endereços e envie de novo.',
+      })
+      expect(banco.avaliacoes).toHaveLength(8)
+      expect(classificarEndereco).not.toHaveBeenCalled()
+      expect((await pedirLista('u1', links(2))).status).toBe(202)
+    })
+
+    it('lista que não cabe na fila geral → 503, sem criar', async () => {
+      vi.mocked(fila.tamanho).mockReturnValue(28)
+
+      expect((await pedirLista('u1', links(3))).status).toBe(503)
+      expect(banco.avaliacoes).toEqual([])
+      expect((await pedirLista('u1', links(2))).status).toBe(202)
+    })
+
+    it('cada link conta no limite de pedidos: 3 listas de 10 gastam os 30 da conta', async () => {
+      vi.mocked(classificarEndereco).mockResolvedValue('inexistente')
+      for (let i = 0; i < 3; i++) expect((await pedirLista('u1', links(10))).status).toBe(400)
+
+      const resposta = await pedir('u1', 'https://loja.com.br/outra')
+
+      expect(resposta.status).toBe(429)
+      expect(resposta.body).toEqual({ erro: 'Muitas tentativas. Tente de novo em 15 minutos.' })
+    })
+  })
+})
+
+describe('GET /api/avaliacoes (histórico)', () => {
+  function listar(usuario: string | null, antes?: string) {
+    const pedido = request(criarApp())
+      .get('/api/avaliacoes')
+      .query(antes ? { antes } : {})
+    if (usuario) pedido.set('x-usuario', usuario)
+    return pedido
+  }
+  const minutosAtras = (n: number) => new Date(Date.now() - n * 60_000)
+
+  it('sem login → 401', async () => {
+    expect((await listar(null)).status).toBe(401)
+  })
+
+  it('só as da conta, da mais nova para a mais antiga, com o andamento', async () => {
+    const velha = semear({ criadaEm: minutosAtras(30), nota: 76 })
+    const nova = semear({ status: 'NA_FILA', criadaEm: minutosAtras(1) })
+    semear({ usuarioId: 'u2' })
+    vi.mocked(fila.posicao).mockImplementation((id) => (id === nova.id ? 2 : null))
+
+    const { status, body } = await listar('u1')
+
+    expect(status).toBe(200)
+    expect(body.avaliacoes).toHaveLength(2)
+    expect(body.avaliacoes[0]).toMatchObject({ id: nova.id, status: 'NA_FILA', posicaoNaFila: 2 })
+    expect(body.avaliacoes[1]).toMatchObject({ id: velha.id, status: 'CONCLUIDA', nota: 76 })
+    expect(body.proximo).toBeNull()
+  })
+
+  it('20 por vez; o cursor traz as seguintes sem pular nem repetir, mesmo com datas iguais', async () => {
+    const mesmaData = minutosAtras(5)
+    // 25 avaliações; 6 delas com a mesma data, bem na virada da página
+    for (let i = 0; i < 25; i++) semear({ criadaEm: i < 6 ? mesmaData : minutosAtras(100 + i) })
+
+    const primeira = (await listar('u1')).body
+    expect(primeira.avaliacoes).toHaveLength(20)
+    expect(primeira.proximo).toEqual(expect.any(String))
+
+    const segunda = (await listar('u1', primeira.proximo)).body
+    expect(segunda.avaliacoes).toHaveLength(5)
+    expect(segunda.proximo).toBeNull()
+
+    const ids = [...primeira.avaliacoes, ...segunda.avaliacoes].map((a: { id: string }) => a.id)
+    expect(new Set(ids).size).toBe(25)
+  })
+
+  it('cursor inválido → 400', async () => {
+    expect((await listar('u1', 'nao-e-cursor')).status).toBe(400)
+  })
+
+  it('pendente morta vira ERRO também no histórico', async () => {
+    semear({ status: 'ANALISANDO', criadaEm: minutosAtras(11) })
+
+    const { body } = await listar('u1')
+
+    expect(body.avaliacoes[0]).toMatchObject({
+      status: 'ERRO',
+      mensagemErro: 'A análise foi interrompida do nosso lado. Tente de novo.',
+    })
+    expect(banco.avaliacoes[0]?.status).toBe('ERRO')
   })
 })
 
