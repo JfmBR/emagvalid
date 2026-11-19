@@ -85,7 +85,7 @@ function falhas({ resultado }: DadosDoRelatorio) {
       <ol>${c.ocorrencias
         .map(
           (o) => `
-        <li>${escapar(o.descricao)}<br><code>${escapar(o.seletor)}</code>${o.trecho === null ? '' : `<pre>${escapar(o.trecho)}</pre>`}</li>`,
+        <li>${escapar(o.descricao)}<br><code>${escapar(o.seletor)}</code>${o.trecho ? `<pre>${escapar(o.trecho)}</pre>` : ''}</li>`,
         )
         .join('')}
       </ol>

@@ -5,6 +5,7 @@ import { Botao } from '../componentes/Botao.tsx'
 import { Ponto } from '../componentes/Ponto.tsx'
 import { Selo } from '../componentes/Selo.tsx'
 import { Cartao } from './Cartao.tsx'
+import { useSessao } from '../sessao.tsx'
 import { RevisaoHumana } from './RevisaoHumana.tsx'
 
 type Prioridade = 'alta' | 'media' | 'baixa'
@@ -51,6 +52,7 @@ export function Resultado({ id, resultado }: { id: string; resultado: ResultadoA
   const aprovadas = verificacoes.filter((v) => v.aprovada)
   const soma = (lista: typeof verificacoes) => lista.reduce((total, v) => total + v.peso, 0)
   const falhas = cartoes.reduce((total, c) => total + c.ocorrencias.length, 0)
+  const { usuario } = useSessao()
   const [aba, setAba] = useState(0)
   // marcas da revisão humana: a aba muda, e a contagem junto do "Baixar PDF" acompanha
   const [feitas, setFeitas] = useState(
@@ -120,8 +122,9 @@ export function Resultado({ id, resultado }: { id: string; resultado: ResultadoA
           ) : (
             <p className="dica">
               Revisão humana: {feitas.size} de{' '}
-              {plural(revisao.length, 'item conferido', 'itens conferidos')}. Os outros saem no PDF
-              como "a conferir".{' '}
+              {plural(revisao.length, 'item conferido', 'itens conferidos')}.
+              {/* sem plano pago não há PDF: a frase sobre ele só confundiria */}
+              {usuario?.planoPago ? ' Os outros saem no PDF como "a conferir".' : ''}{' '}
               <Botao variante="txt" onClick={irParaRevisao}>
                 Ir para a revisão humana
               </Botao>

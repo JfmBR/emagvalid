@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { StrictMode } from 'react'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, useNavigate } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App.tsx'
 
@@ -534,6 +534,23 @@ describe('Tela 8 · histórico', () => {
       await screen.findByRole('button', { name: 'Baixar PDF de https://loja.com.br/a1' }),
     ).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /^Baixar PDF/ })).toHaveLength(1)
+  })
+
+  it('erro do PDF na linha aparece num alerta fora de elemento inline (HTML válido)', async () => {
+    simularApi({
+      '/api/auth/eu': { status: 200, corpo: { usuario: { ...helena, planoPago: true } } },
+      '/api/avaliacoes': lista([item('a1')]),
+      '/api/avaliacoes/a1/pdf': { status: 429, corpo: { erro: 'Limite de relatórios.' } },
+    })
+    abrir('/avaliacoes')
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Baixar PDF de https://loja.com.br/a1' }),
+    )
+
+    const alerta = await screen.findByRole('alert')
+    expect(alerta).toHaveTextContent('Limite de relatórios.')
+    expect(alerta.closest('span')).toBeNull()
   })
 
   it('sem plano, o aviso aparece uma vez e descreve os botões', async () => {
@@ -1125,6 +1142,41 @@ describe('Tela 4 · análise', () => {
         clique.mockRestore()
       })
 
+      it('trocar de avaliação na mesma tela não leva as marcas da anterior', async () => {
+        simularApi({
+          ...comPlano,
+          '/api/avaliacoes/a1': resposta(concluida),
+          '/api/avaliacoes/a2': resposta({
+            ...concluida,
+            id: 'a2',
+            resultado: {
+              ...resultado,
+              revisao: resultado.revisao.map((item) => ({ ...item, feita: false })),
+            },
+          }),
+        })
+        // a rota /avaliacoes/:id continua montada quando só o id muda (voltar e avançar do navegador)
+        function IrParaA2() {
+          const navegar = useNavigate()
+          return (
+            <button type="button" onClick={() => void navegar('/avaliacoes/a2')}>
+              ir para a2
+            </button>
+          )
+        }
+        render(
+          <MemoryRouter initialEntries={['/avaliacoes/a1']}>
+            <App />
+            <IrParaA2 />
+          </MemoryRouter>,
+        )
+        expect(await screen.findByText(/^Revisão humana: 1 de 2/)).toBeInTheDocument()
+
+        fireEvent.click(screen.getByRole('button', { name: 'ir para a2' }))
+
+        expect(await screen.findByText(/^Revisão humana: 0 de 2/)).toBeInTheDocument()
+      })
+
       it('sem plano pago, o botão aparece bloqueado', async () => {
         simularApi({ ...logada, '/api/avaliacoes/a1': resposta(concluida) })
         abrir('/avaliacoes/a1')
@@ -1132,6 +1184,10 @@ describe('Tela 4 · análise', () => {
         expect(
           await screen.findByRole('button', { name: 'Baixar PDF (plano pago)' }),
         ).toHaveAttribute('aria-disabled', 'true')
+        // quem não pode baixar não lê sobre o que sai no PDF
+        expect(screen.getByText('Revisão humana: 1 de 2 itens conferidos.')).toBeInTheDocument()
+        expect(screen.queryByText(/saem no PDF/)).not.toBeInTheDocument()
+        expect(screen.getByRole('button', { name: 'Ir para a revisão humana' })).toBeInTheDocument()
       })
     })
   })

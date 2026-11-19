@@ -160,7 +160,8 @@ export function Analise() {
         </div>
       ) : status === 'CONCLUIDA' && avaliacao?.resultado ? (
         <>
-          <Resultado id={avaliacao.id} resultado={avaliacao.resultado} />
+          {/* key: outra avaliação remonta a tela, e as marcas e a aba não vêm da anterior */}
+          <Resultado key={avaliacao.id} id={avaliacao.id} resultado={avaliacao.resultado} />
           <p className="acoes">
             <Link className="btn" to="/avaliacoes/nova">
               Nova avaliação

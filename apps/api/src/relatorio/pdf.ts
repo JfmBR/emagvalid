@@ -12,21 +12,20 @@ export async function gerarPdf(html: string, rodape: string, limiteMs = 20_000):
   if (gerando) throw new GeradorOcupado('Outro PDF está sendo gerado')
   gerando = true
   let relogio: NodeJS.Timeout | undefined
-  const navegador = await chromium
-    .launch({ env: ambienteDoNavegador(process.env), args: ARGS_SEM_REDE })
-    .catch((erro: unknown) => {
-      gerando = false
-      throw erro
-    })
+  // o teto conta desde a abertura: um Chromium que trava ao abrir não segura a trava de todos
+  const abrindo = chromium.launch({ env: ambienteDoNavegador(process.env), args: ARGS_SEM_REDE })
+  // fecha quando terminar de abrir, mesmo que o teto já tenha passado
+  const fecharNavegador = () => abrindo.then((navegador) => navegador.close()).catch(() => {})
   try {
     // o teto fecha o navegador, e o page.pdf que estiver esperando falha na hora
     const teto = new Promise<never>((_, falhar) => {
       relogio = setTimeout(() => {
-        navegador.close().catch(() => {})
+        void fecharNavegador()
         falhar(new Error('O PDF passou do teto de tempo'))
       }, limiteMs)
     })
     const gerar = async () => {
+      const navegador = await abrindo
       const contexto = await navegador.newContext({ javaScriptEnabled: false })
       await contexto.route('**/*', (rota) => rota.abort())
       const pagina = await contexto.newPage()
@@ -45,7 +44,8 @@ export async function gerarPdf(html: string, rodape: string, limiteMs = 20_000):
     return await Promise.race([gerar(), teto])
   } finally {
     clearTimeout(relogio)
-    await navegador.close().catch(() => {})
     gerando = false
+    // sem await: se o Chromium travou ao abrir, a resposta não espera por ele
+    void fecharNavegador()
   }
 }

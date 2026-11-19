@@ -59,13 +59,7 @@ Decisões do João (19/11), registradas em `projeto/contexto_agente/07-pendencia
 - Sites lentos dão DEMOROU (RNF06, R7).
 - Avisar o cálculo da nota e o arredondamento para baixo.
 
-**Achados menores do `/code-review` do PDF, adiados**
-
-- `chromium.launch` fica fora do teto de 20 s: se o launch travar, todo PDF responde 503 por até 180 s (`apps/api/src/relatorio/pdf.ts`).
-- Trecho vazio (`''`) vira uma caixa de código vazia no PDF; a Tela 5 não mostra nada (`html.ts` compara com `null`).
-- Conta sem plano lê "Os outros saem no PDF como "a conferir"", mesmo sem poder baixar o PDF (`Resultado.tsx`).
-- Na Tela 8, o erro do PDF aparece num `Aviso` (div) dentro do `span` da linha.
-- Já existia: as marcas da revisão e a aba não se atualizam se o `Resultado` trocar de avaliação sem remontar.
+**Achados menores do `/code-review` do PDF:** os 5 foram corrigidos com teste, a pedido do João (19/11). Ficou só a decisão de não registrar em log o 403 (sem plano) e o 429 do PDF: o plano é regra de produto, não acesso a dado de outra conta.
 
 **Riscos e pequenos ajustes adiados**
 

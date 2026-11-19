@@ -193,7 +193,8 @@ export function Historico() {
                     </td>
                     <td>{situacao(item)}</td>
                     <td>
-                      <span style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px' }}>
+                      {/* div, e não span: o erro do "Baixar PDF" é um bloco (Aviso) */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 16px' }}>
                         {/* depois de "Mostrar mais", o foco vem para este link da primeira linha nova */}
                         <Link id={`linha-${item.id}`} to={`/avaliacoes/${item.id}`}>
                           {item.status === 'CONCLUIDA'
@@ -215,7 +216,7 @@ export function Historico() {
                             avisoBloqueioId={usuario?.planoPago ? undefined : AVISO_PLANO_ID}
                           />
                         ) : null}
-                      </span>
+                      </div>
                     </td>
                   </tr>
                 ))}

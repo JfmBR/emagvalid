@@ -90,6 +90,12 @@ describe('htmlDoRelatorio', () => {
     expect(html).toContain('Onde (1 ocorrência):')
   })
 
+  it('trecho vazio não vira caixa de código vazia, como na Tela 5', () => {
+    const html = gerar({ falhas: [falha('3.6', 'img', ''), falha('3.6', 'img.b', null)] })
+
+    expect(html).not.toContain('<pre></pre>')
+  })
+
   it('sem falhas diz "Nenhuma falha automática encontrada."', () => {
     expect(gerar({ falhas: [] })).toContain('Nenhuma falha automática encontrada.')
   })
