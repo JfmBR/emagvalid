@@ -874,6 +874,12 @@ describe('Tela 4 · análise', () => {
       expect(screen.getAllByText('Automático')[0]?.closest('[aria-hidden="true"]')).not.toBeNull()
       expect(screen.getByText('Prioridade baixa')).toBeInTheDocument()
       expect(screen.getByText('Por que 3.6 é falha.')).toBeInTheDocument()
+      // site de fora abre em outra aba, com aviso no texto do link (eMAG 1.9)
+      const emag = screen.getByRole('link', {
+        name: 'Ler a recomendação 3.6 no eMAG 3.1 (abre em nova aba)',
+      })
+      expect(emag).toHaveAttribute('target', '_blank')
+      expect(emag).toHaveAttribute('rel', 'noopener noreferrer')
       expect(cartao?.querySelector('.local')).toHaveTextContent('2 ocorrências ·, img.a e mais 1')
       // o trecho da página avaliada aparece escrito, sem virar elemento
       expect(screen.getAllByText('<img src="a.png" onerror="alert(1)">')).toHaveLength(3)
