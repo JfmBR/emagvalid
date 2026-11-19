@@ -2,6 +2,7 @@ import type { Requisito } from './requisitos.js'
 
 // Texto padrão de cada recomendação do eMAG 3.1, mostrado na Tela 5 sem depender da IA (Passo 8, contingência do R5).
 // Rascunho redigido pelo Claude em 19/11/2026 a partir do eMAG 3.1, a revisar pelo grupo (decisão do João).
+// As dúvidas do rascunho (2.4, 2.5, 2.6/2.7/5.5, 3.9, 1.4/6.3, 4.1, 4.3, 6.2, 6.6, 2.1/2.2) foram decididas pelo João no mesmo dia.
 export const textos: Record<string, Pick<Requisito, 'porque' | 'exemplo' | 'conferir'>> = {
   '1.1': {
     conferir:
@@ -67,7 +68,7 @@ export const textos: Record<string, Pick<Requisito, 'porque' | 'exemplo' | 'conf
     porque:
       'O redirecionamento automático troca a página sem aviso, e quem usa leitor de tela perde a referência de onde está.',
     exemplo:
-      '<!-- Tire: <meta http-equiv="refresh" content="0; url=/novo"> -->\n<!-- Faça o redirecionamento no servidor (HTTP 301), sem tempo de espera -->',
+      '<!-- Tire: <meta http-equiv="refresh" content="0; url=/novo"> -->\n<!-- No servidor, responda: -->\nHTTP/1.1 301 Moved Permanently\nLocation: /novo',
   },
   '2.5': {
     porque:
@@ -85,7 +86,7 @@ export const textos: Record<string, Pick<Requisito, 'porque' | 'exemplo' | 'conf
     porque:
       'Texto que se move sozinho, sem como pausar, é difícil de ler para quem tem baixa visão, dislexia ou leitura lenta.',
     exemplo:
-      '<!-- Antes: <marquee>Atendimento em novo horário</marquee> -->\n<p>Atendimento em novo horário</p>',
+      '<div aria-live="off">…notícias que passam…</div>\n<button type="button">Pausar</button>',
   },
   '3.1': {
     porque:
@@ -152,7 +153,7 @@ export const textos: Record<string, Pick<Requisito, 'porque' | 'exemplo' | 'conf
     porque:
       'Quem tem baixa visão ou daltonismo, ou usa a tela sob luz forte, não consegue ler texto com pouco contraste.',
     exemplo:
-      '<!-- Texto comum: contraste de pelo menos 4,5:1 com o fundo -->\n<p style="color: #595959; background-color: #ffffff">Horário de atendimento</p>',
+      '/* Texto comum: contraste de pelo menos 4,5:1 com o fundo */\n.aviso { color: #595959; background-color: #ffffff; } /* 7:1 */',
   },
   '4.2': {
     porque: 'Quem não distingue cores não percebe um link marcado só pela cor no meio do texto.',
@@ -161,7 +162,7 @@ export const textos: Record<string, Pick<Requisito, 'porque' | 'exemplo' | 'conf
   },
   '4.3': {
     porque:
-      'Quem tem baixa visão amplia a página ou aumenta o espaçamento do texto. Com o zoom bloqueado ou o espaçamento travado, não consegue ler.',
+      'Quem tem baixa visão amplia a página até 200% ou aumenta o espaçamento do texto. Com o zoom bloqueado ou o espaçamento travado com !important, o conteúdo fica ilegível ou cortado.',
     exemplo:
       '<meta name="viewport" content="width=device-width, initial-scale=1">\n<p style="line-height: 1.5">Espaçamento sem !important</p>',
   },
@@ -190,8 +191,7 @@ export const textos: Record<string, Pick<Requisito, 'porque' | 'exemplo' | 'conf
   '5.5': {
     porque:
       'Animação que não para distrai quem tem dificuldade de atenção e atrapalha quem lê devagar.',
-    exemplo:
-      '<!-- Antes: <marquee><a href="/noticias">Últimas notícias</a></marquee> -->\n<p><a href="/noticias">Últimas notícias</a></p>',
+    exemplo: '@media (prefers-reduced-motion: reduce) {\n  .banner { animation: none; }\n}',
   },
   '6.1': {
     porque:
@@ -220,7 +220,7 @@ export const textos: Record<string, Pick<Requisito, 'porque' | 'exemplo' | 'conf
   },
   '6.6': {
     conferir:
-      'Envie o formulário com erros e confira se cada erro é identificado e descrito em texto. Confira também se há uma etapa para revisar os dados antes do envio.',
+      'Envie o formulário com erros e confira se cada erro é identificado e descrito em texto. Confira também se, antes do envio, há uma tela de confirmação para revisar os dados.',
   },
   '6.7': {
     conferir:
