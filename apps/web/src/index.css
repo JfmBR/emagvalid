@@ -5,6 +5,22 @@
   color-scheme: light dark;
 }
 
+/* tema escolhido na barra: campos e rolagem nativos acompanham a escolha, não o sistema
+   (o alto contraste já põe color-scheme: dark em tokens.css) */
+:root[data-theme='claro'] {
+  color-scheme: light;
+}
+
+:root[data-theme='escuro'] {
+  color-scheme: dark;
+}
+
+/* destino de um atalho da barra (BarraAcessibilidade, irPara): contorno mesmo com clique do mouse */
+[data-atalho]:focus {
+  outline: var(--focus-ring) solid var(--focus);
+  outline-offset: 2px;
+}
+
 body {
   margin: 0;
 }

@@ -54,6 +54,61 @@ test('zoom de 200%: nenhuma tela rola na horizontal', async ({ page }) => {
   }
 })
 
+// Com a conta aberta o topo ganha "Olá" e "Sair": também não pode empurrar a tela para o lado
+test('zoom de 200% com a conta aberta: nenhuma tela rola na horizontal', async ({ page }) => {
+  const helena = { nome: 'Helena Souza', email: 'helena@empresa.com.br' }
+  await page.route('**/api/auth/eu', (rota) =>
+    rota.fulfill({ status: 200, json: { usuario: helena } }),
+  )
+  await page.route('**/api/avaliacoes/a1', (rota) =>
+    rota.fulfill({
+      status: 200,
+      json: {
+        avaliacao: {
+          id: 'a1',
+          url: 'https://www.loja.com.br/contato',
+          urlFinal: null,
+          status: 'ANALISANDO',
+          etapa: 2,
+          posicaoNaFila: null,
+          paginaGrande: false,
+          mensagemErro: null,
+          falhas: [],
+        },
+      },
+    }),
+  )
+  await page.setViewportSize({ width: 640, height: 900 })
+  for (const tela of ['/', '/avaliacoes/nova', '/avaliacoes/a1']) {
+    await page.goto(tela)
+    await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+    const sobra = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    )
+    expect(sobra, tela).toBeLessThanOrEqual(0)
+  }
+})
+
+// eMAG 4.1: Alt + número pela página (no Linux o accesskey perde para a troca de aba)
+test('atalhos da barra: Alt + 4 e Alt + Shift + 1 levam o foco, com contorno visível', async ({
+  page,
+}) => {
+  await page.goto('/acessibilidade')
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await page.keyboard.press('Alt+4')
+  const rodape = page.locator('#rodape')
+  await expect(rodape).toBeFocused()
+  await expect(rodape).not.toHaveCSS('outline-style', 'none')
+  await page.keyboard.press('Alt+Shift+1')
+  await expect(page.locator('#conteudo')).toBeFocused()
+
+  // com o mouse, o link também mostra para onde o foco foi
+  await page.getByRole('link', { name: 'Ir para o rodapé [4]' }).click()
+  await expect(rodape).toBeFocused()
+  await expect(rodape).not.toHaveCSS('outline-style', 'none')
+})
+
 test('botão e link respondem ao mouse', async ({ page }) => {
   await page.goto('/')
   const fundo = (seletor: string) =>

@@ -19,8 +19,8 @@ export function Acessibilidade() {
           <li>4: ir para o rodapé</li>
         </ul>
         <p>
-          A combinação muda com o navegador: Alt + número no Chrome e no Edge; Alt + Shift + número
-          no Firefox; Ctrl + Option + número no Mac.
+          No Windows e no Linux, use Alt + número (Alt + Shift + número também funciona). No Mac,
+          use Ctrl + Option + número.
         </p>
       </section>
       <section className="cabeca">
