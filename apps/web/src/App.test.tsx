@@ -393,6 +393,22 @@ describe('Tela 3 · nova avaliação', () => {
       await waitFor(() => expect(screen.getByLabelText('Endereço da página (URL)')).toHaveFocus())
     })
 
+    it('remover dois campos seguidos leva o foco ao anterior nas duas vezes', async () => {
+      simularApi(logada)
+      abrir('/avaliacoes/nova')
+      const mais = await screen.findByRole('button', { name: '+ Adicionar outra página' })
+      for (let i = 0; i < 3; i++) fireEvent.click(mais) // 4 campos
+      const segundo = screen.getByLabelText('Endereço da página 2 (URL)')
+
+      fireEvent.click(screen.getByRole('button', { name: 'Remover a página 3' }))
+      await waitFor(() => expect(segundo).toHaveFocus())
+      // o novo 3º campo some, e o foco volta ao 2º de novo (o mesmo campo da vez anterior)
+      screen.getByRole('button', { name: 'Remover a página 3' }).focus()
+      fireEvent.click(screen.getByRole('button', { name: 'Remover a página 3' }))
+
+      await waitFor(() => expect(segundo).toHaveFocus())
+    })
+
     it('no décimo campo, o "+" some e aparece o aviso do limite', async () => {
       simularApi(logada)
       abrir('/avaliacoes/nova')

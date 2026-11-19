@@ -25,8 +25,9 @@ export function NovaAvaliacao() {
   // cada campo tem uma chave fixa: remover o do meio não embaralha o que já foi digitado
   const [chaves, setChaves] = useState([0])
   const proximaChave = useRef(1)
-  // campo que deve receber o foco depois de acrescentar ou remover
-  const [focar, setFocar] = useState<string | null>(null)
+  // campo que deve receber o foco depois de acrescentar ou remover; objeto novo a cada vez, para o
+  // efeito rodar mesmo quando o campo é o mesmo de antes (remover dois seguidos)
+  const [focar, setFocar] = useState<{ id: string } | null>(null)
 
   // depois de cada envio com erro, o foco vai para o primeiro campo errado
   useEffect(() => {
@@ -34,7 +35,7 @@ export function NovaAvaliacao() {
   }, [erros])
 
   useEffect(() => {
-    if (focar) document.getElementById(focar)?.focus()
+    if (focar) document.getElementById(focar.id)?.focus()
   }, [focar])
 
   if (!carregando && !usuario) return <Navigate to="/entrar" replace />
@@ -46,11 +47,11 @@ export function NovaAvaliacao() {
     proximaChave.current += 1
     setChaves((atuais) => [...atuais, chave])
     setErros({}) // os erros vêm pela posição; com a lista mudando, ficariam no campo errado
-    setFocar(`url-${chave}`)
+    setFocar({ id: `url-${chave}` })
   }
 
   function remover(indice: number) {
-    setFocar(`url-${chaves[indice - 1]}`)
+    setFocar({ id: `url-${chaves[indice - 1]}` })
     setChaves((atuais) => atuais.filter((_, i) => i !== indice))
     setErros({})
   }
@@ -66,12 +67,11 @@ export function NovaAvaliacao() {
       definirUsuario(null) // sessão expirou: a tela leva para /entrar
       return
     }
-    if (status === 202 && corpo.avaliacoes?.length) {
-      // um link: acompanha na Tela 4; vários: no histórico, com o andamento de cada um
-      const [primeira] = corpo.avaliacoes
-      void navegar(
-        corpo.avaliacoes.length === 1 && primeira ? `/avaliacoes/${primeira.id}` : '/avaliacoes',
-      )
+    if (status === 202) {
+      // um link: acompanha na Tela 4; vários (ou resposta sem a lista): no histórico, com o andamento
+      const criadas = corpo.avaliacoes ?? []
+      const [primeira] = criadas
+      void navegar(criadas.length === 1 && primeira ? `/avaliacoes/${primeira.id}` : '/avaliacoes')
       return
     }
     setErros(corpo.campos ?? {})

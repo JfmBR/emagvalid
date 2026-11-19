@@ -382,9 +382,9 @@ describe('POST /api/avaliacoes', () => {
       const ids = banco.avaliacoes.map((a) => a.id)
       expect(resposta.body).toEqual({ avaliacoes: ids.map((id) => ({ id })) })
       expect(vi.mocked(fila.adicionar).mock.calls.map(([id]) => id)).toEqual(ids)
-      // a data cresce na ordem da lista: o histórico mostra o envio na ordem
+      // o histórico (mais nova em cima) mostra o envio na ordem da lista: o 1º link é o "mais novo"
       const datas = banco.avaliacoes.map((a) => a.criadaEm.getTime())
-      expect(datas).toEqual([...datas].sort((x, y) => x - y))
+      expect(datas).toEqual([...datas].sort((x, y) => y - x))
       expect(new Set(datas).size).toBe(3)
     })
 
@@ -460,6 +460,26 @@ describe('POST /api/avaliacoes', () => {
 
       expect(resposta.status).toBe(429)
       expect(resposta.body).toEqual({ erro: 'Muitas tentativas. Tente de novo em 15 minutos.' })
+    })
+
+    it('a lista só passa se couberem todos os links nas tentativas que sobram', async () => {
+      vi.mocked(classificarEndereco).mockResolvedValue('inexistente')
+      for (let i = 0; i < 29; i++) await pedir('u1', `https://loja.com.br/x${i}`)
+
+      const resposta = await pedirLista('u1', links(10))
+
+      expect(resposta.status).toBe(429)
+      // não chegou a sondar nenhum dos 10
+      expect(classificarEndereco).toHaveBeenCalledTimes(29)
+      expect((await pedir('u1', 'https://loja.com.br/ultima')).status).toBe(400)
+    })
+
+    it('recusa barata (limite por hora) devolve as tentativas: não trava a conta', async () => {
+      for (let i = 0; i < 8; i++) semear()
+      // 5 listas de 10 recusadas pela hora gastariam 50 tentativas, se contassem
+      for (let i = 0; i < 5; i++) expect((await pedirLista('u1', links(10))).status).toBe(429)
+
+      expect((await pedirLista('u1', links(2))).status).toBe(202)
     })
   })
 })

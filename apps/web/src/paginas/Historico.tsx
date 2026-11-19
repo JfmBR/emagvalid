@@ -99,7 +99,11 @@ export function Historico() {
     if (status === 401) return definirUsuario(null)
     if (status !== 200 || !corpo.avaliacoes) return setAviso(mensagemDeErro(status, corpo.erro))
     const novas = corpo.avaliacoes
-    setItens((atuais) => [...(atuais ?? []), ...novas])
+    // a primeira página pode ter mudado enquanto isso (pergunta a cada 2 s): sem repetir linha
+    setItens((atuais) => {
+      const ids = new Set((atuais ?? []).map((item) => item.id))
+      return [...(atuais ?? []), ...novas.filter((item) => !ids.has(item.id))]
+    })
     setProximo(corpo.proximo ?? null)
     setFocar(novas[0]?.id ?? null)
   }

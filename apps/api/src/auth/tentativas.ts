@@ -25,6 +25,10 @@ export function criarLimite(maximo: number, janelaMs: number) {
     bloqueado(chave: string, agora = Date.now()) {
       return (registroValido(chave, agora)?.contagem ?? 0) >= maximo
     },
+    // quantas ainda cabem na janela (ex.: uma lista de 10 links só passa se couberem as 10)
+    restantes(chave: string, agora = Date.now()) {
+      return Math.max(0, maximo - (registroValido(chave, agora)?.contagem ?? 0))
+    },
     registrar(chave: string, agora = Date.now()) {
       const registro = registroValido(chave, agora)
       if (registro) registro.contagem += 1

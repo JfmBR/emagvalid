@@ -76,36 +76,37 @@ rotasAvaliacoes.post('/', exigirLogin, async (req, res) => {
 
   // Todo link bem formado conta, mesmo se recusado depois: sem isso, as respostas diferentes
   // (interno, inexistente, ok) serviriam de oráculo do DNS interno. Cada link conta uma vez, senão
-  // uma lista de 10 sondaria 10 endereços pelo preço de um. Conta antes de qualquer await.
+  // uma lista de 10 sondaria 10 endereços pelo preço de um. A lista só passa se couberem todos os
+  // links. Conta antes de qualquer await, para pedidos ao mesmo tempo não furarem o limite.
   const ip = chaveDoIp(req.ip ?? 'desconhecido')
-  if (limiteAvaliacaoPorConta.bloqueado(usuarioId) || limiteAvaliacaoPorIp.bloqueado(ip)) {
+  const n = pedidas.length
+  if (limiteAvaliacaoPorConta.restantes(usuarioId) < n || limiteAvaliacaoPorIp.restantes(ip) < n) {
     res.status(429).json({ erro: MSG_MUITOS_PEDIDOS })
     return
   }
-  for (let i = 0; i < pedidas.length; i += 1) {
+  for (let i = 0; i < n; i += 1) {
     limiteAvaliacaoPorConta.registrar(usuarioId)
     limiteAvaliacaoPorIp.registrar(ip)
   }
+  // as recusas baratas abaixo não chegam ao DNS (não servem de sonda): devolvem as tentativas
+  const recusarSemDns = (codigo: number, erro: string) => {
+    for (let i = 0; i < n; i += 1) {
+      limiteAvaliacaoPorConta.descontar(usuarioId)
+      limiteAvaliacaoPorIp.descontar(ip)
+    }
+    res.status(codigo).json({ erro })
+  }
 
   // dois envios ao mesmo tempo da mesma conta passariam juntos do limite por hora (o count não vê o outro)
-  if (criando.has(usuarioId)) {
-    res.status(409).json({ erro: MSG_ENVIANDO })
-    return
-  }
+  if (criando.has(usuarioId)) return recusarSemDns(409, MSG_ENVIANDO)
   criando.add(usuarioId)
   try {
     const naUltimaHora = await db.avaliacao.count({
       where: { usuarioId, criadaEm: { gte: new Date(Date.now() - UMA_HORA_MS) } },
     })
     const sobram = MAX_POR_HORA - naUltimaHora
-    if (pedidas.length > sobram) {
-      res.status(429).json({ erro: sobram > 0 ? msgSobram(sobram) : MSG_LIMITE })
-      return
-    }
-    if (fila.tamanho() + pedidas.length > MAX_NA_FILA) {
-      res.status(503).json({ erro: MSG_FILA_CHEIA })
-      return
-    }
+    if (n > sobram) return recusarSemDns(429, sobram > 0 ? msgSobram(sobram) : MSG_LIMITE)
+    if (fila.tamanho() + n > MAX_NA_FILA) return recusarSemDns(503, MSG_FILA_CHEIA)
 
     // o DNS só roda depois de todas as recusas baratas; os links em paralelo (até 3 s cada)
     const tipos = await Promise.all(pedidas.map(({ url }) => classificarEndereco(url.hostname)))
@@ -130,12 +131,13 @@ rotasAvaliacoes.post('/', exigirLogin, async (req, res) => {
       res.status(503).json({ erro: MSG_FILA_CHEIA })
       return
     }
-    // tudo ou nada; 1 ms entre as datas mantém a ordem da lista no histórico (o now() do banco seria igual para todas)
+    // Tudo ou nada. O histórico mostra a mais nova em cima; com 1 ms a menos por link, o 1º link do
+    // envio fica em cima e os outros seguem a ordem da lista (o now() do banco seria igual para todos)
     const agora = Date.now()
     const criadas = await db.$transaction(
       pedidas.map(({ url }, indice) =>
         db.avaliacao.create({
-          data: { usuarioId, url: url.href, criadaEm: new Date(agora + indice) },
+          data: { usuarioId, url: url.href, criadaEm: new Date(agora - indice) },
           select: { id: true },
         }),
       ),
