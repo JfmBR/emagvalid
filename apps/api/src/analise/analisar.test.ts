@@ -233,6 +233,16 @@ describe('analisar', { timeout: 20_000 }, () => {
     expect(imagem?.ajuda).not.toContain('Images must')
   })
 
+  it('devolve as regras aplicáveis (aprovadas e com falha) e as em dúvida, só pelo id', async () => {
+    const { aplicaveis, duvidas } = await analisar(url, { conferirEndereco: soLocal })
+
+    expect(aplicaveis).toEqual(
+      expect.arrayContaining(['image-alt', 'html-has-lang', 'document-title']),
+    )
+    expect(aplicaveis).not.toContain('video-caption') // a página não tem vídeo
+    expect(duvidas.every((regra) => typeof regra === 'string')).toBe(true)
+  })
+
   it('segue o redirecionamento e devolve o endereço final', async () => {
     const { urlFinal } = await analisar(`${url}/vai`, { conferirEndereco: soLocal })
     expect(urlFinal).toBe(`${url}/`)

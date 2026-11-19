@@ -63,6 +63,9 @@ const imagemSemAlt: Violacao = {
   ocorrencias: [{ seletor: 'img', trecho: '<img src="a.png">' }],
 }
 
+// análise sem falha, sem regra aplicável e sem dúvida
+const semNada = { violacoes: [], aplicaveis: [], duvidas: [] }
+
 beforeEach(() => {
   analisar.mockReset()
   banco.avaliacao = { id: 'a1', url: 'https://exemplo.com.br/', usuarioId: 'u1' }
@@ -133,7 +136,12 @@ describe('executarAvaliacao', () => {
       etapas.push(andamento.get('a1')?.etapa)
       opcoes?.aoCarregar?.(10)
       etapas.push(andamento.get('a1')?.etapa)
-      return { violacoes: [imagemSemAlt], urlFinal: 'https://exemplo.com.br/inicio' }
+      return {
+        violacoes: [imagemSemAlt],
+        aplicaveis: ['image-alt', 'document-title', 'html-has-lang'],
+        duvidas: ['color-contrast'],
+        urlFinal: 'https://exemplo.com.br/inicio',
+      }
     })
 
     await executarAvaliacao('a1')
@@ -147,6 +155,10 @@ describe('executarAvaliacao', () => {
       status: 'CONCLUIDA',
       urlFinal: 'https://exemplo.com.br/inicio',
       paginaGrande: false,
+      // 3.1 e 3.3 média (2 + 2) aprovadas; 3.6 alta (3) reprovada: 100 × 4 ÷ 7
+      requisitosAplicaveis: ['3.1', '3.3', '3.6'],
+      requisitosEmDuvida: ['4.1'],
+      nota: 57,
     })
     expect(banco.atualizacoes[1]?.concluidaEm).toBeInstanceOf(Date)
     expect(banco.falhas).toHaveLength(requisitosDaRegra('image-alt').length)
@@ -157,7 +169,7 @@ describe('executarAvaliacao', () => {
     analisar.mockImplementation(async (_url, opcoes) => {
       opcoes?.aoCarregar?.(LIMITE_PAGINA_GRANDE + 1)
       expect(andamento.get('a1')?.paginaGrande).toBe(true)
-      return { violacoes: [], urlFinal: 'https://exemplo.com.br/' }
+      return { ...semNada, urlFinal: 'https://exemplo.com.br/' }
     })
 
     await executarAvaliacao('a1')
@@ -168,7 +180,7 @@ describe('executarAvaliacao', () => {
   it('página com exatamente LIMITE_PAGINA_GRANDE elementos não é grande', async () => {
     analisar.mockImplementation(async (_url, opcoes) => {
       opcoes?.aoCarregar?.(LIMITE_PAGINA_GRANDE)
-      return { violacoes: [], urlFinal: 'https://exemplo.com.br/' }
+      return { ...semNada, urlFinal: 'https://exemplo.com.br/' }
     })
 
     await executarAvaliacao('a1')
@@ -251,7 +263,7 @@ describe('executarAvaliacao', () => {
   })
 
   it('cada gravação só vale com o status esperado', async () => {
-    analisar.mockResolvedValue({ violacoes: [], urlFinal: 'https://exemplo.com.br/' })
+    analisar.mockResolvedValue({ ...semNada, urlFinal: 'https://exemplo.com.br/' })
     await executarAvaliacao('a1')
     analisar.mockRejectedValue(new ErroDeAnalise('DEMOROU'))
     vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -278,7 +290,11 @@ describe('executarAvaliacao', () => {
 
   it('virou ERRO durante a análise: não grava CONCLUIDA nem as falhas', async () => {
     banco.contagens = [1, 0]
-    analisar.mockResolvedValue({ violacoes: [imagemSemAlt], urlFinal: 'https://exemplo.com.br/' })
+    analisar.mockResolvedValue({
+      ...semNada,
+      violacoes: [imagemSemAlt],
+      urlFinal: 'https://exemplo.com.br/',
+    })
 
     await executarAvaliacao('a1')
 
