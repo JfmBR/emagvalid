@@ -691,6 +691,28 @@ describe('Tela 4 · análise', () => {
       expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     })
 
+    it('enquanto o pedido roda, outro clique no mesmo item é ignorado', async () => {
+      simularApi({
+        ...logada,
+        '/api/avaliacoes/a1': resposta(concluida),
+        '/api/avaliacoes/a1/revisao': { status: 204 },
+      })
+      abrir('/avaliacoes/a1')
+      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana (2)' }))
+      const foco = screen.getByRole('checkbox', { name: /4\.4 · Foco visível/ })
+
+      fireEvent.click(foco)
+      fireEvent.click(foco)
+
+      expect(foco).toBeChecked()
+      await waitFor(() => {
+        const pedidos = vi
+          .mocked(fetch)
+          .mock.calls.filter(([caminho]) => caminho === '/api/avaliacoes/a1/revisao')
+        expect(pedidos).toHaveLength(1)
+      })
+    })
+
     it('se a API não gravar, a caixa volta e a mensagem aparece', async () => {
       simularApi({
         ...logada,

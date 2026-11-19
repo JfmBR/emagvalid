@@ -192,7 +192,14 @@ function Abas({
           </button>
         ))}
       </div>
-      <div role="tabpanel" id="painel-falhas" aria-labelledby="aba-falhas" hidden={aba !== 0}>
+      {/* tabIndex 0: o Tab para no painel mesmo quando ele não tem nada focável (padrão WAI-ARIA) */}
+      <div
+        role="tabpanel"
+        id="painel-falhas"
+        aria-labelledby="aba-falhas"
+        tabIndex={0}
+        hidden={aba !== 0}
+      >
         {cartoes.length === 0 ? (
           <p>Não encontramos falhas automáticas. Ainda assim, faça a revisão humana.</p>
         ) : (
@@ -203,7 +210,13 @@ function Abas({
           </ul>
         )}
       </div>
-      <div role="tabpanel" id="painel-humana" aria-labelledby="aba-humana" hidden={aba !== 1}>
+      <div
+        role="tabpanel"
+        id="painel-humana"
+        aria-labelledby="aba-humana"
+        tabIndex={0}
+        hidden={aba !== 1}
+      >
         <RevisaoHumana id={id} revisao={revisao} />
       </div>
     </div>
@@ -275,6 +288,8 @@ function RevisaoHumana({ id, revisao }: { id: string; revisao: ResultadoAvaliaca
     () => new Set(revisao.filter((item) => item.feita).map((item) => item.numero)),
   )
   const [erro, setErro] = useState('')
+  // um pedido por item de cada vez: respostas fora de ordem desfariam a marca errada
+  const pendentes = useRef(new Set<string>())
 
   const marcar = (numero: string, feita: boolean) =>
     setFeitas((atual) => {
@@ -285,11 +300,14 @@ function RevisaoHumana({ id, revisao }: { id: string; revisao: ResultadoAvaliaca
     })
 
   async function mudar(numero: string, feita: boolean) {
+    if (pendentes.current.has(numero)) return // o clique é ignorado e a caixa fica como está
+    pendentes.current.add(numero)
     marcar(numero, feita)
     const { status, corpo } = await enviar<{ erro: string }>(
       `/api/avaliacoes/${encodeURIComponent(id)}/revisao`,
       { numero, feita },
     )
+    pendentes.current.delete(numero)
     if (status === 204) return setErro('')
     marcar(numero, !feita) // não gravou: a caixa volta a mostrar o que está salvo
     if (status === 401) return definirUsuario(null)

@@ -33,9 +33,15 @@ describe('calcularNota', () => {
     expect(calcularNota(['3.6', '1.3', '1.8'], ['3.6'])).toBe(50)
   })
 
-  it('arredonda para inteiro', () => {
+  it('arredonda para baixo', () => {
     // 3.6 alta (3) e 1.8 baixa (1) aprovadas; 1.3 média (2) reprovada: 100 × 4 ÷ 6 = 66,7
-    expect(calcularNota(['3.6', '1.3', '1.8'], ['1.3'])).toBe(67)
+    expect(calcularNota(['3.6', '1.3', '1.8'], ['1.3'])).toBe(66)
+  })
+
+  it('com uma reprovada, nunca dá 100', () => {
+    // 66 aprovadas de peso 3 (198) e uma baixa (1) reprovada: 100 × 198 ÷ 199 = 99,5
+    const aplicaveis = [...Array.from({ length: 66 }, () => '3.6'), '1.8']
+    expect(calcularNota(aplicaveis, ['1.8'])).toBe(99)
   })
 
   it('tudo reprovado dá 0', () => {

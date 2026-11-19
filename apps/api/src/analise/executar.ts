@@ -105,7 +105,8 @@ export async function executarAvaliacao(id: string): Promise<void> {
           urlFinal,
           paginaGrande: estado.paginaGrande,
           requisitosAplicaveis,
-          requisitosEmDuvida: requisitosDasRegras(duvidas),
+          // o que já tem falha não está "em dúvida": aparece no cartão
+          requisitosEmDuvida: requisitosDasRegras(duvidas).filter((n) => !reprovados.includes(n)),
           nota: calcularNota(requisitosAplicaveis, reprovados),
         },
       })

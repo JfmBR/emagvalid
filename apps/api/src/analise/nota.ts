@@ -22,5 +22,6 @@ export function calcularNota(aplicaveis: string[], reprovados: string[]): number
   if (total === 0) return null
   const aprovados = aplicaveis.filter((numero) => !reprovados.includes(numero))
   const pontos = aprovados.reduce((soma, numero) => soma + peso(numero), 0)
-  return Math.round((100 * pontos) / total)
+  // para baixo: com qualquer reprovada, a nota nunca chega a 100 (99,5 arredondado daria 100)
+  return Math.floor((100 * pontos) / total)
 }

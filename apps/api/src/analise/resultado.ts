@@ -33,6 +33,7 @@ export function itensDeRevisao(emDuvida: string[]): Requisito[] {
 export function resultadoDaAvaliacao(avaliacao: AvaliacaoConcluida) {
   const reprovados = new Set(avaliacao.falhas.map((f) => f.requisitoEmag))
 
+  // shortcut: prioridade e peso vêm da lista atual, não da gravada; se um peso mudar, a conta das avaliações velhas deixa de fechar com a nota gravada. Gravar os pesos junto se isso acontecer
   const verificacoes = avaliacao.requisitosAplicaveis.flatMap((numero) => {
     const r = porNumero(numero)
     if (!r?.prioridade) return []

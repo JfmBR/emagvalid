@@ -172,6 +172,8 @@ test('só com teclado: pedir a avaliação, acompanhar e ver a análise concluí
   await page.keyboard.press('ArrowRight')
   await expect(page.getByRole('tab', { name: 'Revisão humana (2)' })).toBeFocused()
   await page.keyboard.press('Tab')
+  await expect(page.getByRole('tabpanel')).toBeFocused()
+  await page.keyboard.press('Tab')
   const caixa = page.getByRole('checkbox', { name: /4\.4/ })
   await expect(caixa).toBeFocused()
   await page.keyboard.press('Space')

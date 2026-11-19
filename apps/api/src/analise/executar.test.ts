@@ -139,7 +139,8 @@ describe('executarAvaliacao', () => {
       return {
         violacoes: [imagemSemAlt],
         aplicaveis: ['image-alt', 'document-title', 'html-has-lang'],
-        duvidas: ['color-contrast'],
+        // image-alt também falhou: 3.6 fica no cartão, não na dúvida
+        duvidas: ['color-contrast', 'image-alt'],
         urlFinal: 'https://exemplo.com.br/inicio',
       }
     })
