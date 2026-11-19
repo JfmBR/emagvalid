@@ -207,7 +207,7 @@ Requisitos: RF12, RF13, RF21. Design: `docs/superpowers/specs/2026-11-19-relator
 - [x] Montar o relatório como uma página HTML e gerar o PDF com o próprio Playwright (`page.pdf()`), sem biblioteca nova
 - [x] Conteúdo (decisão do João, 19/11/2026): cabeçalho (página, data, "Preparado para"), aviso de que não é certificação, resumo, uma caixa por recomendação com falha (prioridade, porquê, exemplo de correção e todas as ocorrências), "Revisão humana" com o que foi conferido, "Como chegamos na nota" e rodapé com a data e a página. Sem nome de auditor(a), porque o público agora é o dono do site
 - [x] Sem Tela 7 (decisão do João, 19/11/2026): "Baixar PDF" fica na Tela 5, junto da nota, com a contagem da revisão humana e o atalho "Ir para a revisão humana"
-- [x] Plano pago (RF21): campo `planoPago` na conta; sem ele, o botão aparece bloqueado com o aviso
+- [x] Plano pago (RF21): campo `planoPago` na conta; sem ele, o botão aparece bloqueado com o aviso. Saiu do MVP em 19/11/2026 (decisão do João): o PDF ficou liberado para toda conta, e a coluna ficou no banco, sem uso
 
 **Terminou quando:** o PDF baixado tem tudo o que o RF13 pede.
 

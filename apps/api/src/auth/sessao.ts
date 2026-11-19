@@ -5,7 +5,7 @@ import { db } from '../db.js'
 export const COOKIE_SESSAO = 'sessao'
 const DURACAO_MS = 7 * 24 * 60 * 60 * 1000
 
-export type UsuarioDaSessao = { id: string; nome: string; email: string; planoPago: boolean }
+export type UsuarioDaSessao = { id: string; nome: string; email: string }
 
 function hashDoToken(token: string) {
   return createHash('sha256').update(token).digest('hex')
@@ -48,7 +48,7 @@ async function usuarioDaSessao(req: Request): Promise<UsuarioDaSessao | null> {
   if (!token) return null
   const sessao = await db.sessao.findUnique({
     where: { tokenHash: hashDoToken(token) },
-    include: { usuario: { select: { id: true, nome: true, email: true, planoPago: true } } },
+    include: { usuario: { select: { id: true, nome: true, email: true } } },
   })
   if (!sessao) return null
   if (sessao.expiraEm.getTime() <= Date.now()) {

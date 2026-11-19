@@ -149,9 +149,7 @@ vi.mock('../auth/sessao.js', async (importOriginal) => ({
       res.status(401).json({ erro: 'Entre na sua conta para continuar.' })
       return
     }
-    // x-plano: sim faz o papel do plano pago (RF21)
-    const planoPago = req.get('x-plano') === 'sim'
-    res.locals.usuario = { id, nome: 'Teste', email: `${id}@empresa.com.br`, planoPago }
+    res.locals.usuario = { id, nome: 'Teste', email: `${id}@empresa.com.br` }
     next()
   },
 }))
@@ -767,10 +765,9 @@ describe('POST /api/avaliacoes/:id/revisao', () => {
 })
 
 describe('GET /api/avaliacoes/:id/pdf', () => {
-  function baixar(usuario: string | null, id: string, plano = true) {
+  function baixar(usuario: string | null, id: string) {
     const pedido = request(criarApp()).get(`/api/avaliacoes/${id}/pdf`)
     if (usuario) pedido.set('x-usuario', usuario)
-    if (plano) pedido.set('x-plano', 'sim')
     return pedido
   }
   const concluida = (dados: Partial<AvaliacaoFalsa> = {}) =>
@@ -788,22 +785,15 @@ describe('GET /api/avaliacoes/:id/pdf', () => {
     expect((await baixar(null, concluida().id)).status).toBe(401)
   })
 
-  it('avaliação de outra conta, inexistente ou id que não é UUID → 404, mesmo sem plano', async () => {
+  it('avaliação de outra conta, inexistente ou id que não é UUID → 404', async () => {
     const outra = concluida({ usuarioId: 'u2' })
 
     for (const id of [outra.id, randomUUID(), 'nao-e-uuid']) {
-      const { status, body } = await baixar('u1', id, false)
+      const { status, body } = await baixar('u1', id)
       expect(status).toBe(404)
       expect(body.erro).toBe('Avaliação não encontrada.')
     }
     expect(gerarPdf).not.toHaveBeenCalled()
-  })
-
-  it('sem plano pago → 403', async () => {
-    const { status, body } = await baixar('u1', concluida().id, false)
-
-    expect(status).toBe(403)
-    expect(body.erro).toBe('O relatório em PDF faz parte do plano pago.')
   })
 
   it('avaliação pendente ou com erro → 409', async () => {

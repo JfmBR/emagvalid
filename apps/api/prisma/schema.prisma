@@ -19,7 +19,7 @@ model Usuario {
   email      String      @unique
   senhaHash  String // nunca a senha em texto (RNF04)
   criadoEm   DateTime    @default(now())
-  planoPago  Boolean     @default(false) // RF21: ligado à mão pelo grupo nas contas de demonstração e da banca
+  planoPago  Boolean     @default(false) // sem uso: plano pago (RF21) saiu do MVP em 19/11/2026; a coluna fica para quando a cobrança voltar
   avaliacoes Avaliacao[]
   sessoes    Sessao[]
 

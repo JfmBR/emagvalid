@@ -13,7 +13,7 @@ export const rotasRelatorio = Router()
 // Data no nome do arquivo, no fuso de Brasília (en-CA dá AAAA-MM-DD)
 const diaBrasilia = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' })
 
-// Relatório em PDF de uma avaliação concluída (RF12, RF13), só no plano pago (RF21).
+// Relatório em PDF de uma avaliação concluída (RF12, RF13), para toda conta (plano pago fora do MVP, 19/11/2026).
 // Gerado na hora, um por vez (design de 19/11/2026); nada fica guardado.
 rotasRelatorio.get('/:id/pdf', exigirLogin, async (req, res) => {
   const usuario = res.locals.usuario as UsuarioDaSessao
@@ -21,7 +21,6 @@ rotasRelatorio.get('/:id/pdf', exigirLogin, async (req, res) => {
   const naoEncontrada = () => res.status(404).json({ erro: 'Avaliação não encontrada.' })
   if (!UUID.test(id)) return naoEncontrada()
 
-  // 404 antes do 403: quem não tem plano também não descobre se o id existe
   const avaliacao = await db.avaliacao.findFirst({
     where: { id, usuarioId: usuario.id },
     select: {
@@ -34,9 +33,6 @@ rotasRelatorio.get('/:id/pdf', exigirLogin, async (req, res) => {
     },
   })
   if (!avaliacao) return naoEncontrada()
-  if (!usuario.planoPago) {
-    return res.status(403).json({ erro: 'O relatório em PDF faz parte do plano pago.' })
-  }
   if (avaliacao.status !== 'CONCLUIDA') {
     return res
       .status(409)

@@ -1,32 +1,24 @@
-import { useId, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { mensagemDeErro } from '../api.ts'
 import { useSessao } from '../sessao.tsx'
 import { Aviso } from './Aviso.tsx'
 import { Botao } from './Botao.tsx'
 
-export const AVISO_PLANO_PAGO =
-  'O relatório em PDF faz parte do plano pago. No MVP não há cobrança: o grupo libera o plano nas contas de demonstração.'
-
-// "Baixar PDF" da Tela 5 e da Tela 8 (RF12). Sem plano pago, o botão fica bloqueado com o aviso (RF21):
-// aria-disabled, e não disabled, para continuar no Tab e o leitor de tela ler o porquê.
-// avisoBloqueioId: o aviso já está na tela (Tela 8, um para a tabela toda), e o botão só aponta para ele.
+// "Baixar PDF" da Tela 5 e da Tela 8 (RF12), para toda conta (plano pago fora do MVP, 19/11/2026).
 // pagina: na Tela 8, cada linha tem um botão; o leitor de tela ouve de qual página é.
 // antes: na Tela 5, espera as marcações da revisão que ainda estão sendo gravadas, para o PDF levá-las.
 export function BaixarPdf({
   id,
-  avisoBloqueioId,
   pagina,
   variante = 'principal',
   antes,
 }: {
   id: string
-  avisoBloqueioId?: string
   pagina?: string
   variante?: 'principal' | 'txt'
   antes?: () => Promise<unknown>
 }) {
-  const { usuario, definirUsuario } = useSessao()
-  const idAviso = useId()
+  const { definirUsuario } = useSessao()
   const [baixando, setBaixando] = useState(false)
   const [erro, setErro] = useState('')
   // o estado demora um render; a ref barra o segundo clique na hora
@@ -38,25 +30,6 @@ export function BaixarPdf({
       <span className="so-leitor">de {pagina}</span>
     </>
   ) : null
-
-  if (!usuario?.planoPago) {
-    return (
-      <>
-        <Botao
-          variante={variante === 'txt' ? 'txt' : 'sec'}
-          aria-disabled="true"
-          aria-describedby={avisoBloqueioId ?? idAviso}
-        >
-          Baixar PDF (plano pago){dePagina}
-        </Botao>
-        {avisoBloqueioId ? null : (
-          <p className="dica" id={idAviso}>
-            {AVISO_PLANO_PAGO}
-          </p>
-        )}
-      </>
-    )
-  }
 
   async function baixar() {
     if (ocupado.current) return

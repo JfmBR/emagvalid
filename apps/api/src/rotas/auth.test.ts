@@ -22,7 +22,6 @@ type UsuarioFalso = {
   nome: string
   email: string
   senhaHash: string
-  planoPago: boolean
 }
 type SessaoFalsa = { id: string; tokenHash: string; usuarioId: string; expiraEm: Date }
 
@@ -39,19 +38,18 @@ vi.mock('../db.js', async () => {
     id: u.id,
     nome: u.nome,
     email: u.email,
-    planoPago: u.planoPago,
   })
   return {
     db: {
       usuario: {
-        create: async ({ data }: { data: Omit<UsuarioFalso, 'id' | 'planoPago'> }) => {
+        create: async ({ data }: { data: Omit<UsuarioFalso, 'id'> }) => {
           if (banco.usuarios.some((u) => u.email === data.email)) {
             throw new Prisma.PrismaClientKnownRequestError('e-mail repetido', {
               code: 'P2002',
               clientVersion: 'teste',
             })
           }
-          const usuario = { id: `u${banco.usuarios.length + 1}`, planoPago: false, ...data }
+          const usuario = { id: `u${banco.usuarios.length + 1}`, ...data }
           banco.usuarios.push(usuario)
           return publico(usuario)
         },
@@ -116,7 +114,7 @@ describe('cadastro', () => {
 
     expect(resposta.status).toBe(201)
     expect(resposta.body).toEqual({
-      usuario: { nome: 'Helena Souza', email: 'helena@empresa.com.br', planoPago: false },
+      usuario: { nome: 'Helena Souza', email: 'helena@empresa.com.br' },
     })
     expect(banco.usuarios[0]?.senhaHash).not.toContain(helena.senha)
     const cookie = String(resposta.headers['set-cookie'])
@@ -126,7 +124,7 @@ describe('cadastro', () => {
 
     const eu = await agente.get('/api/auth/eu')
     expect(eu.body).toEqual({
-      usuario: { nome: 'Helena Souza', email: 'helena@empresa.com.br', planoPago: false },
+      usuario: { nome: 'Helena Souza', email: 'helena@empresa.com.br' },
     })
   })
 
@@ -185,7 +183,6 @@ describe('entrar e sair', () => {
     expect(entrar.body.usuario).toEqual({
       nome: 'Helena Souza',
       email: 'helena@empresa.com.br',
-      planoPago: false,
     })
     expect(banco.sessoes).toHaveLength(2)
 
@@ -234,14 +231,6 @@ describe('sessão', () => {
 
     expect(resposta.status).toBe(401)
     expect(resposta.body.erro).toBe('Entre na sua conta para continuar.')
-  })
-
-  it('/eu devolve planoPago ligado pelo grupo (RF21)', async () => {
-    const agente = request.agent(criarApp())
-    await cadastrar(agente)
-    banco.usuarios[0]!.planoPago = true
-
-    expect((await agente.get('/api/auth/eu')).body.usuario.planoPago).toBe(true)
   })
 
   it('sessão vencida não vale e sai do banco', async () => {

@@ -113,12 +113,6 @@ body {
   text-decoration: underline;
 }
 
-/* botão bloqueado que continua no Tab (RF21, "Baixar PDF"): sem a opacidade do [disabled], para o
-   texto manter o contraste; o rótulo e a descrição dizem por que está bloqueado */
-.btn[aria-disabled='true'] {
-  cursor: not-allowed;
-}
-
 /* links da barra: alvo de 44 px */
 .barra-acessibilidade a {
   display: inline-flex;

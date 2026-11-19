@@ -32,8 +32,8 @@ function texto(valor: unknown) {
   return typeof valor === 'string' ? valor : ''
 }
 
-function publico({ nome, email, planoPago }: UsuarioDaSessao) {
-  return { nome, email, planoPago }
+function publico({ nome, email }: UsuarioDaSessao) {
+  return { nome, email }
 }
 
 // IP de quem acessa, já com o trust proxy do app.ts (medido no Render); IPv6 conta pelo /64
@@ -78,7 +78,7 @@ rotasAuth.post('/cadastro', async (req, res) => {
   try {
     const usuario = await db.usuario.create({
       data: { nome, email, senhaHash: await gerarHashSenha(senha) },
-      select: { id: true, nome: true, email: true, planoPago: true },
+      select: { id: true, nome: true, email: true },
     })
     await abrirSessao(res, usuario.id)
     res.status(201).json({ usuario: publico(usuario) })

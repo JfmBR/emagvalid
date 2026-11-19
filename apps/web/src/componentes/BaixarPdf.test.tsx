@@ -5,18 +5,16 @@ import { BaixarPdf } from './BaixarPdf.tsx'
 
 const helena = { nome: 'Helena Souza', email: 'helena@empresa.com.br' }
 const CAMINHO = '/api/avaliacoes/a1/pdf'
-const AVISO_PLANO =
-  'O relatório em PDF faz parte do plano pago. No MVP não há cobrança: o grupo libera o plano nas contas de demonstração.'
 
 // API falsa: /eu diz quem entrou; o PDF responde o que o teste mandar
-function simularApi(planoPago: boolean, pdf: () => Response | Promise<Response>) {
+function simularApi(pdf: () => Response | Promise<Response>) {
   const pedidos: string[] = []
   vi.stubGlobal(
     'fetch',
     vi.fn(async (caminho: string) => {
       pedidos.push(caminho)
       if (caminho === '/api/auth/eu') {
-        return new Response(JSON.stringify({ usuario: { ...helena, planoPago } }))
+        return new Response(JSON.stringify({ usuario: helena }))
       }
       return pdf()
     }),
@@ -68,7 +66,7 @@ afterEach(() => {
 
 describe('BaixarPdf', () => {
   it('com plano, baixa com o nome do Content-Disposition', async () => {
-    const pedidos = simularApi(true, pdfOk)
+    const pedidos = simularApi(pdfOk)
     abrir()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Baixar PDF' }))
@@ -91,7 +89,7 @@ describe('BaixarPdf', () => {
         soltoAntesDeLer = vi.mocked(URL.revokeObjectURL).mock.calls.length > 0
       }, 0)
     })
-    simularApi(true, pdfOk)
+    simularApi(pdfOk)
     abrir()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Baixar PDF' }))
@@ -102,7 +100,7 @@ describe('BaixarPdf', () => {
 
   it('dois cliques seguidos mandam um pedido só', async () => {
     let soltar: (resposta: Response) => void = () => {}
-    const pedidos = simularApi(true, () => new Promise((pronto) => (soltar = pronto)))
+    const pedidos = simularApi(() => new Promise((pronto) => (soltar = pronto)))
     abrir()
     const botao = await screen.findByRole('button', { name: 'Baixar PDF' })
 
@@ -118,25 +116,12 @@ describe('BaixarPdf', () => {
     expect(pedidos.filter((p) => p === CAMINHO)).toHaveLength(1)
   })
 
-  it('sem plano: aria-disabled, descrição do plano pago e nenhum pedido ao clicar', async () => {
-    const pedidos = simularApi(false, pdfOk)
-    abrir()
-
-    const botao = await screen.findByRole('button', { name: 'Baixar PDF (plano pago)' })
-    expect(botao).toHaveAttribute('aria-disabled', 'true')
-    expect(botao).not.toBeDisabled()
-    expect(botao).toHaveAccessibleDescription(AVISO_PLANO)
-
-    fireEvent.click(botao)
-    expect(pedidos).not.toContain(CAMINHO)
-  })
-
   it('429 e 503 mostram a mensagem da API num alerta', async () => {
     for (const [status, erro] of [
       [429, 'Você chegou ao limite de 10 relatórios por hora. Tente de novo mais tarde.'],
       [503, 'Outro relatório está sendo gerado. Tente de novo em instantes.'],
     ] as const) {
-      simularApi(true, () => new Response(JSON.stringify({ erro }), { status }))
+      simularApi(() => new Response(JSON.stringify({ erro }), { status }))
       const { unmount } = abrir()
 
       fireEvent.click(await screen.findByRole('button', { name: 'Baixar PDF' }))
@@ -148,7 +133,7 @@ describe('BaixarPdf', () => {
   })
 
   it('401 volta ao estado de não entrou', async () => {
-    simularApi(true, () => new Response(JSON.stringify({ erro: 'Entre.' }), { status: 401 }))
+    simularApi(() => new Response(JSON.stringify({ erro: 'Entre.' }), { status: 401 }))
     abrir()
 
     fireEvent.click(await screen.findByRole('button', { name: 'Baixar PDF' }))
