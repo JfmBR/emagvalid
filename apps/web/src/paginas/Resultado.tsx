@@ -237,7 +237,9 @@ function Cartao({ cartao }: { cartao: ResultadoAvaliacao['cartoes'][number] }) {
         {exemplo ? (
           <>
             <h3>Como corrigir (exemplo)</h3>
-            <pre className="codigo">{exemplo}</pre>
+            <pre className="codigo" translate="no">
+              {exemplo}
+            </pre>
           </>
         ) : null}
         <details>
@@ -248,9 +250,13 @@ function Cartao({ cartao }: { cartao: ResultadoAvaliacao['cartoes'][number] }) {
               <li key={indice} style={{ display: 'grid', gap: 4, minWidth: 0 }}>
                 <p className="dica">{o.descricao}</p>
                 <p className="local">
-                  <code>{o.seletor}</code>
+                  <code translate="no">{o.seletor}</code>
                 </p>
-                {o.trecho ? <pre className="codigo">{o.trecho}</pre> : null}
+                {o.trecho ? (
+                  <pre className="codigo" translate="no">
+                    {o.trecho}
+                  </pre>
+                ) : null}
               </li>
             ))}
           </ol>
