@@ -5,29 +5,23 @@ import { Ponto } from '../componentes/Ponto.tsx'
 import { useSessao } from '../sessao.tsx'
 import type { ResultadoAvaliacao } from './Resultado.tsx'
 
-// Aba "Revisão humana" da Tela 5 (RF09): uma caixa por item, gravada na hora
+// Aba "Revisão humana" da Tela 5 (RF09): uma caixa por item, gravada na hora.
+// As marcas (feitas) vivem no Resultado, que mostra a contagem junto do "Baixar PDF".
 export function RevisaoHumana({
   id,
   revisao,
+  feitas,
+  marcar,
 }: {
   id: string
   revisao: ResultadoAvaliacao['revisao']
+  feitas: Set<string>
+  marcar: (numero: string, feita: boolean) => void
 }) {
   const { definirUsuario } = useSessao()
-  const [feitas, setFeitas] = useState(
-    () => new Set(revisao.filter((item) => item.feita).map((item) => item.numero)),
-  )
   const [erro, setErro] = useState('')
   // um pedido por item de cada vez: respostas fora de ordem desfariam a marca errada
   const pendentes = useRef(new Set<string>())
-
-  const marcar = (numero: string, feita: boolean) =>
-    setFeitas((atual) => {
-      const nova = new Set(atual)
-      if (feita) nova.add(numero)
-      else nova.delete(numero)
-      return nova
-    })
 
   async function mudar(numero: string, feita: boolean) {
     if (pendentes.current.has(numero)) return // o clique é ignorado e a caixa fica como está

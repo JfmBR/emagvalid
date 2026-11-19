@@ -67,7 +67,7 @@ export function BaixarPdf({ id, avisoBloqueioId }: { id: string; avisoBloqueioId
 
   return (
     <>
-      <Botao aria-busy={baixando} onClick={baixar}>
+      <Botao aria-busy={baixando} onClick={() => void baixar()}>
         {baixando ? 'Gerando o PDF...' : 'Baixar PDF'}
       </Botao>
       {erro ? (

@@ -1004,6 +1004,64 @@ describe('Tela 4 · análise', () => {
       expect(screen.queryByText(/Como chegamos/)).not.toBeInTheDocument()
       expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(2)
     })
+
+    describe('Baixar PDF e contagem da revisão', () => {
+      const comPlano = {
+        '/api/auth/eu': { status: 200, corpo: { usuario: { ...helena, planoPago: true } } },
+      }
+
+      it('mostra Baixar PDF e a contagem da revisão', async () => {
+        simularApi({ ...comPlano, '/api/avaliacoes/a1': resposta(concluida) })
+        abrir('/avaliacoes/a1')
+
+        expect(await screen.findByRole('button', { name: 'Baixar PDF' })).toBeInTheDocument()
+        expect(
+          screen.getByText(
+            'Revisão humana: 1 de 2 itens conferidos. Os outros saem no PDF como "a conferir".',
+          ),
+        ).toBeInTheDocument()
+      })
+
+      it('marcar um item muda a contagem sem recarregar', async () => {
+        simularApi({
+          ...comPlano,
+          '/api/avaliacoes/a1': resposta(concluida),
+          '/api/avaliacoes/a1/revisao': { status: 204 },
+        })
+        abrir('/avaliacoes/a1')
+        fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana (2)' }))
+
+        fireEvent.click(screen.getByRole('checkbox', { name: /^4\.4, Foco visível$/ }))
+
+        expect(
+          await screen.findByText('Revisão humana: todos os 2 itens conferidos.'),
+        ).toBeInTheDocument()
+        expect(
+          screen.queryByRole('button', { name: 'Ir para a revisão humana' }),
+        ).not.toBeInTheDocument()
+      })
+
+      it('"Ir para a revisão humana" abre a aba e leva o foco até ela', async () => {
+        simularApi({ ...comPlano, '/api/avaliacoes/a1': resposta(concluida) })
+        abrir('/avaliacoes/a1')
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Ir para a revisão humana' }))
+
+        const aba = screen.getByRole('tab', { name: 'Revisão humana (2)' })
+        expect(aba).toHaveAttribute('aria-selected', 'true')
+        expect(aba).toHaveFocus()
+        expect(screen.getByRole('checkbox', { name: /^4\.4, Foco visível$/ })).toBeVisible()
+      })
+
+      it('sem plano pago, o botão aparece bloqueado', async () => {
+        simularApi({ ...logada, '/api/avaliacoes/a1': resposta(concluida) })
+        abrir('/avaliacoes/a1')
+
+        expect(
+          await screen.findByRole('button', { name: 'Baixar PDF (plano pago)' }),
+        ).toHaveAttribute('aria-disabled', 'true')
+      })
+    })
   })
 
   it('404 mostra "Avaliação não encontrada."', async () => {
