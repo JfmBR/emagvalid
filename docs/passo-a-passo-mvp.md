@@ -178,9 +178,9 @@ Requisitos: RF02, RF03, RF04, RF17, RNF06. **Checkpoint 19/11.**
 
 Requisitos: RF04, RF05, RF06, RF09.
 
-- [ ] `apps/api/src/analise/nota.ts` com a fórmula decidida (Passo 2), com testes
-- [ ] Tela 5: nota, aviso "não é certificação", "Como chegamos a [nota]" (tabela por seção que abre e fecha), abas "Falhas automáticas" e "Revisão humana", cartões por requisito ordenados por prioridade
-- [ ] Lista de revisão humana fixa por requisito (o que a máquina não consegue julgar), com caixas de marcar
+- [x] `apps/api/src/analise/nota.ts` com a fórmula decidida (Passo 2), com testes. A análise passou a guardar também as regras aplicáveis e as em dúvida do axe (19/11/2026)
+- [x] Tela 5: nota, aviso "não é certificação", "Como chegamos a [nota]" (tabela que abre e fecha, uma linha por recomendação em vez de por seção, para mostrar o peso de cada uma, RF06), abas "Falhas automáticas" e "Revisão humana", cartões por requisito ordenados por prioridade
+- [x] Lista de revisão humana com caixas de marcar, gravadas no banco: as 16 recomendações que a máquina não julga mais as que o axe deixou em dúvida na página (decisões do João, 19/11/2026)
 - [ ] **Publicar** (primeira publicação do Plano, semana de 23/11)
 
 **Terminou quando:** no endereço público, uma URL real mostra a nota com a conta e as falhas.
@@ -189,7 +189,7 @@ Requisitos: RF04, RF05, RF06, RF09.
 
 Requisitos: RF07, RF08, RF10, RF11.
 
-- [ ] **Primeiro o texto padrão:** em `requisitos.ts`, para cada requisito, um "por que é falha" e um exemplo de correção escritos pelo grupo. Isso já funciona sem IA (contingência do R5)
+- [ ] **Primeiro o texto padrão:** em `requisitos.ts`, para cada requisito, um "por que é falha" e um exemplo de correção escritos pelo grupo. Isso já funciona sem IA (contingência do R5). Rascunho do Claude pronto em 19/11/2026 e já na Tela 5 (decisão do João); falta a revisão do grupo
 - [ ] **Depois a IA (Google Gemini):** `apps/api/src/orientacoes/ia.ts` manda ao Gemini a falha, o trecho e o requisito da lista fechada, e pede a resposta em formato fixo (JSON). Se a IA citar requisito fora da lista, descartar e usar o texto padrão
 - [ ] Mandar à IA só o trecho da página pública com a falha, sem dado do usuário, e dizer isso na Tela 6 (RNF05)
 - [ ] Guardar as orientações já geradas para não chamar o Gemini de novo pela mesma falha: o plano gratuito limita as chamadas (R7)

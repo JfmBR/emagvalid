@@ -37,6 +37,8 @@ export type ResultadoAvaliacao = {
 const ROTULO: Record<Prioridade, string> = { alta: 'alta', media: 'média', baixa: 'baixa' }
 // o design-system não tem selo de prioridade baixa; o contorno neutro serve, e o texto diz qual é
 const SELO = { alta: 'alta', media: 'media', baixa: 'pendente' } as const
+// cabeçalho de linha com cara de texto comum, como no protótipo (o th do design-system é miúdo e cinza)
+const LINHA = { fontWeight: 400, color: 'var(--ink)', fontSize: '1rem' }
 
 function plural(n: number, singular: string, mais: string) {
   return `${n} ${n === 1 ? singular : mais}`
@@ -109,7 +111,7 @@ export function Resultado({ id, resultado }: { id: string; resultado: ResultadoA
                 <tbody>
                   {verificacoes.map((v) => (
                     <tr key={v.numero}>
-                      <th scope="row">
+                      <th scope="row" style={LINHA}>
                         {v.numero} · {v.nome}
                       </th>
                       <td>{ROTULO[v.prioridade]}</td>
