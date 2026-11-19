@@ -84,6 +84,12 @@ A decidir no design com o João: a Tela 7 (prévia) e o que entra no PDF antes d
 - Na Tela 5, a conta da nota lê a prioridade e o peso atuais, não os gravados (`shortcut:` em `apps/api/src/analise/resultado.ts`).
 - O e2e "tema claro" fica perto do limite de 30 s com a máquina carregada.
 
+**Automatizar parte da revisão humana** (decisão do João, 19/11: depois do PDF):
+
+- aplicabilidade pelo HTML da página: 5.2 e 5.3 (áudio e vídeo), 6.4 a 6.8 (formulário), 1.6 (tabela) e 3.8 (links para documentos);
+- indícios: 1.9 (`target="_blank"` sem aviso), 6.7 (radios fora de `fieldset`) e 6.8 (CAPTCHA conhecido);
+- nada disso entra na nota.
+
 **Depois do MVP** (`07`, seção D, 16/11):
 
 - o cadastro diz quando o e-mail já tem conta;
