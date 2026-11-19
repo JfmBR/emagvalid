@@ -19,8 +19,8 @@ export function Acessibilidade() {
           <li>4: ir para o rodapé</li>
         </ul>
         <p>
-          No Windows e no Linux, use Alt + número (Alt + Shift + número também funciona). No Mac,
-          use Ctrl + Option + número.
+          No Windows e no Linux, use Alt + número (Alt + Shift + número também funciona), fora dos
+          campos de texto. No Mac, use Ctrl + Option + número.
         </p>
       </section>
       <section className="cabeca">

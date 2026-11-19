@@ -25,16 +25,21 @@ const ATALHOS: Record<string, string> = {
 function irPara(id: string) {
   const alvo = document.getElementById(id)
   if (!alvo) return
-  alvo.dataset.atalho = ''
-  alvo.addEventListener('blur', () => delete alvo.dataset.atalho, { once: true })
+  // marcado = já tem um blur esperando para tirar a marca
+  if (alvo.dataset.atalho === undefined) {
+    alvo.dataset.atalho = ''
+    alvo.addEventListener('blur', () => delete alvo.dataset.atalho, { once: true })
+  }
   alvo.focus()
 }
 
+// onde se digita: ali Alt + número pode ser texto (no Mac, Option + 4 digita ¢)
 function editavel(alvo: EventTarget | null) {
-  return (
-    alvo instanceof HTMLElement &&
-    (alvo.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(alvo.tagName))
-  )
+  if (!(alvo instanceof HTMLElement)) return false
+  if (alvo instanceof HTMLInputElement) {
+    return !['checkbox', 'radio', 'button', 'submit', 'reset'].includes(alvo.type)
+  }
+  return alvo.isContentEditable || alvo.tagName === 'TEXTAREA' || alvo.tagName === 'SELECT'
 }
 
 // Barra de acessibilidade do eMAG 3.1 (seção 4.3): atalhos (4.1), alto contraste (4.2) e a página
@@ -83,6 +88,8 @@ export function BarraAcessibilidade() {
   }, [])
 
   function pular(evento: MouseEvent<HTMLAnchorElement>, id: string) {
+    // Ctrl, Shift ou botão do meio: o navegador abre a aba ou a janela, como em qualquer link
+    if (evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.button !== 0) return
     evento.preventDefault()
     irPara(id)
   }

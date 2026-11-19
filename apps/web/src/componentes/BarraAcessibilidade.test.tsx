@@ -65,6 +65,27 @@ describe('atalhos', () => {
     expect(campo).toHaveFocus()
   })
 
+  it('numa caixa de marcar (como "Mostrar senha") o atalho age', () => {
+    render(
+      <MemoryRouter>
+        <BarraAcessibilidade />
+        <input type="checkbox" aria-label="Mostrar senha" />
+        <footer id="rodape" tabIndex={-1} />
+      </MemoryRouter>,
+    )
+    const caixa = screen.getByRole('checkbox', { name: 'Mostrar senha' })
+    caixa.focus()
+    fireEvent.keyDown(caixa, { code: 'Digit4', key: '4', altKey: true })
+    expect(document.getElementById('rodape')).toHaveFocus()
+  })
+
+  it('Ctrl + clique no link fica com o navegador (nova aba)', () => {
+    abrir()
+    const link = screen.getByRole('link', { name: 'Ir para o conteúdo [1]' })
+    expect(fireEvent.click(link, { ctrlKey: true })).toBe(true)
+    expect(document.getElementById('conteudo')).not.toHaveFocus()
+  })
+
   it('o clique no link leva o foco ao destino', () => {
     abrir()
     fireEvent.click(screen.getByRole('link', { name: 'Ir para o conteúdo [1]' }))
