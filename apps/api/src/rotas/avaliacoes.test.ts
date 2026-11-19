@@ -4,7 +4,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { andamento, fila } from '../analise/executar.js'
 import { classificarEndereco, MSG_URL, type TipoEndereco } from '../analise/endereco.js'
 import { criarApp } from '../app.js'
-import { limiteAvaliacaoPorConta, limiteAvaliacaoPorIp } from '../auth/tentativas.js'
+import {
+  limiteAvaliacaoPorConta,
+  limiteAvaliacaoPorIp,
+  limitePdfPorConta,
+} from '../auth/tentativas.js'
+import { GeradorOcupado, gerarPdf } from '../relatorio/pdf.js'
 
 type AvaliacaoFalsa = {
   id: string
@@ -144,9 +149,17 @@ vi.mock('../auth/sessao.js', async (importOriginal) => ({
       res.status(401).json({ erro: 'Entre na sua conta para continuar.' })
       return
     }
-    res.locals.usuario = { id, nome: 'Teste', email: `${id}@empresa.com.br` }
+    // x-plano: sim faz o papel do plano pago (RF21)
+    const planoPago = req.get('x-plano') === 'sim'
+    res.locals.usuario = { id, nome: 'Teste', email: `${id}@empresa.com.br`, planoPago }
     next()
   },
+}))
+
+// o Chromium do PDF tem teste próprio (relatorio/pdf.test.ts); aqui só a rota
+vi.mock('../relatorio/pdf.js', async (importOriginal) => ({
+  GeradorOcupado: (await importOriginal<typeof import('../relatorio/pdf.js')>()).GeradorOcupado,
+  gerarPdf: vi.fn<(html: string, rodape: string) => Promise<Buffer>>(),
 }))
 
 const MSG_ENVIANDO = 'Seu envio anterior ainda está sendo processado. Espere um instante.'
@@ -187,6 +200,8 @@ beforeEach(() => {
   banco.espera = null
   limiteAvaliacaoPorConta.zerar()
   limiteAvaliacaoPorIp.zerar()
+  limitePdfPorConta.zerar()
+  vi.mocked(gerarPdf).mockReset().mockResolvedValue(Buffer.from('%PDF-1.7 falso'))
   andamento.clear()
   vi.mocked(fila.adicionar).mockReset()
   vi.mocked(fila.posicao).mockReset().mockReturnValue(null)
@@ -748,5 +763,120 @@ describe('POST /api/avaliacoes/:id/revisao', () => {
     const avaliacao = semear({ status: 'ANALISANDO' })
 
     expect((await marcar('u1', avaliacao.id, { numero: '4.4', feita: true })).status).toBe(409)
+  })
+})
+
+describe('GET /api/avaliacoes/:id/pdf', () => {
+  function baixar(usuario: string | null, id: string, plano = true) {
+    const pedido = request(criarApp()).get(`/api/avaliacoes/${id}/pdf`)
+    if (usuario) pedido.set('x-usuario', usuario)
+    if (plano) pedido.set('x-plano', 'sim')
+    return pedido
+  }
+  const concluida = (dados: Partial<AvaliacaoFalsa> = {}) =>
+    semear({
+      status: 'CONCLUIDA',
+      url: 'https://www.loja.com.br/',
+      urlFinal: 'https://www.loja.com.br/inicio',
+      concluidaEm: new Date('2026-11-20T01:30:00Z'),
+      nota: 100,
+      requisitosAplicaveis: ['3.1'],
+      ...dados,
+    })
+
+  it('sem login → 401', async () => {
+    expect((await baixar(null, concluida().id)).status).toBe(401)
+  })
+
+  it('avaliação de outra conta, inexistente ou id que não é UUID → 404, mesmo sem plano', async () => {
+    const outra = concluida({ usuarioId: 'u2' })
+
+    for (const id of [outra.id, randomUUID(), 'nao-e-uuid']) {
+      const { status, body } = await baixar('u1', id, false)
+      expect(status).toBe(404)
+      expect(body.erro).toBe('Avaliação não encontrada.')
+    }
+    expect(gerarPdf).not.toHaveBeenCalled()
+  })
+
+  it('sem plano pago → 403', async () => {
+    const { status, body } = await baixar('u1', concluida().id, false)
+
+    expect(status).toBe(403)
+    expect(body.erro).toBe('O relatório em PDF faz parte do plano pago.')
+  })
+
+  it('avaliação pendente ou com erro → 409', async () => {
+    for (const status of ['NA_FILA', 'ANALISANDO', 'ERRO'] as const) {
+      const resposta = await baixar('u1', semear({ status }).id)
+      expect(resposta.status).toBe(409)
+      expect(resposta.body.erro).toBe('Esta avaliação não tem resultado para gerar o relatório.')
+    }
+    expect(gerarPdf).not.toHaveBeenCalled()
+  })
+
+  it('200 com o PDF, o nome do arquivo pelo urlFinal e pela data de Brasília, sem cache', async () => {
+    const resposta = await baixar('u1', concluida().id)
+
+    expect(resposta.status).toBe(200)
+    expect(resposta.headers['content-type']).toBe('application/pdf')
+    expect(resposta.headers['content-disposition']).toBe(
+      'attachment; filename="acessaweb-www.loja.com.br-2026-11-19.pdf"',
+    )
+    expect(resposta.headers['cache-control']).toBe('no-store')
+    expect(Buffer.from(resposta.body).subarray(0, 4).toString()).toBe('%PDF')
+  })
+
+  it('sem urlFinal usa url', async () => {
+    const resposta = await baixar(
+      'u1',
+      concluida({ url: 'https://padaria.com.br/x', urlFinal: null }).id,
+    )
+
+    expect(resposta.headers['content-disposition']).toContain('acessaweb-padaria.com.br-')
+  })
+
+  it('o HTML enviado ao gerador traz o nome da conta e a página', async () => {
+    await baixar('u1', concluida().id)
+
+    const [html, rodape] = vi.mocked(gerarPdf).mock.calls[0]!
+    expect(html).toContain('Preparado para: Teste')
+    expect(html).toContain('https://www.loja.com.br/inicio')
+    expect(rodape).toContain('pageNumber')
+  })
+
+  it('11º pedido da conta na mesma hora → 429', async () => {
+    const id = concluida().id
+    for (let i = 0; i < 10; i++) expect((await baixar('u1', id)).status).toBe(200)
+
+    const { status, body } = await baixar('u1', id)
+    expect(status).toBe(429)
+    expect(body.erro).toBe(
+      'Você chegou ao limite de 10 relatórios por hora. Tente de novo mais tarde.',
+    )
+  })
+
+  it('outro PDF em geração → 503 com Retry-After, sem gastar o limite', async () => {
+    const id = concluida().id
+    vi.mocked(gerarPdf).mockRejectedValue(new GeradorOcupado('ocupado'))
+    for (let i = 0; i < 10; i++) {
+      const { status, body, headers } = await baixar('u1', id)
+      expect(status).toBe(503)
+      expect(headers['retry-after']).toBe('5')
+      expect(body.erro).toBe('Outro relatório está sendo gerado. Tente de novo em instantes.')
+    }
+
+    vi.mocked(gerarPdf).mockResolvedValue(Buffer.from('%PDF-1.7 falso'))
+    expect((await baixar('u1', id)).status).toBe(200)
+  })
+
+  it('falha do gerador → 500 com mensagem genérica', async () => {
+    vi.mocked(gerarPdf).mockRejectedValue(new Error('Chromium caiu: detalhe interno'))
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const { status, body } = await baixar('u1', concluida().id)
+
+    expect(status).toBe(500)
+    expect(body.erro).toBe('Não conseguimos gerar o relatório. Tente de novo em instantes.')
   })
 })

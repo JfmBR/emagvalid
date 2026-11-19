@@ -18,6 +18,24 @@ type AvaliacaoConcluida = {
   falhas: FalhaGravada[]
 }
 
+// O select do Prisma com o que resultadoDaAvaliacao lê: a Tela 5 e o PDF mostram a mesma coisa
+export const CAMPOS_DO_RESULTADO = {
+  nota: true,
+  requisitosAplicaveis: true,
+  requisitosEmDuvida: true,
+  revisados: true,
+  falhas: {
+    select: {
+      requisitoEmag: true,
+      descricao: true,
+      prioridade: true,
+      seletor: true,
+      trecho: true,
+      revisaoHumana: true,
+    },
+  },
+} as const
+
 const ORDEM: Record<Prioridade, number> = { alta: 0, media: 1, baixa: 2 }
 const posicao = (numero: string) => requisitos.findIndex((r) => r.numero === numero)
 const porNumero = (numero: string) => requisitos.find((r) => r.numero === numero)
