@@ -13,6 +13,15 @@ describe('limite de tentativas', () => {
     expect(limite.bloqueado('chave', inicio + 1000)).toBe(false)
   })
 
+  it('restantes diz quantas cabem e nunca fica negativo', () => {
+    const limite = criarLimite(3, 1000)
+    expect(limite.restantes('a', 0)).toBe(3)
+    for (let i = 0; i < 4; i++) limite.registrar('a', 0)
+    expect(limite.restantes('a', 0)).toBe(0)
+    // a janela venceu
+    expect(limite.restantes('a', 1000)).toBe(3)
+  })
+
   it('descontar tira uma contagem só e nunca fica negativo', () => {
     const limite = criarLimite(2, 1000)
     limite.registrar('a')

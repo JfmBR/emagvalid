@@ -18,15 +18,17 @@ function abrir(endereco: string) {
 type RespostaFalsa = { status: number; corpo?: unknown }
 
 // API falsa: cada caminho responde o que o teste mandar (ou uma função, para mudar a resposta
-// com o tempo); o resto responde 401 (ninguém entrou)
-function simularApi(rotas: Record<string, RespostaFalsa | (() => RespostaFalsa)> = {}) {
+// com o tempo ou conforme o método); o resto responde 401 (ninguém entrou)
+function simularApi(
+  rotas: Record<string, RespostaFalsa | ((opcoes?: RequestInit) => RespostaFalsa)> = {},
+) {
   const enviados: Record<string, unknown> = {}
   vi.stubGlobal(
     'fetch',
     vi.fn(async (caminho: string, opcoes?: RequestInit) => {
       if (opcoes?.body) enviados[caminho] = JSON.parse(String(opcoes.body))
       const rota = rotas[caminho]
-      const { status, corpo } = (typeof rota === 'function' ? rota() : rota) ?? {
+      const { status, corpo } = (typeof rota === 'function' ? rota(opcoes) : rota) ?? {
         status: 401,
         corpo: { erro: 'Entre.' },
       }
@@ -289,7 +291,7 @@ describe('Tela 3 · nova avaliação', () => {
   it('envia a URL e vai para a Tela 4', async () => {
     const enviados = simularApi({
       ...logada,
-      '/api/avaliacoes': { status: 202, corpo: { avaliacao: { id: 'a1' } } },
+      '/api/avaliacoes': { status: 202, corpo: { avaliacoes: [{ id: 'a1' }] } },
     })
     abrir('/avaliacoes/nova')
     expect(await screen.findByRole('heading', { level: 1 })).toHaveTextContent(titulo)
@@ -298,7 +300,9 @@ describe('Tela 3 · nova avaliação', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Avaliar página' }))
 
     await waitFor(() => expect(screen.queryByText(titulo)).not.toBeInTheDocument())
-    expect(enviados['/api/avaliacoes']).toEqual({ url: 'https://www.suaempresa.com.br/contato' })
+    expect(enviados['/api/avaliacoes']).toEqual({
+      urls: ['https://www.suaempresa.com.br/contato'],
+    })
   })
 
   it('erro do campo aparece no campo e recebe o foco', async () => {
@@ -308,7 +312,7 @@ describe('Tela 3 · nova avaliação', () => {
         status: 400,
         corpo: {
           erro: 'Confira os campos marcados.',
-          campos: { url: 'Digite um endereço válido.' },
+          campos: { 'urls.0': 'Digite um endereço válido.' },
         },
       },
     })
@@ -356,7 +360,7 @@ describe('Tela 3 · nova avaliação', () => {
   it('dois cliques mandam um pedido só', async () => {
     simularApi({
       ...logada,
-      '/api/avaliacoes': { status: 202, corpo: { avaliacao: { id: 'a1' } } },
+      '/api/avaliacoes': { status: 202, corpo: { avaliacoes: [{ id: 'a1' }] } },
     })
     abrir('/avaliacoes/nova')
     const botao = await screen.findByRole('button', { name: 'Avaliar página' })
@@ -367,6 +371,210 @@ describe('Tela 3 · nova avaliação', () => {
     await waitFor(() => expect(screen.queryByText(titulo)).not.toBeInTheDocument())
     const pedidos = vi.mocked(fetch).mock.calls.filter(([caminho]) => caminho === '/api/avaliacoes')
     expect(pedidos).toHaveLength(1)
+  })
+
+  describe('lista de links (RF20)', () => {
+    it('"+" acrescenta um campo e leva o foco; "Remover" tira e leva ao anterior', async () => {
+      simularApi(logada)
+      abrir('/avaliacoes/nova')
+      const mais = await screen.findByRole('button', { name: '+ Adicionar outra página' })
+      expect(screen.getByText('1 de 10 páginas')).toBeInTheDocument()
+
+      fireEvent.click(mais)
+      const segundo = screen.getByLabelText('Endereço da página 2 (URL)')
+      await waitFor(() => expect(segundo).toHaveFocus())
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+        'Quais páginas você quer avaliar?',
+      )
+      expect(screen.getByText('2 de 10 páginas')).toBeInTheDocument()
+
+      fireEvent.click(screen.getByRole('button', { name: 'Remover a página 2' }))
+      expect(screen.queryByLabelText('Endereço da página 2 (URL)')).not.toBeInTheDocument()
+      await waitFor(() => expect(screen.getByLabelText('Endereço da página (URL)')).toHaveFocus())
+    })
+
+    it('remover dois campos seguidos leva o foco ao anterior nas duas vezes', async () => {
+      simularApi(logada)
+      abrir('/avaliacoes/nova')
+      const mais = await screen.findByRole('button', { name: '+ Adicionar outra página' })
+      for (let i = 0; i < 3; i++) fireEvent.click(mais) // 4 campos
+      const segundo = screen.getByLabelText('Endereço da página 2 (URL)')
+
+      fireEvent.click(screen.getByRole('button', { name: 'Remover a página 3' }))
+      await waitFor(() => expect(segundo).toHaveFocus())
+      // o novo 3º campo some, e o foco volta ao 2º de novo (o mesmo campo da vez anterior)
+      screen.getByRole('button', { name: 'Remover a página 3' }).focus()
+      fireEvent.click(screen.getByRole('button', { name: 'Remover a página 3' }))
+
+      await waitFor(() => expect(segundo).toHaveFocus())
+    })
+
+    it('no décimo campo, o "+" some e aparece o aviso do limite', async () => {
+      simularApi(logada)
+      abrir('/avaliacoes/nova')
+      const mais = await screen.findByRole('button', { name: '+ Adicionar outra página' })
+
+      for (let i = 0; i < 9; i++) fireEvent.click(mais)
+
+      expect(screen.getByLabelText('Endereço da página 10 (URL)')).toBeInTheDocument()
+      expect(
+        screen.queryByRole('button', { name: '+ Adicionar outra página' }),
+      ).not.toBeInTheDocument()
+      expect(screen.getByText('Você chegou ao limite de 10 páginas.')).toBeInTheDocument()
+    })
+
+    it('envia a lista na ordem, e o erro aparece no campo do link certo', async () => {
+      const enviados = simularApi({
+        ...logada,
+        '/api/avaliacoes': {
+          status: 400,
+          corpo: { erro: 'Confira os campos marcados.', campos: { 'urls.1': 'Endereço interno.' } },
+        },
+      })
+      abrir('/avaliacoes/nova')
+      fireEvent.click(await screen.findByRole('button', { name: '+ Adicionar outra página' }))
+      preencher('Endereço da página (URL)', 'https://loja.com.br/a')
+      preencher('Endereço da página 2 (URL)', 'https://interno.exemplo/')
+
+      fireEvent.click(screen.getByRole('button', { name: 'Avaliar páginas' }))
+
+      const segundo = screen.getByLabelText('Endereço da página 2 (URL)')
+      await waitFor(() => expect(segundo).toHaveFocus())
+      expect(segundo).toHaveAccessibleDescription(/Endereço interno/)
+      expect(screen.getByLabelText('Endereço da página (URL)')).toBeValid()
+      expect(enviados['/api/avaliacoes']).toEqual({
+        urls: ['https://loja.com.br/a', 'https://interno.exemplo/'],
+      })
+    })
+
+    it('com 2 ou mais links, vai para o histórico', async () => {
+      simularApi({
+        ...logada,
+        '/api/avaliacoes': (opcoes) =>
+          opcoes?.method === 'POST'
+            ? { status: 202, corpo: { avaliacoes: [{ id: 'a1' }, { id: 'a2' }] } }
+            : { status: 200, corpo: { avaliacoes: [], proximo: null } },
+      })
+      abrir('/avaliacoes/nova')
+      fireEvent.click(await screen.findByRole('button', { name: '+ Adicionar outra página' }))
+      preencher('Endereço da página (URL)', 'https://loja.com.br/a')
+      preencher('Endereço da página 2 (URL)', 'https://loja.com.br/b')
+
+      fireEvent.click(screen.getByRole('button', { name: 'Avaliar páginas' }))
+
+      expect(
+        await screen.findByRole('heading', { level: 1, name: 'Histórico de avaliações' }),
+      ).toBeInTheDocument()
+    })
+  })
+})
+
+describe('Tela 8 · histórico', () => {
+  const logada = { '/api/auth/eu': { status: 200, corpo: { usuario: helena } } }
+  const item = (id: string, dados: object = {}) => ({
+    id,
+    url: `https://loja.com.br/${id}`,
+    status: 'CONCLUIDA',
+    criadaEm: '2026-11-19T15:02:00.000Z',
+    nota: 76,
+    etapa: null,
+    posicaoNaFila: null,
+    ...dados,
+  })
+  const lista = (avaliacoes: object[], proximo: string | null = null) => ({
+    status: 200,
+    corpo: { avaliacoes, proximo },
+  })
+  const chamadasDaLista = () =>
+    vi.mocked(fetch).mock.calls.filter(([caminho]) => caminho === '/api/avaliacoes').length
+
+  it('mostra cada avaliação com a nota, a situação e as ações', async () => {
+    simularApi({
+      ...logada,
+      '/api/avaliacoes': lista([
+        item('a3', { status: 'NA_FILA', nota: null, posicaoNaFila: 1 }),
+        item('a2', { status: 'ANALISANDO', nota: null, etapa: 2 }),
+        item('a1'),
+        item('a0', { status: 'ERRO', nota: null }),
+      ]),
+    })
+    abrir('/avaliacoes')
+
+    expect(await screen.findByText('Na fila: 1 antes da sua')).toBeInTheDocument()
+    expect(screen.getByText('Analisando (passo 2 de 3)')).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'Ver resultado de https://loja.com.br/a1' }),
+    ).toHaveAttribute('href', '/avaliacoes/a1')
+    expect(
+      screen.getByRole('link', { name: 'Ver o motivo de https://loja.com.br/a0' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'Avaliar de novo https://loja.com.br/a1' }),
+    ).toHaveAttribute(
+      'href',
+      `/avaliacoes/nova?url=${encodeURIComponent('https://loja.com.br/a1')}`,
+    )
+    // sem nota: o traço aparece, e o leitor ouve "sem nota"
+    expect(screen.getAllByText('sem nota')).toHaveLength(3)
+    expect(screen.getByText('2 análises em andamento.')).toBeInTheDocument()
+  })
+
+  it('pergunta de novo a cada 2 s só enquanto houver pendente', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    let resposta = lista([item('a1', { status: 'ANALISANDO', nota: null, etapa: 1 })])
+    simularApi({ ...logada, '/api/avaliacoes': () => resposta })
+    abrir('/avaliacoes')
+    await screen.findByText('Analisando (passo 1 de 3)')
+    const inicio = chamadasDaLista()
+
+    resposta = lista([item('a1')])
+    await vi.advanceTimersByTimeAsync(2_000)
+    expect(await screen.findByText('Concluída')).toBeInTheDocument()
+    expect(screen.getByText('Todas as análises terminaram.')).toBeInTheDocument()
+    const depois = chamadasDaLista()
+    expect(depois).toBeGreaterThan(inicio)
+
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(chamadasDaLista()).toBe(depois)
+  })
+
+  it('"Mostrar mais" traz as próximas e leva o foco à primeira linha nova', async () => {
+    simularApi({
+      ...logada,
+      '/api/avaliacoes': lista([item('a2')], 'cursor-1'),
+      '/api/avaliacoes?antes=cursor-1': lista([item('a1'), item('a0')]),
+    })
+    abrir('/avaliacoes')
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Mostrar mais' }))
+
+    const primeiraNova = await screen.findByRole('link', {
+      name: 'Ver resultado de https://loja.com.br/a1',
+    })
+    await waitFor(() => expect(primeiraNova).toHaveFocus())
+    expect(screen.getAllByRole('row')).toHaveLength(4) // cabeçalho e 3 linhas
+    expect(screen.queryByRole('button', { name: 'Mostrar mais' })).not.toBeInTheDocument()
+  })
+
+  it('sem avaliações, diz que ainda não há nenhuma', async () => {
+    simularApi({ ...logada, '/api/avaliacoes': lista([]) })
+    abrir('/avaliacoes')
+
+    expect(await screen.findByText('Você ainda não avaliou nenhuma página.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Nova avaliação' })).toHaveAttribute(
+      'href',
+      '/avaliacoes/nova',
+    )
+  })
+
+  it('o cabeçalho de quem entrou leva ao histórico', async () => {
+    simularApi({ ...logada, '/api/avaliacoes': lista([]) })
+    abrir('/')
+
+    expect(await screen.findByRole('link', { name: 'Histórico' })).toHaveAttribute(
+      'href',
+      '/avaliacoes',
+    )
   })
 })
 
@@ -441,7 +649,7 @@ describe('Tela 4 · análise', () => {
   it('enviar a URL na Tela 3 leva à Tela 4 da avaliação criada', async () => {
     simularApi({
       ...logada,
-      '/api/avaliacoes': { status: 202, corpo: { avaliacao: { id: 'a1' } } },
+      '/api/avaliacoes': { status: 202, corpo: { avaliacoes: [{ id: 'a1' }] } },
       '/api/avaliacoes/a1': resposta(base),
     })
     abrir('/avaliacoes/nova')
@@ -666,6 +874,12 @@ describe('Tela 4 · análise', () => {
       expect(screen.getAllByText('Automático')[0]?.closest('[aria-hidden="true"]')).not.toBeNull()
       expect(screen.getByText('Prioridade baixa')).toBeInTheDocument()
       expect(screen.getByText('Por que 3.6 é falha.')).toBeInTheDocument()
+      // site de fora abre em outra aba, com aviso no texto do link (eMAG 1.9)
+      const emag = screen.getByRole('link', {
+        name: 'Ler a recomendação 3.6 no eMAG 3.1 (abre em nova aba)',
+      })
+      expect(emag).toHaveAttribute('target', '_blank')
+      expect(emag).toHaveAttribute('rel', 'noopener noreferrer')
       expect(cartao?.querySelector('.local')).toHaveTextContent('2 ocorrências ·, img.a e mais 1')
       // o trecho da página avaliada aparece escrito, sem virar elemento
       expect(screen.getAllByText('<img src="a.png" onerror="alert(1)">')).toHaveLength(3)

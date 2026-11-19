@@ -16,7 +16,7 @@ Pequenas e médias empresas têm site, mas não sabem se ele é acessível nem c
 Caminho a seguir: o protótipo beta, `projeto/docs/prototipo/beta/index.html` (11/11/2026). Ele orienta o fluxo e os textos, não o visual (o visual é o de `design-system/`), e não define escopo: o que ele mostra fora do MVP fica fora. O que o MVP tem e o beta não mostra continua (login, histórico, nota com a conta). Protótipo anterior, só como histórico: `projeto/docs/prototipo/prototipo_emagvalid.html` e `projeto/docs/rascunhos/Prototipo_30-10_telas_e_teste.md`.
 
 1. Criar conta ou entrar com e-mail e senha.
-2. Informar a URL de uma página pública e iniciar a avaliação (ou, se houver tempo, uma lista de URLs analisadas uma por vez, RF20); acompanhar o andamento.
+2. Informar a URL de uma página pública, ou uma lista de até 10 (RF20, analisadas uma por vez), e iniciar a avaliação; acompanhar o andamento na própria tela ou no histórico.
 3. Ver o resultado: nota, nota por requisito com a conta, falhas com requisito, local exato e prioridade, e o que exige revisão humana.
 4. Ler as sugestões da IA, marcadas como sugestão, com aviso para conferir antes de aplicar (RF10).
 5. Gerar o PDF (plano pago). Na amostra gratuita, que exige conta, o PDF aparece bloqueado, com aviso; não há cobrança no MVP (RF21).
@@ -25,7 +25,7 @@ Caminho a seguir: o protótipo beta, `projeto/docs/prototipo/beta/index.html` (1
 
 ## MVP
 
-Requisitos de prioridade alta (A) e média (M) do Plano de Projeto v1.1: RF01–RF10, RF12–RF14, RF16, RF17, RF21, RNF01–RNF08 e RNF10. RF20 (lista de URLs, baixa) entra se houver tempo. A média só se corta com o aval do mentor; nunca se corta a publicação, a LGPD (RNF05) nem a segurança (RNF04, RNF10).
+Requisitos de prioridade alta (A) e média (M) do Plano de Projeto v1.1: RF01–RF10, RF12–RF14, RF16, RF17, RF21, RNF01–RNF08 e RNF10. RF20 (lista de URLs, baixa) entrou em 19/11/2026, com até 10 links por envio. A média só se corta com o aval do mentor; nunca se corta a publicação, a LGPD (RNF05) nem a segurança (RNF04, RNF10).
 
 ## Fora do escopo
 

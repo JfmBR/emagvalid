@@ -307,7 +307,11 @@ function Cartao({ cartao }: { cartao: ResultadoAvaliacao['cartoes'][number] }) {
           </ol>
         </details>
         <p>
-          <a href={link}>Ler a recomendação {numero} no eMAG 3.1</a>
+          {/* site de fora: outra aba, a pedido do João (19/11/2026), com o aviso no texto que o eMAG 1.9 pede.
+              noopener: a página aberta não controla esta; noreferrer: não leva o endereço da avaliação */}
+          <a href={link} target="_blank" rel="noopener noreferrer">
+            Ler a recomendação {numero} no eMAG 3.1 (abre em nova aba)
+          </a>
         </p>
       </div>
     </li>

@@ -6,10 +6,14 @@ import { Botao } from '../componentes/Botao.tsx'
 import { Campo } from '../componentes/Campo.tsx'
 import { useSessao } from '../sessao.tsx'
 
-type Campos = Partial<Record<'url', string>>
-type RespostaAvaliacao = { avaliacao: { id: string }; erro: string; campos: Campos }
+// erros por campo: "urls.0", "urls.1"… (a posição do link na lista)
+type Campos = Record<string, string>
+type RespostaAvaliacao = { avaliacoes: { id: string }[]; erro: string; campos: Campos }
 
-// Tela 3 · Nova avaliação (RF02, RF17). Texto do protótipo beta (projeto/docs/prototipo/beta/).
+// Links por envio (RF20, decisão do João, 19/11/2026); a API confere o mesmo limite
+const MAX_URLS = 10
+
+// Tela 3 · Nova avaliação (RF02, RF17, RF20). Texto do protótipo beta (projeto/docs/prototipo/beta/).
 export function NovaAvaliacao() {
   const { usuario, carregando, definirUsuario } = useSessao()
   const navegar = useNavigate()
@@ -18,27 +22,56 @@ export function NovaAvaliacao() {
   const [erros, setErros] = useState<Campos>({})
   const [erroGeral, setErroGeral] = useState('')
   const [enviando, setEnviando] = useState(false)
+  // cada campo tem uma chave fixa: remover o do meio não embaralha o que já foi digitado
+  const [chaves, setChaves] = useState([0])
+  const proximaChave = useRef(1)
+  // campo que deve receber o foco depois de acrescentar ou remover; objeto novo a cada vez, para o
+  // efeito rodar mesmo quando o campo é o mesmo de antes (remover dois seguidos)
+  const [focar, setFocar] = useState<{ id: string } | null>(null)
 
   // depois de cada envio com erro, o foco vai para o primeiro campo errado
   useEffect(() => {
     formulario.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
   }, [erros])
 
+  useEffect(() => {
+    if (focar) document.getElementById(focar.id)?.focus()
+  }, [focar])
+
   if (!carregando && !usuario) return <Navigate to="/entrar" replace />
+
+  const varias = chaves.length > 1
+
+  function acrescentar() {
+    const chave = proximaChave.current
+    proximaChave.current += 1
+    setChaves((atuais) => [...atuais, chave])
+    setErros({}) // os erros vêm pela posição; com a lista mudando, ficariam no campo errado
+    setFocar({ id: `url-${chave}` })
+  }
+
+  function remover(indice: number) {
+    setFocar({ id: `url-${chaves[indice - 1]}` })
+    setChaves((atuais) => atuais.filter((_, i) => i !== indice))
+    setErros({})
+  }
 
   async function avaliar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
     if (enviando) return
     setEnviando(true)
-    const dados = Object.fromEntries(new FormData(evento.currentTarget))
-    const { status, corpo } = await enviar<RespostaAvaliacao>('/api/avaliacoes', dados)
+    const urls = new FormData(evento.currentTarget).getAll('urls')
+    const { status, corpo } = await enviar<RespostaAvaliacao>('/api/avaliacoes', { urls })
     setEnviando(false)
     if (status === 401) {
       definirUsuario(null) // sessão expirou: a tela leva para /entrar
       return
     }
-    if (status === 202 && corpo.avaliacao) {
-      void navegar(`/avaliacoes/${corpo.avaliacao.id}`)
+    if (status === 202) {
+      // um link: acompanha na Tela 4; vários (ou resposta sem a lista): no histórico, com o andamento
+      const criadas = corpo.avaliacoes ?? []
+      const [primeira] = criadas
+      void navegar(criadas.length === 1 && primeira ? `/avaliacoes/${primeira.id}` : '/avaliacoes')
       return
     }
     setErros(corpo.campos ?? {})
@@ -50,7 +83,7 @@ export function NovaAvaliacao() {
       <title>Nova avaliação · AcessaWeb</title>
       <div className="cabeca">
         <p className="sobre">Nova avaliação</p>
-        <h1>Qual página você quer avaliar?</h1>
+        <h1>{varias ? 'Quais páginas você quer avaliar?' : 'Qual página você quer avaliar?'}</h1>
       </div>
       {erroGeral ? (
         <Aviso tipo="alerta" papel="alert">
@@ -63,21 +96,52 @@ export function NovaAvaliacao() {
         noValidate
         onSubmit={(evento) => void avaliar(evento)}
       >
-        <Campo
-          rotulo="Endereço da página (URL)"
-          name="url"
-          inputMode="url"
-          autoComplete="url"
-          spellCheck={false}
-          defaultValue={parametros.get('url') ?? ''}
-          dica="Ex.: https://www.suaempresa.com.br/contato"
-          erro={erros.url}
-        />
+        {chaves.map((chave, indice) => (
+          <div key={chave} style={{ display: 'grid', gap: 8 }}>
+            <Campo
+              id={`url-${chave}`}
+              rotulo={
+                indice === 0 ? 'Endereço da página (URL)' : `Endereço da página ${indice + 1} (URL)`
+              }
+              name="urls"
+              inputMode="url"
+              autoComplete={indice === 0 ? 'url' : 'off'}
+              spellCheck={false}
+              defaultValue={indice === 0 ? (parametros.get('url') ?? '') : ''}
+              dica={indice === 0 ? 'Ex.: https://www.suaempresa.com.br/contato' : undefined}
+              erro={erros[`urls.${indice}`]}
+            />
+            {indice > 0 ? (
+              <p>
+                <Botao variante="sec" onClick={() => remover(indice)}>
+                  Remover <span className="so-leitor">a página {indice + 1}</span>
+                </Botao>
+              </p>
+            ) : null}
+          </div>
+        ))}
+        <p className="acoes" style={{ alignItems: 'center' }}>
+          {chaves.length < MAX_URLS ? (
+            <Botao variante="sec" onClick={acrescentar}>
+              + Adicionar outra página
+            </Botao>
+          ) : null}
+          <span className="dica">
+            {chaves.length < MAX_URLS
+              ? `${chaves.length} de ${MAX_URLS} páginas`
+              : `Você chegou ao limite de ${MAX_URLS} páginas.`}
+          </span>
+        </p>
         <Aviso>
-          <p>Uma página pública por vez. Páginas que pedem login ainda não são avaliadas.</p>
+          <p>
+            Até {MAX_URLS} páginas públicas por envio, analisadas uma por vez. Páginas que pedem
+            login ainda não são avaliadas.
+          </p>
         </Aviso>
         <p className="acoes">
-          <Botao type="submit">{enviando ? 'Enviando…' : 'Avaliar página'}</Botao>
+          <Botao type="submit">
+            {enviando ? 'Enviando…' : varias ? 'Avaliar páginas' : 'Avaliar página'}
+          </Botao>
         </p>
       </form>
     </div>
