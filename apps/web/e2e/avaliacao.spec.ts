@@ -107,7 +107,7 @@ async function simularApi(page: Page, resposta: () => object) {
     rota.fulfill({ status: 200, json: { usuario: helena } }),
   )
   await page.route('**/api/avaliacoes', (rota) =>
-    rota.fulfill({ status: 202, json: { avaliacao: { id: 'a1' } } }),
+    rota.fulfill({ status: 202, json: { avaliacoes: [{ id: 'a1' }] } }),
   )
   await page.route('**/api/avaliacoes/a1', (rota) =>
     rota.fulfill({ status: 200, json: { avaliacao: resposta() } }),
@@ -132,6 +132,9 @@ test('só com teclado: pedir a avaliação, acompanhar e ver a análise concluí
   await page.keyboard.press('Tab')
   await expect(page.getByLabel('Endereço da página (URL)')).toBeFocused()
   await page.keyboard.type(url)
+  // o próximo Tab passa pelo "+ Adicionar outra página" (RF20) antes do botão de enviar
+  await page.keyboard.press('Tab')
+  await expect(page.getByRole('button', { name: '+ Adicionar outra página' })).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(page.getByRole('button', { name: 'Avaliar página' })).toBeFocused()
   await page.keyboard.press('Enter')
