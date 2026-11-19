@@ -4,6 +4,7 @@ import { buscar, mensagemDeErro } from '../api.ts'
 import { Aviso } from '../componentes/Aviso.tsx'
 import { Selo } from '../componentes/Selo.tsx'
 import { useSessao } from '../sessao.tsx'
+import { Resultado, type ResultadoAvaliacao } from './Resultado.tsx'
 
 type Avaliacao = {
   id: string
@@ -14,7 +15,8 @@ type Avaliacao = {
   posicaoNaFila: number | null
   paginaGrande: boolean
   mensagemErro: string | null
-  falhas: { requisitoEmag: string }[]
+  concluidaEm: string | null
+  resultado: ResultadoAvaliacao | null
 }
 type RespostaAvaliacao = { avaliacao: Avaliacao; erro: string }
 
@@ -29,7 +31,10 @@ function plural(n: number, singular: string, mais: string) {
   return `${n} ${n === 1 ? singular : mais}`
 }
 
-// Tela 4 · Análise em andamento, erro e concluída (RF02, RF17, RNF06). Texto do protótipo beta.
+const dataHora = (iso: string) =>
+  new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+
+// Tela 4 · Análise em andamento e erro (RF02, RF17, RNF06), texto do protótipo beta. Concluída, vira a Tela 5.
 export function Analise() {
   const { id = '' } = useParams()
   const { usuario, carregando, definirUsuario } = useSessao()
@@ -77,8 +82,6 @@ export function Analise() {
 
   if (!carregando && !usuario) return <Navigate to="/entrar" replace />
 
-  const falhas = avaliacao?.falhas ?? []
-  const requisitos = new Set(falhas.map((falha) => falha.requisitoEmag)).size
   const etapa = avaliacao?.etapa ?? 0
   const fila = status === 'NA_FILA' ? (avaliacao?.posicaoNaFila ?? null) : null
 
@@ -88,24 +91,32 @@ export function Analise() {
     : status === 'ERRO'
       ? 'Não conseguimos avaliar essa página.'
       : status === 'CONCLUIDA'
-        ? 'Análise concluída'
+        ? 'Resultado da avaliação'
         : 'Avaliando a página'
 
   return (
-    <div className="tela estreito">
+    <div className={status === 'CONCLUIDA' ? 'tela' : 'tela estreito'}>
       <title>{`${terminou ? textoTitulo : 'Analisando'} · AcessaWeb`}</title>
       <div className="cabeca">
         {erro ? (
           <p>
             <Selo variante="alta">Erro</Selo>
           </p>
-        ) : status === 'CONCLUIDA' ? null : (
-          <p className="sobre">Analisando</p>
+        ) : (
+          <p className="sobre">{status === 'CONCLUIDA' ? 'Resultado' : 'Analisando'}</p>
         )}
         <h1 ref={titulo} tabIndex={-1}>
           {textoTitulo}
         </h1>
-        {avaliacao && !erro ? <p className="meta">{avaliacao.url}</p> : null}
+        {avaliacao && !erro ? (
+          <p className="meta">
+            {avaliacao.url}
+            {avaliacao.concluidaEm ? ` · ${dataHora(avaliacao.concluidaEm)}` : null}
+          </p>
+        ) : null}
+        {avaliacao?.urlFinal && avaliacao.urlFinal !== avaliacao.url && status === 'CONCLUIDA' ? (
+          <p className="meta">Avaliamos {avaliacao.urlFinal}</p>
+        ) : null}
       </div>
 
       {aviso ? (
@@ -133,22 +144,15 @@ export function Analise() {
             </Link>
           </p>
         </div>
-      ) : status === 'CONCLUIDA' ? (
-        <div className="painel">
-          <p>
-            {falhas.length === 0
-              ? 'Não encontramos falhas automáticas. Ainda assim, faça a revisão humana.'
-              : `Encontramos ${plural(falhas.length, 'falha', 'falhas')} em ${plural(requisitos, 'recomendação', 'recomendações')} do eMAG 3.1.`}
-          </p>
-          {avaliacao?.urlFinal && avaliacao.urlFinal !== avaliacao.url ? (
-            <p className="meta">Avaliamos {avaliacao.urlFinal}</p>
-          ) : null}
+      ) : status === 'CONCLUIDA' && avaliacao?.resultado ? (
+        <>
+          <Resultado id={avaliacao.id} resultado={avaliacao.resultado} />
           <p className="acoes">
             <Link className="btn" to="/avaliacoes/nova">
               Nova avaliação
             </Link>
           </p>
-        </div>
+        </>
       ) : (
         <div className="painel">
           {fila !== null ? (

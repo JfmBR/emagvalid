@@ -396,16 +396,44 @@ describe('Tela 4 · análise', () => {
     posicaoNaFila: null,
     paginaGrande: false,
     mensagemErro: null,
-    falhas: [],
+    concluidaEm: null,
+    resultado: null,
   }
-  const falha = (requisitoEmag: string) => ({
-    requisitoEmag,
-    descricao: 'Descrição',
-    prioridade: 'ALTA',
-    seletor: 'img',
-    trecho: '<img>',
+  // resultado no formato do GET da API (apps/api/src/analise/resultado.ts)
+  const cartao = (numero: string, prioridade: string, seletores: string[]) => ({
+    numero,
+    nome: `Recomendação ${numero}`,
+    link: 'https://emag.governoeletronico.gov.br/#s3.3',
+    prioridade,
+    porque: `Por que ${numero} é falha.`,
+    exemplo: '<img src="a.png" alt="Logo">',
     revisaoHumana: false,
+    ocorrencias: seletores.map((seletor) => ({
+      descricao: 'Descrição do axe',
+      seletor,
+      trecho: '<img src="a.png" onerror="alert(1)">',
+    })),
   })
+  const resultado = {
+    nota: 57,
+    verificacoes: [
+      { numero: '3.1', nome: 'Idioma', prioridade: 'media', peso: 2, aprovada: true },
+      { numero: '3.3', nome: 'Título', prioridade: 'media', peso: 2, aprovada: true },
+      { numero: '3.6', nome: 'Imagens', prioridade: 'alta', peso: 3, aprovada: false },
+    ],
+    cartoes: [cartao('3.6', 'alta', ['img.a', 'img.b']), cartao('1.8', 'baixa', ['main'])],
+    revisao: [
+      { numero: '4.4', nome: 'Foco visível', motivo: 'fixa', conferir: 'Use o Tab.', feita: false },
+      { numero: '4.1', nome: 'Contraste', motivo: 'duvida', conferir: 'Confira.', feita: true },
+    ],
+  }
+  const concluida = {
+    ...base,
+    status: 'CONCLUIDA',
+    etapa: null,
+    concluidaEm: '2026-11-19T14:32:00.000Z',
+    resultado,
+  }
   const resposta = (avaliacao: object) => ({ status: 200, corpo: { avaliacao } })
   const chamadasDoGet = () =>
     vi.mocked(fetch).mock.calls.filter(([caminho]) => caminho === '/api/avaliacoes/a1').length
@@ -485,10 +513,10 @@ describe('Tela 4 · análise', () => {
     await vi.advanceTimersByTimeAsync(1_000)
     expect(chamadasDoGet()).toBe(inicio + 1)
 
-    avaliacao = { ...base, status: 'CONCLUIDA', etapa: null, falhas: [falha('3.5.1')] }
+    avaliacao = concluida
     await vi.advanceTimersByTimeAsync(2_000)
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Análise concluída' }),
+      await screen.findByRole('heading', { level: 1, name: 'Resultado da avaliação' }),
     ).toBeVisible()
     const depois = chamadasDoGet()
     await vi.advanceTimersByTimeAsync(10_000)
@@ -568,44 +596,146 @@ describe('Tela 4 · análise', () => {
     expect(await screen.findByLabelText('Endereço da página (URL)')).toHaveValue(url)
   })
 
-  it('CONCLUIDA mostra o resumo e "Nova avaliação"', async () => {
-    simularApi({
-      ...logada,
-      '/api/avaliacoes/a1': resposta({
-        ...base,
-        status: 'CONCLUIDA',
-        etapa: null,
-        urlFinal: 'https://www.loja.com.br/inicio',
-        falhas: [falha('3.5.1'), falha('3.5.1'), falha('1.2')],
-      }),
+  describe('Tela 5 · resultado', () => {
+    it('mostra a nota, o aviso, a conta e "Nova avaliação"', async () => {
+      simularApi({
+        ...logada,
+        '/api/avaliacoes/a1': resposta({
+          ...concluida,
+          urlFinal: 'https://www.loja.com.br/inicio',
+        }),
+      })
+      abrir('/avaliacoes/a1')
+
+      const titulo = await screen.findByRole('heading', {
+        level: 1,
+        name: 'Resultado da avaliação',
+      })
+      await waitFor(() => expect(titulo).toHaveFocus())
+      expect(screen.getByText('Nota 57 de 100')).toBeInTheDocument()
+      expect(
+        screen.getByText('Não é certificação. A conclusão de conformidade é sua.'),
+      ).toBeVisible()
+      expect(
+        screen.getByText(
+          '2 de 3 verificações automáticas aprovadas · 3 falhas em 2 requisitos · 2 itens para revisão humana',
+        ),
+      ).toBeInTheDocument()
+      expect(screen.getByText('Como chegamos a 57')).toBeInTheDocument()
+      expect(screen.getByText('100 × 4 ÷ 7 = 57')).toBeInTheDocument()
+      expect(screen.getByText(/Avaliamos/)).toHaveTextContent('https://www.loja.com.br/inicio')
+      expect(screen.getByRole('link', { name: 'Nova avaliação' })).toHaveAttribute(
+        'href',
+        '/avaliacoes/nova',
+      )
     })
-    abrir('/avaliacoes/a1')
 
-    const titulo = await screen.findByRole('heading', { level: 1, name: 'Análise concluída' })
-    await waitFor(() => expect(titulo).toHaveFocus())
-    expect(
-      screen.getByText('Encontramos 3 falhas em 2 recomendações do eMAG 3.1.'),
-    ).toBeInTheDocument()
-    expect(screen.getByText(/Avaliamos/)).toHaveTextContent('https://www.loja.com.br/inicio')
-    expect(screen.getByRole('link', { name: 'Nova avaliação' })).toHaveAttribute(
-      'href',
-      '/avaliacoes/nova',
-    )
-  })
+    it('cartões na ordem da API, com o porquê, o exemplo e o trecho só como texto', async () => {
+      simularApi({ ...logada, '/api/avaliacoes/a1': resposta(concluida) })
+      abrir('/avaliacoes/a1')
 
-  it('CONCLUIDA sem falhas pede a revisão humana', async () => {
-    simularApi({
-      ...logada,
-      '/api/avaliacoes/a1': resposta({ ...base, status: 'CONCLUIDA', etapa: null }),
+      const cartoes = await screen.findAllByRole('heading', { level: 2 })
+      expect(cartoes.map((c) => c.textContent)).toEqual([
+        '3.6 · Recomendação 3.6',
+        '1.8 · Recomendação 1.8',
+      ])
+      expect(screen.getByText('Prioridade baixa')).toBeInTheDocument()
+      expect(screen.getByText('Por que 3.6 é falha.')).toBeInTheDocument()
+      expect(screen.getByText('2 ocorrências · img.a e mais 1')).toBeInTheDocument()
+      // o trecho da página avaliada aparece escrito, sem virar elemento
+      expect(screen.getAllByText('<img src="a.png" onerror="alert(1)">')).toHaveLength(3)
+      expect(document.querySelector('img[onerror]')).toBeNull()
     })
-    abrir('/avaliacoes/a1')
 
-    expect(
-      await screen.findByText(
-        'Não encontramos falhas automáticas. Ainda assim, faça a revisão humana.',
-      ),
-    ).toBeInTheDocument()
-    expect(screen.queryByText(/Avaliamos/)).not.toBeInTheDocument()
+    it('abas por teclado: setas trocam e levam o foco; Home e End vão às pontas', async () => {
+      simularApi({ ...logada, '/api/avaliacoes/a1': resposta(concluida) })
+      abrir('/avaliacoes/a1')
+
+      const falhas = await screen.findByRole('tab', { name: 'Falhas automáticas (2)' })
+      const humana = screen.getByRole('tab', { name: 'Revisão humana (2)' })
+      expect(falhas).toHaveAttribute('aria-selected', 'true')
+      expect(humana).toHaveAttribute('tabindex', '-1')
+
+      fireEvent.keyDown(falhas, { key: 'ArrowRight' })
+      expect(humana).toHaveFocus()
+      expect(humana).toHaveAttribute('aria-selected', 'true')
+      expect(screen.getByRole('tabpanel')).toHaveAccessibleName('Revisão humana (2)')
+
+      fireEvent.keyDown(humana, { key: 'ArrowRight' })
+      expect(falhas).toHaveFocus()
+      fireEvent.keyDown(falhas, { key: 'End' })
+      expect(humana).toHaveFocus()
+      fireEvent.keyDown(humana, { key: 'Home' })
+      expect(falhas).toHaveFocus()
+    })
+
+    it('marcar um item da revisão humana grava na API', async () => {
+      const enviados = simularApi({
+        ...logada,
+        '/api/avaliacoes/a1': resposta(concluida),
+        '/api/avaliacoes/a1/revisao': { status: 204 },
+      })
+      abrir('/avaliacoes/a1')
+      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana (2)' }))
+
+      const foco = screen.getByRole('checkbox', { name: /4\.4 · Foco visível/ })
+      expect(foco).not.toBeChecked()
+      expect(screen.getByRole('checkbox', { name: /4\.1 · Contraste/ })).toBeChecked()
+
+      fireEvent.click(foco)
+
+      expect(foco).toBeChecked()
+      await waitFor(() =>
+        expect(enviados['/api/avaliacoes/a1/revisao']).toEqual({ numero: '4.4', feita: true }),
+      )
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    })
+
+    it('se a API não gravar, a caixa volta e a mensagem aparece', async () => {
+      simularApi({
+        ...logada,
+        '/api/avaliacoes/a1': resposta(concluida),
+        '/api/avaliacoes/a1/revisao': { status: 500, corpo: { erro: 'Erro interno.' } },
+      })
+      abrir('/avaliacoes/a1')
+      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana (2)' }))
+      const foco = screen.getByRole('checkbox', { name: /4\.4 · Foco visível/ })
+
+      fireEvent.click(foco)
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Erro interno.')
+      expect(foco).not.toBeChecked()
+    })
+
+    it('sem falhas automáticas, pede a revisão humana', async () => {
+      simularApi({
+        ...logada,
+        '/api/avaliacoes/a1': resposta({ ...concluida, resultado: { ...resultado, cartoes: [] } }),
+      })
+      abrir('/avaliacoes/a1')
+
+      expect(
+        await screen.findByText(
+          'Não encontramos falhas automáticas. Ainda assim, faça a revisão humana.',
+        ),
+      ).toBeInTheDocument()
+      expect(screen.queryByText(/Avaliamos/)).not.toBeInTheDocument()
+    })
+
+    it('avaliação antiga, sem nota: explica e mostra os cartões mesmo assim', async () => {
+      simularApi({
+        ...logada,
+        '/api/avaliacoes/a1': resposta({
+          ...concluida,
+          resultado: { ...resultado, nota: null, verificacoes: [] },
+        }),
+      })
+      abrir('/avaliacoes/a1')
+
+      expect(await screen.findByText(/feita antes do cálculo da nota/)).toBeInTheDocument()
+      expect(screen.queryByText(/Como chegamos/)).not.toBeInTheDocument()
+      expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(2)
+    })
   })
 
   it('404 mostra "Avaliação não encontrada."', async () => {
