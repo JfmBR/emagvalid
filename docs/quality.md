@@ -34,6 +34,7 @@ O `--verificar` não roda no CI, porque a tabela de nomes é privada: ele entra 
 - **Interface (Vitest + Testing Library):** comportamento de componentes, com consultas por papel e rótulo, como o leitor de tela vê.
 - **Ponta a ponta (Playwright + axe, `apps/web/e2e/`):** cada tela sem violações sérias ou críticas de WCAG 2.1 A/AA, uso por teclado e estados da tela. A resposta da API é simulada com `page.route` para o teste não depender dela.
 - **Leitor de tela (manual):** Orca + Firefox e NVDA; roteiro em `docs/design.md`.
+- **SQL escrito à mão (manual):** o CI não tem banco, então o teste da rota usa um banco falso. O `UPDATE` da revisão humana (`apps/api/src/rotas/avaliacoes.ts`) foi conferido no Postgres local em 19/11/2026 (marcar, repetir, desmarcar); confira de novo se ele mudar.
 - Correção de bug começa por um teste que reproduz o erro.
 
 ## Navegador para o agente

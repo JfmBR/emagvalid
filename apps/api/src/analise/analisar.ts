@@ -53,6 +53,10 @@ interface OpcoesDeTeste {
 
 export interface ResultadoAnalise {
   violacoes: Violacao[]
+  // ids das regras que acharam elemento para avaliar (aprovadas ou com falha): entram na nota (RF05)
+  aplicaveis: string[]
+  // ids das regras que o axe não conseguiu decidir ("needs review"): vão para a revisão humana (RF09)
+  duvidas: string[]
   urlFinal: string
 }
 
@@ -244,7 +248,7 @@ export async function analisar(
     if (!/text\/html|application\/xhtml\+xml/i.test(tipo)) throw new ErroDeAnalise('NAO_HTML')
 
     aoCarregar?.(await pagina.locator('*').count())
-    const { violations } = await new AxeBuilder({
+    const { violations, passes, incomplete } = await new AxeBuilder({
       page: pagina,
       axeSource: axeEmPortugues,
     }).analyze()
@@ -257,6 +261,8 @@ export async function analisar(
         // seletor é o caminho do elemento na página; trecho é o HTML dele (mostrar sempre como texto, RNF10)
         ocorrencias: v.nodes.map((n) => ({ seletor: n.target.join(' '), trecho: n.html })),
       })),
+      aplicaveis: [...passes, ...violations].map((r) => r.id),
+      duvidas: incomplete.map((r) => r.id),
       urlFinal: pagina.url(),
     }
   } catch (erro) {

@@ -15,6 +15,11 @@ type AvaliacaoFalsa = {
   mensagemErro: string | null
   paginaGrande: boolean
   criadaEm: Date
+  concluidaEm: Date | null
+  nota: number | null
+  requisitosAplicaveis: string[]
+  requisitosEmDuvida: string[]
+  revisados: string[]
   falhas: object[]
 }
 type Filtro = {
@@ -49,6 +54,11 @@ vi.mock('../db.js', () => {
             mensagemErro: null,
             paginaGrande: false,
             criadaEm: new Date(),
+            concluidaEm: null,
+            nota: null,
+            requisitosAplicaveis: [],
+            requisitosEmDuvida: [],
+            revisados: [],
             falhas: [],
           }
           banco.avaliacoes.push(avaliacao)
@@ -71,6 +81,17 @@ vi.mock('../db.js', () => {
           for (const a of achadas) Object.assign(a, data)
           return { count: achadas.length }
         },
+      },
+      // só o UPDATE da revisão usa SQL; os valores chegam na ordem do comando
+      $executeRaw: async (_sql: TemplateStringsArray, ...valores: unknown[]) => {
+        const [feita, numero] = valores as [boolean, string]
+        const [id, usuarioId] = valores.slice(-2) as [string, string]
+        const achadas = banco.avaliacoes.filter((a) => confere(a, { id, usuarioId }))
+        for (const a of achadas) {
+          a.revisados = a.revisados.filter((n) => n !== numero)
+          if (feita) a.revisados.push(numero)
+        }
+        return achadas.length
       },
     },
   }
@@ -132,6 +153,11 @@ function semear(dados: Partial<AvaliacaoFalsa> = {}) {
     mensagemErro: null,
     paginaGrande: false,
     criadaEm: new Date(),
+    concluidaEm: null,
+    nota: null,
+    requisitosAplicaveis: [],
+    requisitosEmDuvida: [],
+    revisados: [],
     falhas: [],
     ...dados,
   }
@@ -387,7 +413,7 @@ describe('GET /api/avaliacoes/:id', () => {
     const { body } = await buscar('u1', avaliacao.id)
 
     expect(body.avaliacao).toMatchObject({ status: 'NA_FILA', posicaoNaFila: 2, etapa: null })
-    expect(body.avaliacao.falhas).toEqual([])
+    expect(body.avaliacao.resultado).toBeNull()
   })
 
   it('em andamento traz etapa e paginaGrande do andamento, sem posição', async () => {
@@ -406,15 +432,16 @@ describe('GET /api/avaliacoes/:id', () => {
       posicaoNaFila: null,
       paginaGrande: true,
       mensagemErro: null,
-      falhas: [],
+      concluidaEm: null,
+      resultado: null,
     })
   })
 
-  it('concluída traz as falhas e o paginaGrande gravado, sem etapa nem posição', async () => {
+  it('concluída traz a nota, as verificações, os cartões e a revisão, sem etapa nem posição', async () => {
     const falha = {
-      requisitoEmag: '3.5',
-      descricao: 'Imagem sem texto alternativo',
-      prioridade: 'ALTA',
+      requisitoEmag: '3.6',
+      descricao: 'Imagens devem ter texto alternativo',
+      prioridade: 'alta',
       seletor: 'img',
       trecho: '<img src="a.png">',
       revisaoHumana: false,
@@ -423,6 +450,10 @@ describe('GET /api/avaliacoes/:id', () => {
       status: 'CONCLUIDA',
       urlFinal: 'https://www.loja.com.br/inicio',
       paginaGrande: true,
+      nota: 57,
+      requisitosAplicaveis: ['3.1', '3.3', '3.6'],
+      requisitosEmDuvida: ['4.1'],
+      revisados: ['4.1'],
       falhas: [falha],
     })
 
@@ -435,7 +466,20 @@ describe('GET /api/avaliacoes/:id', () => {
       etapa: null,
       posicaoNaFila: null,
       paginaGrande: true,
-      falhas: [falha],
+    })
+    const { resultado } = body.avaliacao
+    expect(resultado.nota).toBe(57)
+    expect(resultado.verificacoes).toHaveLength(3)
+    expect(resultado.cartoes).toEqual([
+      expect.objectContaining({
+        numero: '3.6',
+        ocorrencias: [{ descricao: falha.descricao, seletor: 'img', trecho: '<img src="a.png">' }],
+      }),
+    ])
+    expect(resultado.revisao).toHaveLength(17)
+    expect(resultado.revisao.find((r: { numero: string }) => r.numero === '4.1')).toMatchObject({
+      motivo: 'duvida',
+      feita: true,
     })
   })
 
@@ -473,7 +517,65 @@ describe('GET /api/avaliacoes/:id', () => {
     expect(body.avaliacao).toMatchObject({
       status: 'ERRO',
       mensagemErro: 'A página demorou demais.',
-      falhas: [],
+      resultado: null,
     })
+  })
+})
+
+describe('POST /api/avaliacoes/:id/revisao', () => {
+  function marcar(usuario: string | null, id: string, dados: unknown) {
+    const pedido = request(criarApp()).post(`/api/avaliacoes/${id}/revisao`)
+    if (usuario) pedido.set('x-usuario', usuario)
+    return pedido.send(dados as object)
+  }
+
+  it('sem login → 401', async () => {
+    expect((await marcar(null, semear().id, { numero: '4.4', feita: true })).status).toBe(401)
+  })
+
+  it('marca e desmarca, sem repetir o número', async () => {
+    const avaliacao = semear({ revisados: ['1.1'] })
+
+    expect((await marcar('u1', avaliacao.id, { numero: '4.4', feita: true })).status).toBe(204)
+    await marcar('u1', avaliacao.id, { numero: '4.4', feita: true })
+    expect(banco.avaliacoes[0]?.revisados).toEqual(['1.1', '4.4'])
+
+    await marcar('u1', avaliacao.id, { numero: '1.1', feita: false })
+    expect(banco.avaliacoes[0]?.revisados).toEqual(['4.4'])
+  })
+
+  it('aceita o item em dúvida daquela avaliação', async () => {
+    const avaliacao = semear({ requisitosEmDuvida: ['4.1'] })
+
+    expect((await marcar('u1', avaliacao.id, { numero: '4.1', feita: true })).status).toBe(204)
+  })
+
+  it('avaliação de outra conta ou id que não é UUID → 404, sem gravar', async () => {
+    const dela = semear({ usuarioId: 'u2' })
+
+    expect((await marcar('u1', dela.id, { numero: '4.4', feita: true })).status).toBe(404)
+    expect((await marcar('u1', 'nao-e-uuid', { numero: '4.4', feita: true })).status).toBe(404)
+    expect(dela.revisados).toEqual([])
+  })
+
+  it('número fora da lista de revisão ou corpo inválido → 400', async () => {
+    const avaliacao = semear()
+
+    for (const dados of [
+      { numero: '3.6', feita: true }, // entra na nota, não na revisão
+      { numero: '4.1', feita: true }, // não ficou em dúvida nesta avaliação
+      { numero: '4.4', feita: 'sim' },
+      { numero: 44, feita: true },
+      {},
+    ]) {
+      expect((await marcar('u1', avaliacao.id, dados)).status).toBe(400)
+    }
+    expect(avaliacao.revisados).toEqual([])
+  })
+
+  it('análise que não terminou → 409', async () => {
+    const avaliacao = semear({ status: 'ANALISANDO' })
+
+    expect((await marcar('u1', avaliacao.id, { numero: '4.4', feita: true })).status).toBe(409)
   })
 })

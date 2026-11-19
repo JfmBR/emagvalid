@@ -2,6 +2,7 @@ import { db } from '../db.js'
 import { requisitosDaRegra, type Prioridade } from '../emag/requisitos.js'
 import { ErroDeAnalise, analisar, type CodigoErro, type Violacao } from './analisar.js'
 import { criarFila } from './fila.js'
+import { calcularNota, requisitosDasRegras } from './nota.js'
 
 // Medido em 17/11/2026 com `npm run analisar` (tempo inclui a rede): 22 elementos 1,7 s; 807 → 5,9 s;
 // 851 → 12,6 s; 5.256 → 20,8 s; 16.555 → 43,1 s (~2 s por mil elementos, 30 s perto de 10 mil).
@@ -84,7 +85,7 @@ export async function executarAvaliacao(id: string): Promise<void> {
     })
     if (count === 0) return
 
-    const { violacoes, urlFinal } = await analisar(avaliacao.url, {
+    const { violacoes, aplicaveis, duvidas, urlFinal } = await analisar(avaliacao.url, {
       aoCarregar: (elementos) => {
         estado.etapa = 2
         estado.paginaGrande = elementos > LIMITE_PAGINA_GRANDE
@@ -92,6 +93,9 @@ export async function executarAvaliacao(id: string): Promise<void> {
     })
     estado.etapa = 3
 
+    const falhas = falhasDaAnalise(violacoes)
+    const requisitosAplicaveis = requisitosDasRegras(aplicaveis)
+    const reprovados = [...new Set(falhas.map((falha) => falha.requisitoEmag))]
     await db.$transaction(async (tx) => {
       const { count } = await tx.avaliacao.updateMany({
         where: { id, status: 'ANALISANDO' },
@@ -100,12 +104,16 @@ export async function executarAvaliacao(id: string): Promise<void> {
           concluidaEm: new Date(),
           urlFinal,
           paginaGrande: estado.paginaGrande,
+          requisitosAplicaveis,
+          // o que já tem falha não está "em dúvida": aparece no cartão
+          requisitosEmDuvida: requisitosDasRegras(duvidas).filter((n) => !reprovados.includes(n)),
+          nota: calcularNota(requisitosAplicaveis, reprovados),
         },
       })
       // já virou ERRO ou sumiu: as falhas não entram
       if (count === 0) return
       await tx.falha.createMany({
-        data: falhasDaAnalise(violacoes).map((falha) => ({ ...falha, avaliacaoId: id })),
+        data: falhas.map((falha) => ({ ...falha, avaliacaoId: id })),
       })
     })
   } catch (erro) {

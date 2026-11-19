@@ -1,6 +1,9 @@
 // Lista fechada das 45 recomendações do eMAG 3.1 (RF08) e o que o axe-core cobre de cada uma.
 // Fonte: projeto/docs/rascunhos/Cobertura_eMAG_axe-core.md (mapeamento do agente, a conferir com o mentor José Alves).
 // Os nomes de 6.5 a 6.8 vieram de um resumo da página: conferir no PDF oficial do eMAG.
+// O texto padrão de cada uma (por que é falha, exemplo, o que conferir) fica em textos.ts.
+
+import { textos } from './textos.js'
 
 export type Cobertura = 'sim' | 'parcial' | 'nao'
 export type Prioridade = 'alta' | 'media' | 'baixa'
@@ -13,6 +16,12 @@ export interface Requisito {
   // Prioridade do AcessaWeb (o eMAG não tem níveis); só existe quando o axe-core cobre
   prioridade?: Prioridade
   regras: string[]
+  // Por que é falha (quem é prejudicado e como); só nas que entram na nota
+  porque?: string
+  // HTML de correção para o que as regras do axe-core apontam; só nas que entram na nota
+  exemplo?: string
+  // O que conferir à mão na página; só nas de cobertura 'nao' (revisão humana, RF09)
+  conferir?: string
 }
 
 // Peso de cada prioridade na nota (RF05)
@@ -198,6 +207,7 @@ export const requisitos: Requisito[] = linhas.map(
     cobertura,
     prioridade: prioridade || undefined,
     regras: regras ? regras.split(' ') : [],
+    ...textos[numero],
   }),
 )
 

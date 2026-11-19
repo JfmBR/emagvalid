@@ -52,12 +52,18 @@ model Avaliacao {
   usuario     Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   url         String
   status      StatusAvaliacao @default(NA_FILA)
-  nota        Int? // 0 a 100; cálculo a definir (TAP)
+  nota        Int? // 0 a 100 (RF05, decisão de 05/11/2026); vazia na avaliação gravada antes do cálculo
   mensagemErro String?
   criadaEm    DateTime        @default(now())
   concluidaEm DateTime?
   urlFinal    String? // endereço depois dos redirecionamentos (RF17)
   paginaGrande Boolean @default(false) // aviso da Tela 4 (R7)
+  // números do eMAG (ex.: "3.6"), gravados na análise para a nota não mudar se o peso mudar (RF05, RF06)
+  requisitosAplicaveis String[] @default([])
+  // o axe não conseguiu decidir ("needs review"): vão para a revisão humana (RF09)
+  requisitosEmDuvida   String[] @default([])
+  // itens da revisão humana que o auditor marcou como conferidos (RF09; o PDF do Passo 9 usa)
+  revisados            String[] @default([])
   falhas      Falha[]
 
   @@index([usuarioId, criadaEm])
