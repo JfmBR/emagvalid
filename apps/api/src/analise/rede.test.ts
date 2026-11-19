@@ -7,6 +7,7 @@ describe('motivoDaFalha', () => {
   it('DNS fora do ar ou lento (códigos do c-ares) é falha de conexão, não erro desconhecido', () => {
     expect(motivoDaFalha(comCodigo('ETIMEOUT'))).toBe('connectionfailed')
     expect(motivoDaFalha(comCodigo('ESERVFAIL'))).toBe('connectionfailed')
+    expect(motivoDaFalha(comCodigo('EREFUSED'))).toBe('connectionfailed')
   })
 
   it('endereço interno, nome inexistente e prazo de conexão têm motivo próprio', () => {

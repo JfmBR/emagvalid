@@ -74,6 +74,10 @@ rotasAvaliacoes.post('/', exigirLogin, async (req, res) => {
       res.status(429).json({ erro: MSG_LIMITE })
       return
     }
+    if (fila.tamanho() >= MAX_NA_FILA) {
+      res.status(503).json({ erro: MSG_FILA_CHEIA })
+      return
+    }
 
     // o DNS só roda depois de todas as recusas baratas
     const tipo = await classificarEndereco(url.hostname)
@@ -87,6 +91,7 @@ rotasAvaliacoes.post('/', exigirLogin, async (req, res) => {
       return
     }
 
+    // de novo: o DNS pode levar até 3 s, e a fila enche nesse meio-tempo
     // shortcut: pedidos de contas diferentes no mesmo instante do create podem passar do teto por 1 ou 2; trocar por reserva se a fila crescer
     if (fila.tamanho() >= MAX_NA_FILA) {
       res.status(503).json({ erro: MSG_FILA_CHEIA })

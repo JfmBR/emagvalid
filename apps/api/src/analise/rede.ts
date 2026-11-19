@@ -171,12 +171,19 @@ export function motivoDaFalha(erro: unknown) {
   if (codigo === 'EBLOQUEADO') return 'blockedbyclient'
   if (codigo === 'ENOTFOUND' || codigo === 'ENODATA') return 'namenotresolved'
   if (codigo === 'ETIMEDOUT') return 'timedout'
-  // ETIMEOUT e ESERVFAIL: DNS fora do ar ou lento no c-ares (resolverNome), no lugar do EAI_AGAIN do getaddrinfo
+  // ETIMEOUT, ESERVFAIL e EREFUSED: DNS fora do ar, lento ou recusando no c-ares (resolverNome),
+  // no lugar do EAI_AGAIN do getaddrinfo
   if (
     typeof codigo === 'string' &&
-    ['ECONNREFUSED', 'ECONNRESET', 'ETIMEOUT', 'ESERVFAIL', 'EHOSTUNREACH', 'ENETUNREACH'].includes(
-      codigo,
-    )
+    [
+      'ECONNREFUSED',
+      'ECONNRESET',
+      'ETIMEOUT',
+      'ESERVFAIL',
+      'EREFUSED',
+      'EHOSTUNREACH',
+      'ENETUNREACH',
+    ].includes(codigo)
   )
     return 'connectionfailed'
   return 'failed'

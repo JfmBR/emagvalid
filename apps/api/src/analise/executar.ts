@@ -24,7 +24,8 @@ export const MENSAGEM_ERRO: Record<CodigoErro | 'INTERROMPIDA', string> = {
   BLOQUEADO:
     'Esse endereço não é de uma página pública na internet. Use o endereço que abre em qualquer navegador.',
   FALHOU: 'A análise falhou do nosso lado. Tente de novo em instantes.',
-  INTERROMPIDA: 'A análise foi interrompida porque o servidor reiniciou. Tente de novo.',
+  // vale para o reinício do servidor e para a pendente que morreu sem dono (deploy, banco fora)
+  INTERROMPIDA: 'A análise foi interrompida do nosso lado. Tente de novo.',
 }
 
 export type FalhaNova = {
@@ -75,7 +76,13 @@ export async function executarAvaliacao(id: string): Promise<void> {
   const estado = { etapa: 1 as 1 | 2 | 3, paginaGrande: false }
   andamento.set(id, estado)
   try {
-    await db.avaliacao.update({ where: { id }, data: { status: 'ANALISANDO' } })
+    // Cada gravação só vale se o status ainda for o esperado: outra instância (deploy) ou o GET da
+    // Tela 4 pode ter dado a análise como morta, e a conta pode ter sido excluída
+    const { count } = await db.avaliacao.updateMany({
+      where: { id, status: 'NA_FILA' },
+      data: { status: 'ANALISANDO' },
+    })
+    if (count === 0) return
 
     const { violacoes, urlFinal } = await analisar(avaliacao.url, {
       aoCarregar: (elementos) => {
@@ -85,20 +92,22 @@ export async function executarAvaliacao(id: string): Promise<void> {
     })
     estado.etapa = 3
 
-    await db.$transaction([
-      db.falha.createMany({
-        data: falhasDaAnalise(violacoes).map((falha) => ({ ...falha, avaliacaoId: id })),
-      }),
-      db.avaliacao.update({
-        where: { id },
+    await db.$transaction(async (tx) => {
+      const { count } = await tx.avaliacao.updateMany({
+        where: { id, status: 'ANALISANDO' },
         data: {
           status: 'CONCLUIDA',
           concluidaEm: new Date(),
           urlFinal,
           paginaGrande: estado.paginaGrande,
         },
-      }),
-    ])
+      })
+      // já virou ERRO ou sumiu: as falhas não entram
+      if (count === 0) return
+      await tx.falha.createMany({
+        data: falhasDaAnalise(violacoes).map((falha) => ({ ...falha, avaliacaoId: id })),
+      })
+    })
   } catch (erro) {
     const codigo: CodigoErro = erro instanceof ErroDeAnalise ? erro.codigo : 'FALHOU'
     // Log de segurança (decisão 13): só o código; em BLOQUEADO, a conta e o host, nunca a URL completa
@@ -118,8 +127,8 @@ export async function executarAvaliacao(id: string): Promise<void> {
       // oxlint-disable-next-line no-console
       console.error('Análise com erro:', codigo, ...diagnostico(erro))
     }
-    await db.avaliacao.update({
-      where: { id },
+    await db.avaliacao.updateMany({
+      where: { id, status: { in: ['NA_FILA', 'ANALISANDO'] } },
       data: { status: 'ERRO', mensagemErro: MENSAGEM_ERRO[codigo] },
     })
   } finally {

@@ -76,14 +76,15 @@ vi.mock('../db.js', () => {
   }
 })
 
-vi.mock('../analise/executar.js', () => ({
+vi.mock('../analise/executar.js', async (importOriginal) => ({
+  // as mensagens reais, para o teste conferir o texto que a pessoa vê
+  MENSAGEM_ERRO: (await importOriginal<typeof import('../analise/executar.js')>()).MENSAGEM_ERRO,
   fila: {
     adicionar: vi.fn<(id: string) => void>(),
     posicao: vi.fn<(id: string) => number | null>(),
     tamanho: vi.fn<() => number>(),
   },
   andamento: new Map(),
-  MENSAGEM_ERRO: { INTERROMPIDA: 'A análise foi interrompida porque o servidor reiniciou.' },
 }))
 
 vi.mock('../analise/endereco.js', async (importOriginal) => ({
@@ -256,6 +257,7 @@ describe('POST /api/avaliacoes', () => {
     })
     expect(banco.avaliacoes).toEqual([])
     expect(fila.adicionar).not.toHaveBeenCalled()
+    expect(classificarEndereco).not.toHaveBeenCalled()
   })
 
   it('fila com 9 análises ainda aceita', async () => {
@@ -444,7 +446,7 @@ describe('GET /api/avaliacoes/:id', () => {
 
     expect(body.avaliacao).toMatchObject({
       status: 'ERRO',
-      mensagemErro: 'A análise foi interrompida porque o servidor reiniciou.',
+      mensagemErro: 'A análise foi interrompida do nosso lado. Tente de novo.',
       posicaoNaFila: null,
     })
     expect(banco.avaliacoes[0]).toMatchObject({ status: 'ERRO' })

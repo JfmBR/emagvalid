@@ -19,20 +19,19 @@ const banco = vi.hoisted(() => ({
   atualizacoes: [] as Record<string, unknown>[],
   falhas: [] as Record<string, unknown>[],
   etapaNaGravacao: undefined as number | undefined,
-  filtro: undefined as unknown,
+  filtros: [] as unknown[],
+  // linhas que cada updateMany encontra; 0 simula status que outra instância já mudou
+  contagens: [] as number[],
 }))
 
-vi.mock('../db.js', () => ({
-  db: {
+vi.mock('../db.js', () => {
+  const db = {
     avaliacao: {
       findUnique: async () => banco.avaliacao,
-      update: async ({ data }: { data: Record<string, unknown> }) => {
-        banco.atualizacoes.push(data)
-      },
       updateMany: async ({ where, data }: { where: unknown; data: Record<string, unknown> }) => {
-        banco.filtro = where
+        banco.filtros.push(where)
         banco.atualizacoes.push(data)
-        return { count: 2 }
+        return { count: banco.contagens.shift() ?? 1 }
       },
     },
     falha: {
@@ -40,13 +39,14 @@ vi.mock('../db.js', () => ({
         banco.falhas.push(...data)
       },
     },
-    $transaction: async (operacoes: Promise<unknown>[]) => {
+    $transaction: async (gravar: (tx: unknown) => Promise<unknown>) => {
       // quando a transação roda, a etapa do andamento já deve ser a 3
       banco.etapaNaGravacao = [...andamento.values()][0]?.etapa
-      return Promise.all(operacoes)
+      return gravar(db)
     },
-  },
-}))
+  }
+  return { db }
+})
 
 const analisar = vi.hoisted(() => vi.fn<typeof import('./analisar.js').analisar>())
 vi.mock('./analisar.js', async () => ({
@@ -69,6 +69,8 @@ beforeEach(() => {
   banco.atualizacoes = []
   banco.falhas = []
   banco.etapaNaGravacao = undefined
+  banco.filtros = []
+  banco.contagens = []
   andamento.clear()
 })
 
@@ -248,6 +250,41 @@ describe('executarAvaliacao', () => {
     log.mockRestore()
   })
 
+  it('cada gravação só vale com o status esperado', async () => {
+    analisar.mockResolvedValue({ violacoes: [], urlFinal: 'https://exemplo.com.br/' })
+    await executarAvaliacao('a1')
+    analisar.mockRejectedValue(new ErroDeAnalise('DEMOROU'))
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    await executarAvaliacao('a1')
+
+    expect(banco.filtros).toEqual([
+      { id: 'a1', status: 'NA_FILA' },
+      { id: 'a1', status: 'ANALISANDO' },
+      { id: 'a1', status: 'NA_FILA' },
+      { id: 'a1', status: { in: ['NA_FILA', 'ANALISANDO'] } },
+    ])
+    vi.mocked(console.error).mockRestore()
+  })
+
+  it('já não estava NA_FILA (dada como morta ou conta excluída): não analisa', async () => {
+    banco.contagens = [0]
+
+    await executarAvaliacao('a1')
+
+    expect(analisar).not.toHaveBeenCalled()
+    expect(banco.atualizacoes).toHaveLength(1)
+    expect(andamento.has('a1')).toBe(false)
+  })
+
+  it('virou ERRO durante a análise: não grava CONCLUIDA nem as falhas', async () => {
+    banco.contagens = [1, 0]
+    analisar.mockResolvedValue({ violacoes: [imagemSemAlt], urlFinal: 'https://exemplo.com.br/' })
+
+    await executarAvaliacao('a1')
+
+    expect(banco.falhas).toEqual([])
+  })
+
   it('avaliação que sumiu: não faz nada', async () => {
     banco.avaliacao = null
 
@@ -269,8 +306,9 @@ describe('diagnostico', () => {
 
 describe('recuperarInterrompidas', () => {
   it('troca NA_FILA e ANALISANDO por ERRO INTERROMPIDA e devolve quantas', async () => {
+    banco.contagens = [2]
     expect(await recuperarInterrompidas()).toBe(2)
-    expect(banco.filtro).toEqual({ status: { in: ['NA_FILA', 'ANALISANDO'] } })
+    expect(banco.filtros).toEqual([{ status: { in: ['NA_FILA', 'ANALISANDO'] } }])
     expect(banco.atualizacoes).toEqual([
       { status: 'ERRO', mensagemErro: MENSAGEM_ERRO.INTERROMPIDA },
     ])
