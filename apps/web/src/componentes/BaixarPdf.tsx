@@ -11,16 +11,19 @@ export const AVISO_PLANO_PAGO =
 // aria-disabled, e não disabled, para continuar no Tab e o leitor de tela ler o porquê.
 // avisoBloqueioId: o aviso já está na tela (Tela 8, um para a tabela toda), e o botão só aponta para ele.
 // pagina: na Tela 8, cada linha tem um botão; o leitor de tela ouve de qual página é.
+// antes: na Tela 5, espera as marcações da revisão que ainda estão sendo gravadas, para o PDF levá-las.
 export function BaixarPdf({
   id,
   avisoBloqueioId,
   pagina,
   variante = 'principal',
+  antes,
 }: {
   id: string
   avisoBloqueioId?: string
   pagina?: string
   variante?: 'principal' | 'txt'
+  antes?: () => Promise<unknown>
 }) {
   const { usuario, definirUsuario } = useSessao()
   const idAviso = useId()
@@ -61,6 +64,7 @@ export function BaixarPdf({
     setBaixando(true)
     setErro('')
     try {
+      await antes?.()
       const resposta = await fetch(`/api/avaliacoes/${encodeURIComponent(id)}/pdf`)
       if (resposta.ok) {
         const nome =
@@ -73,7 +77,8 @@ export function BaixarPdf({
         document.body.append(link)
         link.click()
         link.remove()
-        URL.revokeObjectURL(endereco)
+        // Safari e Firefox leem o blob depois do clique: soltar na hora cancelaria o download
+        setTimeout(() => URL.revokeObjectURL(endereco), 1_000)
         return
       }
       if (resposta.status === 401) return definirUsuario(null)

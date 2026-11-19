@@ -63,6 +63,12 @@ export function Resultado({ id, resultado }: { id: string; resultado: ResultadoA
       else nova.delete(numero)
       return nova
     })
+  // gravações da revisão em andamento: o "Baixar PDF" espera por elas, para o PDF levar a marca nova
+  const gravando = useRef(new Set<Promise<unknown>>())
+  const aoGravar = (pedido: Promise<unknown>) => {
+    gravando.current.add(pedido)
+    void pedido.finally(() => gravando.current.delete(pedido))
+  }
 
   function irParaRevisao() {
     setAba(1)
@@ -108,7 +114,7 @@ export function Resultado({ id, resultado }: { id: string; resultado: ResultadoA
         </div>
         {/* RF12: o PDF leva as marcas da revisão; a frase diz o que ainda sai como "a conferir" */}
         <div style={{ display: 'grid', gap: 8, justifyItems: 'start' }}>
-          <BaixarPdf id={id} />
+          <BaixarPdf id={id} antes={() => Promise.all(gravando.current)} />
           {feitas.size === revisao.length ? (
             <p className="dica">Revisão humana: todos os {revisao.length} itens conferidos.</p>
           ) : (
@@ -202,6 +208,7 @@ export function Resultado({ id, resultado }: { id: string; resultado: ResultadoA
         setAba={setAba}
         feitas={feitas}
         marcar={marcar}
+        aoGravar={aoGravar}
       />
     </>
   )
@@ -217,6 +224,7 @@ function Abas({
   setAba,
   feitas,
   marcar,
+  aoGravar,
 }: {
   id: string
   cartoes: ResultadoAvaliacao['cartoes']
@@ -225,6 +233,7 @@ function Abas({
   setAba: (aba: number) => void
   feitas: Set<string>
   marcar: (numero: string, feita: boolean) => void
+  aoGravar: (pedido: Promise<unknown>) => void
 }) {
   const botoes = useRef<(HTMLButtonElement | null)[]>([])
 
@@ -290,7 +299,13 @@ function Abas({
         tabIndex={0}
         hidden={aba !== 1}
       >
-        <RevisaoHumana id={id} revisao={revisao} feitas={feitas} marcar={marcar} />
+        <RevisaoHumana
+          id={id}
+          revisao={revisao}
+          feitas={feitas}
+          marcar={marcar}
+          aoGravar={aoGravar}
+        />
       </div>
     </div>
   )

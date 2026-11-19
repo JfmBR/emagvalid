@@ -75,7 +75,29 @@ describe('BaixarPdf', () => {
 
     await waitFor(() => expect(baixados).toEqual(['acessaweb-www.loja.com.br-2026-11-19.pdf']))
     expect(pedidos).toContain(CAMINHO)
-    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:falso')
+    await waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:falso'), {
+      timeout: 2_000,
+    })
+  })
+
+  it('só solta o endereço do arquivo depois que o navegador começa a ler (Safari e Firefox)', async () => {
+    // o navegador lê o blob depois do clique, numa tarefa seguinte; soltar antes cancela o download
+    let soltoAntesDeLer: boolean | null = null
+    vi.mocked(HTMLAnchorElement.prototype.click).mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      baixados.push(this.download)
+      setTimeout(() => {
+        soltoAntesDeLer = vi.mocked(URL.revokeObjectURL).mock.calls.length > 0
+      }, 0)
+    })
+    simularApi(true, pdfOk)
+    abrir()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Baixar PDF' }))
+
+    await waitFor(() => expect(soltoAntesDeLer).not.toBeNull())
+    expect(soltoAntesDeLer).toBe(false)
   })
 
   it('dois cliques seguidos mandam um pedido só', async () => {

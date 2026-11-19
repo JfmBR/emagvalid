@@ -12,11 +12,14 @@ export function RevisaoHumana({
   revisao,
   feitas,
   marcar,
+  aoGravar,
 }: {
   id: string
   revisao: ResultadoAvaliacao['revisao']
   feitas: Set<string>
   marcar: (numero: string, feita: boolean) => void
+  // cada gravação em andamento: o "Baixar PDF" espera por ela
+  aoGravar: (pedido: Promise<unknown>) => void
 }) {
   const { definirUsuario } = useSessao()
   const [erro, setErro] = useState('')
@@ -27,10 +30,12 @@ export function RevisaoHumana({
     if (pendentes.current.has(numero)) return // o clique é ignorado e a caixa fica como está
     pendentes.current.add(numero)
     marcar(numero, feita)
-    const { status, corpo } = await enviar<{ erro: string }>(
-      `/api/avaliacoes/${encodeURIComponent(id)}/revisao`,
-      { numero, feita },
-    )
+    const pedido = enviar<{ erro: string }>(`/api/avaliacoes/${encodeURIComponent(id)}/revisao`, {
+      numero,
+      feita,
+    })
+    aoGravar(pedido)
+    const { status, corpo } = await pedido
     pendentes.current.delete(numero)
     if (status === 204) return setErro('')
     marcar(numero, !feita) // não gravou: a caixa volta a mostrar o que está salvo

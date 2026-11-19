@@ -1083,6 +1083,48 @@ describe('Tela 4 · análise', () => {
         expect(screen.getByRole('checkbox', { name: /^4\.4, Foco visível$/ })).toBeVisible()
       })
 
+      it('Baixar PDF espera a marcação da revisão ser gravada', async () => {
+        // a gravação da caixa fica pendente até o teste soltar
+        let gravar: () => void = () => {}
+        const ordem: string[] = []
+        vi.stubGlobal(
+          'fetch',
+          vi.fn(async (caminho: string) => {
+            ordem.push(caminho)
+            if (caminho === '/api/auth/eu') {
+              return new Response(JSON.stringify({ usuario: { ...helena, planoPago: true } }))
+            }
+            if (caminho === '/api/avaliacoes/a1') {
+              return new Response(JSON.stringify({ avaliacao: concluida }))
+            }
+            if (caminho === '/api/avaliacoes/a1/revisao') {
+              await new Promise<void>((pronto) => (gravar = pronto))
+              return new Response(null, { status: 204 })
+            }
+            return new Response('%PDF', {
+              headers: { 'Content-Disposition': 'attachment; filename="r.pdf"' },
+            })
+          }),
+        )
+        URL.createObjectURL = vi.fn<(objeto: Blob) => string>(() => 'blob:falso')
+        URL.revokeObjectURL = vi.fn<(endereco: string) => void>()
+        const clique = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+        abrir('/avaliacoes/a1')
+        fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana (2)' }))
+
+        fireEvent.click(screen.getByRole('checkbox', { name: /^4\.4, Foco visível$/ }))
+        fireEvent.click(screen.getByRole('button', { name: 'Baixar PDF' }))
+        await new Promise((esperar) => setTimeout(esperar, 50))
+        expect(ordem).not.toContain('/api/avaliacoes/a1/pdf')
+
+        await act(async () => gravar())
+        await waitFor(() => expect(clique).toHaveBeenCalled())
+        expect(ordem.indexOf('/api/avaliacoes/a1/pdf')).toBeGreaterThan(
+          ordem.indexOf('/api/avaliacoes/a1/revisao'),
+        )
+        clique.mockRestore()
+      })
+
       it('sem plano pago, o botão aparece bloqueado', async () => {
         simularApi({ ...logada, '/api/avaliacoes/a1': resposta(concluida) })
         abrir('/avaliacoes/a1')
