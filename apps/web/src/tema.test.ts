@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { aplicarTema, lerPreferencias, salvarPreferencias, temaDaPagina } from './tema.ts'
+import {
+  aplicarTema,
+  lerPreferencias,
+  salvarPreferencias,
+  temaDaPagina,
+  type Preferencias,
+} from './tema.ts'
 
 beforeEach(() => {
   localStorage.clear()
@@ -49,6 +55,31 @@ describe('preferências no navegador', () => {
     expect(lerPreferencias()).toEqual({ contraste: false, tema: null })
     expect(() => salvarPreferencias({ contraste: true, tema: null })).not.toThrow()
   })
+})
+
+// A regra do tema existe em dois lugares (o script do <head> não importa TypeScript): este teste
+// prende os dois juntos, para quem mudar um lembrar do outro
+describe('public/tema-inicial.js aplica o mesmo que aplicarTema', () => {
+  const casos: Preferencias[] = [
+    { contraste: false, tema: null },
+    { contraste: false, tema: 'claro' },
+    { contraste: false, tema: 'escuro' },
+    { contraste: true, tema: null },
+    { contraste: true, tema: 'claro' },
+    { contraste: true, tema: 'escuro' },
+  ]
+  for (const preferencias of casos) {
+    it(`contraste ${preferencias.contraste}, tema ${preferencias.tema}`, async () => {
+      salvarPreferencias(preferencias)
+      aplicarTema(preferencias)
+      const esperado = document.documentElement.dataset.theme
+      delete document.documentElement.dataset.theme
+      vi.resetModules()
+      // @ts-expect-error script clássico, sem exportações nem tipos: importar só roda o código
+      await import('../public/tema-inicial.js')
+      expect(document.documentElement.dataset.theme).toBe(esperado)
+    })
+  }
 })
 
 describe('aplicarTema', () => {
