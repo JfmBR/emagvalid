@@ -21,6 +21,23 @@ describe('requisitos do eMAG', () => {
     expect(revisao.every((r) => !r.prioridade && r.regras.length === 0)).toBe(true)
   })
 
+  it('as 29 da nota explicam a falha e mostram um exemplo de correção', () => {
+    const naNota = requisitos.filter((r) => r.cobertura !== 'nao')
+
+    expect(naNota).toHaveLength(29)
+    // Lista os números que falham, para a mensagem dizer qual recomendação ficou sem texto
+    const semTexto = naNota.filter((r) => !r.porque?.trim() || !r.exemplo?.trim() || r.conferir)
+    expect(semTexto.map((r) => r.numero)).toEqual([])
+  })
+
+  it('as 16 de revisão humana dizem o que conferir, sem porquê nem exemplo', () => {
+    const revisao = requisitos.filter((r) => r.cobertura === 'nao')
+
+    expect(revisao).toHaveLength(16)
+    const semTexto = revisao.filter((r) => !r.conferir?.trim() || r.porque || r.exemplo)
+    expect(semTexto.map((r) => r.numero)).toEqual([])
+  })
+
   it('liga a seção oficial pelo primeiro número', () => {
     expect(requisitos.find((r) => r.numero === '3.10')?.link).toBe(
       'https://emag.governoeletronico.gov.br/#s3.3',

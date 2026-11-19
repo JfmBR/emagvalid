@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { classificarEndereco, MSG_URL, prepararUrl } from '../analise/endereco.js'
 import { andamento, fila, MENSAGEM_ERRO } from '../analise/executar.js'
+import { itensDeRevisao, resultadoDaAvaliacao } from '../analise/resultado.js'
 import { chaveDoIp } from '../auth/ip.js'
 import { exigirLogin, type UsuarioDaSessao } from '../auth/sessao.js'
 import { limiteAvaliacaoPorConta, limiteAvaliacaoPorIp } from '../auth/tentativas.js'
@@ -129,6 +130,11 @@ rotasAvaliacoes.get('/:id', exigirLogin, async (req, res) => {
       paginaGrande: true,
       mensagemErro: true,
       criadaEm: true,
+      concluidaEm: true,
+      nota: true,
+      requisitosAplicaveis: true,
+      requisitosEmDuvida: true,
+      revisados: true,
       falhas: {
         select: {
           requisitoEmag: true,
@@ -173,7 +179,41 @@ rotasAvaliacoes.get('/:id', exigirLogin, async (req, res) => {
       posicaoNaFila: status === 'NA_FILA' ? fila.posicao(id) : null,
       paginaGrande: emAndamento?.paginaGrande ?? avaliacao.paginaGrande,
       mensagemErro,
-      falhas: status === 'CONCLUIDA' ? avaliacao.falhas : [],
+      concluidaEm: avaliacao.concluidaEm,
+      // Tela 5: só existe depois de concluída
+      resultado: status === 'CONCLUIDA' ? resultadoDaAvaliacao(avaliacao) : null,
     },
   })
+})
+
+// Marca ou desmarca um item da revisão humana como conferido (RF09). POST, e não PUT, como as outras telas.
+rotasAvaliacoes.post('/:id/revisao', exigirLogin, async (req, res) => {
+  const { id: usuarioId } = res.locals.usuario as UsuarioDaSessao
+  const id = typeof req.params.id === 'string' ? req.params.id.toLowerCase() : ''
+  const { numero, feita } = req.body ?? {}
+  if (!UUID.test(id)) return res.status(404).json({ erro: 'Avaliação não encontrada.' })
+  if (typeof numero !== 'string' || typeof feita !== 'boolean') {
+    return res.status(400).json({ erro: 'Pedido inválido.' })
+  }
+
+  const avaliacao = await db.avaliacao.findFirst({
+    where: { id, usuarioId },
+    select: { status: true, requisitosEmDuvida: true },
+  })
+  if (!avaliacao) return res.status(404).json({ erro: 'Avaliação não encontrada.' })
+  if (avaliacao.status !== 'CONCLUIDA') {
+    return res.status(409).json({ erro: 'A análise ainda não terminou.' })
+  }
+  if (!itensDeRevisao(avaliacao.requisitosEmDuvida).some((r) => r.numero === numero)) {
+    return res.status(400).json({ erro: 'Pedido inválido.' })
+  }
+
+  // Num comando só: duas caixas marcadas ao mesmo tempo não apagam uma à outra (ler e regravar a lista apagaria)
+  await db.$executeRaw`
+    UPDATE avaliacoes
+    SET revisados = CASE WHEN ${feita}
+      THEN array_append(array_remove(revisados, ${numero}), ${numero})
+      ELSE array_remove(revisados, ${numero}) END
+    WHERE id = ${id} AND "usuarioId" = ${usuarioId}`
+  res.status(204).end()
 })
