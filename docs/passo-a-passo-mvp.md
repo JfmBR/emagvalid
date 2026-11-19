@@ -35,7 +35,7 @@ API cria a avaliação (status ANALISANDO) e responde na hora
 Tela 4 pergunta a cada 2 s: GET /api/avaliacoes/:id
    ▼
 Tela 5 mostra nota, conta e falhas → Tela 6 orientação (texto padrão + IA)
-   → Tela 7 prévia e PDF → Tela 8 histórico
+   → PDF (botão na Tela 5 e na Tela 8; sem Tela 7 desde 19/11/2026) → Tela 8 histórico
 ```
 
 | Parte             | Onde fica no código                                 | Requisitos                     |
@@ -200,13 +200,14 @@ Requisitos: RF07, RF08, RF10, RF11.
 
 **Terminou quando:** dá para aprovar ou editar todas as orientações de uma avaliação.
 
-## Passo 9 · Relatório em PDF — Tela 7 (30/11–01/12)
+## Passo 9 · Relatório em PDF (30/11–01/12; feito em 19/11/2026)
 
-Requisitos: RF12, RF13.
+Requisitos: RF12, RF13, RF21. Design: `docs/superpowers/specs/2026-11-19-relatorio-pdf-design.md`.
 
-- [ ] Montar o relatório como uma página HTML e gerar o PDF com o próprio Playwright (`page.pdf()`), sem biblioteca nova
-- [ ] Conteúdo: capa (cliente e URL), resumo no início, tabela de falhas (requisito, prioridade, local, correção), seção "Revisão humana", rodapé com o nome do(a) auditor(a)
-- [ ] Tela 7: prévia, aviso se faltar revisão ("Revisar agora" · "Gerar mesmo assim"), "Baixar PDF"
+- [x] Montar o relatório como uma página HTML e gerar o PDF com o próprio Playwright (`page.pdf()`), sem biblioteca nova
+- [x] Conteúdo (decisão do João, 19/11/2026): cabeçalho (página, data, "Preparado para"), aviso de que não é certificação, resumo, uma caixa por recomendação com falha (prioridade, porquê, exemplo de correção e todas as ocorrências), "Revisão humana" com o que foi conferido, "Como chegamos na nota" e rodapé com a data e a página. Sem nome de auditor(a), porque o público agora é o dono do site
+- [x] Sem Tela 7 (decisão do João, 19/11/2026): "Baixar PDF" fica na Tela 5, junto da nota, com a contagem da revisão humana e o atalho "Ir para a revisão humana"
+- [x] Plano pago (RF21): campo `planoPago` na conta; sem ele, o botão aparece bloqueado com o aviso
 
 **Terminou quando:** o PDF baixado tem tudo o que o RF13 pede.
 
@@ -215,7 +216,7 @@ Requisitos: RF12, RF13.
 Requisitos: RF14. O RF15 (comparar duas avaliações da mesma URL) tem prioridade baixa e está fora do MVP desde 05/11.
 
 - [x] API: `GET /api/avaliacoes` lista as avaliações do usuário, da mais nova para a mais antiga, 20 por vez, com "Mostrar mais" (adiantado em 19/11/2026, junto com o RF20)
-- [ ] Tela 8: tabela com data, página, nota e as ações Abrir, Baixar PDF e Avaliar de novo. Feita em 19/11/2026, menos o "Baixar PDF", que entra com o Passo 9
+- [x] Tela 8: tabela com data, página, nota e as ações Abrir, Baixar PDF e Avaliar de novo. Feita em 19/11/2026; o "Baixar PDF" entrou com o Passo 9
 
 ## Passo 11 · Ajuda e mensagens de erro (02/12)
 

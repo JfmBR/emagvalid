@@ -166,6 +166,12 @@ test('só com teclado: pedir a avaliação, acompanhar e ver a análise concluí
   ).toBeVisible()
   await semViolacoesSerias(page)
 
+  // junto da nota: "Baixar PDF" (bloqueado sem plano, mas no Tab) e o atalho para a revisão humana
+  await page.keyboard.press('Tab')
+  await expect(page.getByRole('button', { name: 'Baixar PDF (plano pago)' })).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(page.getByRole('button', { name: 'Ir para a revisão humana' })).toBeFocused()
+
   // Tab abre "Como chegamos" pelo teclado; o próximo Tab para na tabela, e o seguinte, na aba ativa
   await page.keyboard.press('Tab')
   await expect(page.getByText('Como chegamos a 57')).toBeFocused()
@@ -192,6 +198,53 @@ test('só com teclado: pedir a avaliação, acompanhar e ver a análise concluí
   await page.getByRole('link', { name: 'Nova avaliação' }).focus()
   await page.keyboard.press('Enter')
   await expect(page).toHaveURL('/avaliacoes/nova')
+})
+
+const concluida = {
+  ...avaliacao,
+  status: 'CONCLUIDA',
+  etapa: null,
+  concluidaEm: '2026-11-19T14:32:00.000Z',
+  resultado,
+}
+
+test('com plano pago, "Baixar PDF" baixa o arquivo com o nome da página e da data', async ({
+  page,
+}) => {
+  await simularApi(page, () => concluida)
+  // as rotas mais novas valem primeiro: esta troca a sessão da Helena por uma com plano
+  await page.route('**/api/auth/eu', (rota) =>
+    rota.fulfill({ status: 200, json: { usuario: { ...helena, planoPago: true } } }),
+  )
+  await page.route('**/api/avaliacoes/a1/pdf', (rota) =>
+    rota.fulfill({
+      status: 200,
+      contentType: 'application/pdf',
+      headers: {
+        'Content-Disposition': 'attachment; filename="acessaweb-www.loja.com.br-2026-11-19.pdf"',
+      },
+      body: '%PDF-1.7 falso',
+    }),
+  )
+  await page.goto('/avaliacoes/a1')
+
+  const download = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Baixar PDF' }).click()
+
+  expect((await download).suggestedFilename()).toBe('acessaweb-www.loja.com.br-2026-11-19.pdf')
+  await semViolacoesSerias(page)
+})
+
+test('sem plano pago, o botão fica bloqueado, com o aviso, e sem violações sérias', async ({
+  page,
+}) => {
+  await simularApi(page, () => concluida)
+  await page.goto('/avaliacoes/a1')
+
+  const botao = page.getByRole('button', { name: 'Baixar PDF (plano pago)' })
+  await expect(botao).toHaveAttribute('aria-disabled', 'true')
+  await expect(botao).toHaveAccessibleDescription(/^O relatório em PDF faz parte do plano pago/)
+  await semViolacoesSerias(page)
 })
 
 test('erro da análise: mensagem, sem violações sérias e volta com o endereço preenchido', async ({
