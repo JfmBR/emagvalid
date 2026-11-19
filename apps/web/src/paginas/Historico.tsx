@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router'
 import { buscar, mensagemDeErro } from '../api.ts'
 import { Aviso } from '../componentes/Aviso.tsx'
+import { AVISO_PLANO_PAGO, BaixarPdf } from '../componentes/BaixarPdf.tsx'
 import { Botao } from '../componentes/Botao.tsx'
 import { useSessao } from '../sessao.tsx'
+
+const AVISO_PLANO_ID = 'aviso-plano-pdf'
 
 type Status = 'NA_FILA' | 'ANALISANDO' | 'CONCLUIDA' | 'ERRO'
 type Item = {
@@ -147,6 +150,12 @@ export function Historico() {
         </div>
       ) : (
         <div className="painel">
+          {/* sem plano pago: o aviso aparece uma vez, e os botões de cada linha apontam para ele (RF21) */}
+          {usuario?.planoPago ? null : (
+            <p className="dica" id={AVISO_PLANO_ID}>
+              {AVISO_PLANO_PAGO}
+            </p>
+          )}
           {/* área com rolagem precisa receber foco (axe scrollable-region-focusable) */}
           {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
           <section className="rolar" tabIndex={0} aria-label="Avaliações">
@@ -198,6 +207,14 @@ export function Historico() {
                         <Link to={`/avaliacoes/nova?url=${encodeURIComponent(item.url)}`}>
                           Avaliar de novo <span className="so-leitor">{item.url}</span>
                         </Link>
+                        {item.status === 'CONCLUIDA' ? (
+                          <BaixarPdf
+                            id={item.id}
+                            pagina={item.url}
+                            variante="txt"
+                            avisoBloqueioId={usuario?.planoPago ? undefined : AVISO_PLANO_ID}
+                          />
+                        ) : null}
                       </span>
                     </td>
                   </tr>

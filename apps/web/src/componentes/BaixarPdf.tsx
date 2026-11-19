@@ -10,19 +10,41 @@ export const AVISO_PLANO_PAGO =
 // "Baixar PDF" da Tela 5 e da Tela 8 (RF12). Sem plano pago, o botão fica bloqueado com o aviso (RF21):
 // aria-disabled, e não disabled, para continuar no Tab e o leitor de tela ler o porquê.
 // avisoBloqueioId: o aviso já está na tela (Tela 8, um para a tabela toda), e o botão só aponta para ele.
-export function BaixarPdf({ id, avisoBloqueioId }: { id: string; avisoBloqueioId?: string }) {
+// pagina: na Tela 8, cada linha tem um botão; o leitor de tela ouve de qual página é.
+export function BaixarPdf({
+  id,
+  avisoBloqueioId,
+  pagina,
+  variante = 'principal',
+}: {
+  id: string
+  avisoBloqueioId?: string
+  pagina?: string
+  variante?: 'principal' | 'txt'
+}) {
   const { usuario, definirUsuario } = useSessao()
   const idAviso = useId()
   const [baixando, setBaixando] = useState(false)
   const [erro, setErro] = useState('')
   // o estado demora um render; a ref barra o segundo clique na hora
   const ocupado = useRef(false)
+  // o espaço fica fora do span: dentro dele, o nome acessível o perde
+  const dePagina = pagina ? (
+    <>
+      {' '}
+      <span className="so-leitor">de {pagina}</span>
+    </>
+  ) : null
 
   if (!usuario?.planoPago) {
     return (
       <>
-        <Botao variante="sec" aria-disabled="true" aria-describedby={avisoBloqueioId ?? idAviso}>
-          Baixar PDF (plano pago)
+        <Botao
+          variante={variante === 'txt' ? 'txt' : 'sec'}
+          aria-disabled="true"
+          aria-describedby={avisoBloqueioId ?? idAviso}
+        >
+          Baixar PDF (plano pago){dePagina}
         </Botao>
         {avisoBloqueioId ? null : (
           <p className="dica" id={idAviso}>
@@ -67,8 +89,9 @@ export function BaixarPdf({ id, avisoBloqueioId }: { id: string; avisoBloqueioId
 
   return (
     <>
-      <Botao aria-busy={baixando} onClick={() => void baixar()}>
+      <Botao variante={variante} aria-busy={baixando} onClick={() => void baixar()}>
         {baixando ? 'Gerando o PDF...' : 'Baixar PDF'}
+        {dePagina}
       </Botao>
       {erro ? (
         <Aviso tipo="alerta" papel="alert">

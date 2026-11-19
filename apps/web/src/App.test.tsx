@@ -519,6 +519,36 @@ describe('Tela 8 · histórico', () => {
     expect(screen.getByText('2 análises em andamento.')).toBeInTheDocument()
   })
 
+  it('linha concluída tem Baixar PDF com o nome da página; pendente ou com erro não tem', async () => {
+    simularApi({
+      '/api/auth/eu': { status: 200, corpo: { usuario: { ...helena, planoPago: true } } },
+      '/api/avaliacoes': lista([
+        item('a2', { status: 'ANALISANDO', nota: null, etapa: 2 }),
+        item('a1'),
+        item('a0', { status: 'ERRO', nota: null }),
+      ]),
+    })
+    abrir('/avaliacoes')
+
+    expect(
+      await screen.findByRole('button', { name: 'Baixar PDF de https://loja.com.br/a1' }),
+    ).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Baixar PDF/ })).toHaveLength(1)
+  })
+
+  it('sem plano, o aviso aparece uma vez e descreve os botões', async () => {
+    simularApi({ ...logada, '/api/avaliacoes': lista([item('a2'), item('a1')]) })
+    abrir('/avaliacoes')
+
+    const botoes = await screen.findAllByRole('button', { name: /^Baixar PDF \(plano pago\)/ })
+    expect(botoes).toHaveLength(2)
+    expect(screen.getAllByText(/faz parte do plano pago/)).toHaveLength(1)
+    for (const botao of botoes) {
+      expect(botao).toHaveAttribute('aria-disabled', 'true')
+      expect(botao).toHaveAccessibleDescription(/^O relatório em PDF faz parte do plano pago/)
+    }
+  })
+
   it('pergunta de novo a cada 2 s só enquanto houver pendente', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     let resposta = lista([item('a1', { status: 'ANALISANDO', nota: null, etapa: 1 })])
