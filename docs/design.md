@@ -16,6 +16,12 @@ O AcessaWeb é uma ferramenta de acessibilidade: a própria interface precisa se
 - O app importa `tokens.css` e `bundle.css` em `apps/web/src/main.tsx`; o `index.css` guarda só o que o `design-system/` não cobre. Componentes React em `apps/web/src/componentes/` (`Botao`, `Campo`, `Selo`, `Aviso`, `Layout`).
 - O `Layout` traz a barra de acessibilidade, o cabeçalho com a marca, o `main` e o rodapé. Ao trocar de tela, o foco vai para o `h1`; cada tela define o seu `<title>`.
 - Com a conta aberta, o cabeçalho mostra "Olá, Nome", "Minha conta" e "Sair". A tela `/conta` (`paginas/Conta.tsx`) mostra o nome e o e-mail e tem "Excluir minha conta" (LGPD): a pessoa digita a senha e confirma com o botão de perigo. Depois, a mesma tela vira "Conta excluída", com o foco no título novo.
+- Tela 3 · Nova avaliação com lista (RF20): "+ Adicionar outra página" acrescenta um campo (até 10) e leva o foco a ele. "Remover", nos campos 2 a 10, tira o campo e leva o foco ao anterior. O contador "N de 10 páginas" vira "Você chegou ao limite de 10 páginas." no décimo. Com 1 link, a pessoa segue para a Tela 4; com 2 ou mais, para o histórico.
+- Tela 8 · Histórico de avaliações (`paginas/Historico.tsx`, rota `/avaliacoes`, link "Histórico" no cabeçalho), com o layout do protótipo de 28/10:
+  - tabela com Data, Página, Nota, Situação e Ações ("Ver resultado", "Ver o motivo" ou "Acompanhar", e "Avaliar de novo", que preenche a Tela 3 para a pessoa confirmar);
+  - "Mostrar mais" traz as próximas 20 e leva o foco ao primeiro link da primeira linha nova;
+  - leitor de tela: os links levam o endereço da página no nome ("Ver resultado de …"), o traço da nota vazia é lido "sem nota", e um `<output>` escondido diz só o resumo quando ele muda ("2 análises em andamento.", "Todas as análises terminaram.");
+  - "Baixar PDF" entra com o Passo 9.
 - Tela 5 · Resultado (`paginas/Resultado.tsx`, no lugar do resumo da Tela 4 quando a análise conclui, na mesma rota `/avaliacoes/:id`), com o layout do protótipo de 28/10:
   - nota `N/100` (o leitor de tela ouve "Nota N de 100"), o selo "Nota automática" e o aviso fixo "Não é certificação. A conclusão de conformidade é sua.";
   - "Como chegamos a N" (`<details>`): uma linha por recomendação que se aplica à página, com prioridade, peso e Aprovada/Reprovada, e a conta no rodapé (`100 × pesos aprovados ÷ pesos aplicáveis`). Avaliação feita antes do cálculo da nota (sem os dados) mostra um aviso para refazer, e os cartões continuam;

@@ -214,8 +214,8 @@ Requisitos: RF12, RF13.
 
 Requisitos: RF14. O RF15 (comparar duas avaliações da mesma URL) tem prioridade baixa e está fora do MVP desde 05/11.
 
-- [ ] API: `GET /api/avaliacoes` lista as avaliações do usuário, da mais nova para a mais antiga
-- [ ] Tela 8: tabela com data, página, nota e as ações Abrir, Baixar PDF e Avaliar de novo
+- [x] API: `GET /api/avaliacoes` lista as avaliações do usuário, da mais nova para a mais antiga, 20 por vez, com "Mostrar mais" (adiantado em 19/11/2026, junto com o RF20)
+- [ ] Tela 8: tabela com data, página, nota e as ações Abrir, Baixar PDF e Avaliar de novo. Feita em 19/11/2026, menos o "Baixar PDF", que entra com o Passo 9
 
 ## Passo 11 · Ajuda e mensagens de erro (02/12)
 
