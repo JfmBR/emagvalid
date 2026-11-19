@@ -81,3 +81,6 @@ export const limiteAvaliacaoPorIp = criarLimite(60, QUINZE_MINUTOS)
 export const limiteExclusaoPorConta = criarLimite(5, QUINZE_MINUTOS)
 // Relatórios em PDF por conta: cada um abre um Chromium (design do PDF, 19/11/2026)
 export const limitePdfPorConta = criarLimite(10, UMA_HORA)
+// O mesmo por IP, somando todas as contas: sem plano pago, qualquer conta gratuita pede PDF, e criar
+// contas novas não pode multiplicar o limite
+export const limitePdfPorIp = criarLimite(20, UMA_HORA)

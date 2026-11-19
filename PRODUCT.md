@@ -4,7 +4,7 @@ Resumo do produto para quem vai construir. A fonte oficial do escopo é o Plano 
 
 ## Problema e objetivo
 
-Pequenas e médias empresas têm site, mas não sabem se ele é acessível nem como corrigir. O AcessaWeb vende o serviço de analisar uma página pública pelo eMAG 3.1: mostra as falhas com o requisito violado e uma nota de 0 a 100, e a IA traduz cada falha numa explicação simples e numa sugestão de código (antes e depois) para quem quiser corrigir sozinho. A análise de amostra é gratuita; o relatório em PDF fica no plano pago. Ele **complementa** a avaliação humana; não é certificação.
+Pequenas e médias empresas têm site, mas não sabem se ele é acessível nem como corrigir. O AcessaWeb vende o serviço de analisar uma página pública pelo eMAG 3.1: mostra as falhas com o requisito violado e uma nota de 0 a 100, e a IA traduz cada falha numa explicação simples e numa sugestão de código (antes e depois) para quem quiser corrigir sozinho. No MVP tudo é gratuito para quem tem conta, inclusive o relatório em PDF; plano pago e cobrança ficam para depois (decisão do João, 19/11/2026). Ele **complementa** a avaliação humana; não é certificação.
 
 ## Público e papéis
 
@@ -19,17 +19,17 @@ Caminho a seguir: o protótipo beta, `projeto/docs/prototipo/beta/index.html` (1
 2. Informar a URL de uma página pública, ou uma lista de até 10 (RF20, analisadas uma por vez), e iniciar a avaliação; acompanhar o andamento na própria tela ou no histórico.
 3. Ver o resultado: nota, nota por requisito com a conta, falhas com requisito, local exato e prioridade, e o que exige revisão humana.
 4. Ler as sugestões da IA, marcadas como sugestão, com aviso para conferir antes de aplicar (RF10).
-5. Gerar o PDF (plano pago). Na amostra gratuita, que exige conta, o PDF aparece bloqueado, com aviso; não há cobrança no MVP (RF21).
+5. Baixar o relatório em PDF. Exige conta, como o resto; não há plano pago nem cobrança no MVP.
 6. Abrir uma avaliação anterior no histórico.
 7. Em erro e nos casos de borda (URL inválida, página fora do ar ou lenta demais, redirecionamento, arquivo que não é HTML, página que pede login, análise que falhou), ver mensagem clara com o próximo passo (RF17).
 
 ## MVP
 
-Requisitos de prioridade alta (A) e média (M) do Plano de Projeto v1.1: RF01–RF10, RF12–RF14, RF16, RF17, RF21, RNF01–RNF08 e RNF10. RF20 (lista de URLs, baixa) entrou em 19/11/2026, com até 10 links por envio. A média só se corta com o aval do mentor; nunca se corta a publicação, a LGPD (RNF05) nem a segurança (RNF04, RNF10).
+Requisitos de prioridade alta (A) e média (M) do Plano de Projeto v1.1: RF01–RF10, RF12–RF14, RF16, RF17, RF21 (só a parte que exige conta para ver o resultado), RNF01–RNF08 e RNF10. RF20 (lista de URLs, baixa) entrou em 19/11/2026, com até 10 links por envio. O plano pago do RF21 (PDF bloqueado sem ele) saiu em 19/11/2026, por decisão do João: o PDF fica liberado para toda conta. Falta o aval do mentor, e o Plano de Projeto v1.1 ainda não foi atualizado (`projeto/contexto_agente/07-pendencias-e-decisoes.md`, seções D e E). A média só se corta com o aval do mentor; nunca se corta a publicação, a LGPD (RNF05) nem a segurança (RNF04, RNF10).
 
 ## Fora do escopo
 
-O que o protótipo beta mostra além do MVP: nota por perfil de deficiência, critérios WCAG, auditoria aprofundada, indicação de equipes parceiras e validação com uma equipe de pessoas com cada tipo de deficiência (decisão de 11/11/2026). Também: cobrança e pagamento (modelo previsto: valor por quantidade de páginas), edição das orientações (RF11), varredura de várias páginas ao mesmo tempo, aplicativo móvel, certificação de conformidade integral, comparação entre avaliações (RF15), exportação CSV (RF18), canal de contato humano (RF19), uso em celular (RNF09), páginas atrás de login e integrações com Jira, GitHub ou CI.
+O que o protótipo beta mostra além do MVP: nota por perfil de deficiência, critérios WCAG, auditoria aprofundada, indicação de equipes parceiras e validação com uma equipe de pessoas com cada tipo de deficiência (decisão de 11/11/2026). Também: plano pago, cobrança e pagamento (modelo previsto: valor por quantidade de páginas; saiu do MVP em 19/11/2026), edição das orientações (RF11), varredura de várias páginas ao mesmo tempo, aplicativo móvel, certificação de conformidade integral, comparação entre avaliações (RF15), exportação CSV (RF18), canal de contato humano (RF19), uso em celular (RNF09), páginas atrás de login e integrações com Jira, GitHub ou CI.
 
 ## Requisitos
 

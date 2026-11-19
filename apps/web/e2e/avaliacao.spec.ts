@@ -166,9 +166,9 @@ test('só com teclado: pedir a avaliação, acompanhar e ver a análise concluí
   ).toBeVisible()
   await semViolacoesSerias(page)
 
-  // junto da nota: "Baixar PDF" (bloqueado sem plano, mas no Tab) e o atalho para a revisão humana
+  // junto da nota: "Baixar PDF" e o atalho para a revisão humana
   await page.keyboard.press('Tab')
-  await expect(page.getByRole('button', { name: 'Baixar PDF (plano pago)' })).toBeFocused()
+  await expect(page.getByRole('button', { name: 'Baixar PDF' })).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(page.getByRole('button', { name: 'Ir para a revisão humana' })).toBeFocused()
 
@@ -208,14 +208,8 @@ const concluida = {
   resultado,
 }
 
-test('com plano pago, "Baixar PDF" baixa o arquivo com o nome da página e da data', async ({
-  page,
-}) => {
+test('"Baixar PDF" baixa o arquivo com o nome da página e da data', async ({ page }) => {
   await simularApi(page, () => concluida)
-  // as rotas mais novas valem primeiro: esta troca a sessão da Helena por uma com plano
-  await page.route('**/api/auth/eu', (rota) =>
-    rota.fulfill({ status: 200, json: { usuario: { ...helena, planoPago: true } } }),
-  )
   await page.route('**/api/avaliacoes/a1/pdf', (rota) =>
     rota.fulfill({
       status: 200,
@@ -232,18 +226,6 @@ test('com plano pago, "Baixar PDF" baixa o arquivo com o nome da página e da da
   await page.getByRole('button', { name: 'Baixar PDF' }).click()
 
   expect((await download).suggestedFilename()).toBe('acessaweb-www.loja.com.br-2026-11-19.pdf')
-  await semViolacoesSerias(page)
-})
-
-test('sem plano pago, o botão fica bloqueado, com o aviso, e sem violações sérias', async ({
-  page,
-}) => {
-  await simularApi(page, () => concluida)
-  await page.goto('/avaliacoes/a1')
-
-  const botao = page.getByRole('button', { name: 'Baixar PDF (plano pago)' })
-  await expect(botao).toHaveAttribute('aria-disabled', 'true')
-  await expect(botao).toHaveAccessibleDescription(/^O relatório em PDF faz parte do plano pago/)
   await semViolacoesSerias(page)
 })
 

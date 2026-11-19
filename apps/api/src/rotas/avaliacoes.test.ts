@@ -8,6 +8,7 @@ import {
   limiteAvaliacaoPorConta,
   limiteAvaliacaoPorIp,
   limitePdfPorConta,
+  limitePdfPorIp,
 } from '../auth/tentativas.js'
 import { GeradorOcupado, gerarPdf } from '../relatorio/pdf.js'
 
@@ -149,9 +150,7 @@ vi.mock('../auth/sessao.js', async (importOriginal) => ({
       res.status(401).json({ erro: 'Entre na sua conta para continuar.' })
       return
     }
-    // x-plano: sim faz o papel do plano pago (RF21)
-    const planoPago = req.get('x-plano') === 'sim'
-    res.locals.usuario = { id, nome: 'Teste', email: `${id}@empresa.com.br`, planoPago }
+    res.locals.usuario = { id, nome: 'Teste', email: `${id}@empresa.com.br` }
     next()
   },
 }))
@@ -201,6 +200,7 @@ beforeEach(() => {
   limiteAvaliacaoPorConta.zerar()
   limiteAvaliacaoPorIp.zerar()
   limitePdfPorConta.zerar()
+  limitePdfPorIp.zerar()
   vi.mocked(gerarPdf).mockReset().mockResolvedValue(Buffer.from('%PDF-1.7 falso'))
   andamento.clear()
   vi.mocked(fila.adicionar).mockReset()
@@ -767,10 +767,9 @@ describe('POST /api/avaliacoes/:id/revisao', () => {
 })
 
 describe('GET /api/avaliacoes/:id/pdf', () => {
-  function baixar(usuario: string | null, id: string, plano = true) {
+  function baixar(usuario: string | null, id: string) {
     const pedido = request(criarApp()).get(`/api/avaliacoes/${id}/pdf`)
     if (usuario) pedido.set('x-usuario', usuario)
-    if (plano) pedido.set('x-plano', 'sim')
     return pedido
   }
   const concluida = (dados: Partial<AvaliacaoFalsa> = {}) =>
@@ -788,22 +787,15 @@ describe('GET /api/avaliacoes/:id/pdf', () => {
     expect((await baixar(null, concluida().id)).status).toBe(401)
   })
 
-  it('avaliação de outra conta, inexistente ou id que não é UUID → 404, mesmo sem plano', async () => {
+  it('avaliação de outra conta, inexistente ou id que não é UUID → 404', async () => {
     const outra = concluida({ usuarioId: 'u2' })
 
     for (const id of [outra.id, randomUUID(), 'nao-e-uuid']) {
-      const { status, body } = await baixar('u1', id, false)
+      const { status, body } = await baixar('u1', id)
       expect(status).toBe(404)
       expect(body.erro).toBe('Avaliação não encontrada.')
     }
     expect(gerarPdf).not.toHaveBeenCalled()
-  })
-
-  it('sem plano pago → 403', async () => {
-    const { status, body } = await baixar('u1', concluida().id, false)
-
-    expect(status).toBe(403)
-    expect(body.erro).toBe('O relatório em PDF faz parte do plano pago.')
   })
 
   it('avaliação pendente ou com erro → 409', async () => {
@@ -856,10 +848,22 @@ describe('GET /api/avaliacoes/:id/pdf', () => {
     )
   })
 
-  it('outro PDF em geração → 503 com Retry-After, sem gastar o limite', async () => {
+  it('21º pedido do mesmo IP com contas diferentes → 429', async () => {
+    for (let i = 0; i < limitePdfPorIp.maximo; i++) {
+      const conta = `conta${i}`
+      expect((await baixar(conta, concluida({ usuarioId: conta }).id)).status).toBe(200)
+    }
+
+    const { status, body } = await baixar('conta-nova', concluida({ usuarioId: 'conta-nova' }).id)
+    expect(status).toBe(429)
+    expect(body.erro).toBe('Muitos relatórios pedidos desta rede. Tente de novo em 1 hora.')
+    expect(gerarPdf).toHaveBeenCalledTimes(limitePdfPorIp.maximo)
+  })
+
+  it('outro PDF em geração → 503 com Retry-After, sem gastar o limite da conta nem o do IP', async () => {
     const id = concluida().id
     vi.mocked(gerarPdf).mockRejectedValue(new GeradorOcupado('ocupado'))
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < limitePdfPorIp.maximo + 1; i++) {
       const { status, body, headers } = await baixar('u1', id)
       expect(status).toBe(503)
       expect(headers['retry-after']).toBe('5')

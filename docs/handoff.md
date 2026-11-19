@@ -5,23 +5,24 @@ Antes de retomar, confira os arquivos, o `git status`, as checagens e os process
 ## Objetivo
 
 - **Projeto:** MVP do AcessaWeb (`PRODUCT.md`; guia em `docs/passo-a-passo-mvp.md`).
-- **Feito até aqui:** Passos 3 a 7 e a lista de URLs, com as PRs #21 a #31 mescladas na `main`. A #31 (RF20, Tela 8, link do eMAG em nova aba) entrou em 19/11.
-- **Aberta:** a PR #32 (`feat/relatorio-pdf`), com o Passo 9 (PDF, RF12, RF13, RF21). Os checks `verificar` e `e2e` do CI passaram. Design em `docs/superpowers/specs/2026-11-19-relatorio-pdf-design.md`; plano em `docs/superpowers/plans/2026-11-19-relatorio-pdf.md`.
-- **Próximo:** o João faz o merge da #32. Depois, automatizar parte da revisão humana (Pendências) ou o Passo 8 (IA).
+- **Feito até aqui:** Passos 3 a 7, 9 e 10 e a lista de URLs, com as PRs #21 a #32 mescladas na `main`. A #31 (RF20, Tela 8, link do eMAG em nova aba) entrou em 19/11.
+- **Mesclada:** a PR #32 (`feat/relatorio-pdf`), com o Passo 9 (PDF, RF12, RF13). Design em `docs/superpowers/specs/2026-11-19-relatorio-pdf-design.md`; plano em `docs/superpowers/plans/2026-11-19-relatorio-pdf.md`.
+- **Depois do merge (19/11):** plano pago e cobrança saíram do MVP, e o PDF ficou liberado para toda conta (branch `fix/pdf-sem-plano-pago`; `07`, seção D).
+- **Próximo:** automatizar parte da revisão humana (Pendências) ou o Passo 8 (IA).
 
 ## Estado verificado (19/11/2026)
 
-| Item                        | Valor                                                                                                                                                                                                                                                                                                                                               |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `main` (origin)             | `8a588fc` (merge da #31)                                                                                                                                                                                                                                                                                                                            |
-| Branch `feat/relatorio-pdf` | Commits da `ac68905` (design) à `8dd2739` (achados menores do `/code-review`), no GitHub na PR #32, com o CI passando                                                                                                                                                                                                                               |
-| `npm run verificar`         | exit 0 na branch: API 244 testes, web 108, build ok                                                                                                                                                                                                                                                                                                 |
-| `npm run test:e2e`          | 30 de 30                                                                                                                                                                                                                                                                                                                                            |
-| PDF de verdade              | Exemplo com 51 falhas: 8 páginas A4, "Página X de 8" no rodapé, trecho longo quebrando, `<script>` como texto, `pdfinfo` com `Tagged: yes` (`docs/quality.md`)                                                                                                                                                                                      |
-| Banco local                 | Migração `20261119184305_usuario_plano_pago` aplicada, com o ok do João ao SQL. Nenhuma conta tem `planoPago` ligado                                                                                                                                                                                                                                |
-| Produção                    | O próximo deploy leva ao Neon as migrações `20261118002249_avaliacao_url_final_pagina_grande`, `20261119142307_avaliacao_nota_e_revisao` e `20261119184305_usuario_plano_pago`. Depois dele: ligar `planoPago` nas contas de demonstração e da banca, confirmar o `Resolver` (DNS) no Render e medir a memória com a análise e o PDF ao mesmo tempo |
-| Processos                   | Nenhum servidor aberto                                                                                                                                                                                                                                                                                                                              |
-| Branches locais             | `docs/fechamento-18-11`, `feat/excluir-conta`, `feat/tela-resultado`, `fix/barra-acessibilidade`, `fix/fila-e-pendentes` e `feat/lista-de-urls` já entraram por squash (#26 a #31) e podem ser apagadas                                                                                                                                             |
+| Item                            | Valor                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main` (origin)                 | `df60a0d` (merge da #32)                                                                                                                                                                                                                                                                                                                                      |
+| Branch `fix/pdf-sem-plano-pago` | PR #33: plano pago fora do MVP, limite de PDF por IP, VLibras como ideia pós-MVP e documentos desatualizados corrigidos. Aguarda o merge do João                                                                                                                                                                                                              |
+| `npm run verificar`             | exit 0 na branch `fix/pdf-sem-plano-pago`: API 243 testes, web 106, build ok                                                                                                                                                                                                                                                                                  |
+| `npm run test:e2e`              | 29 de 29                                                                                                                                                                                                                                                                                                                                                      |
+| PDF de verdade                  | Exemplo com 51 falhas: 8 páginas A4, "Página X de 8" no rodapé, trecho longo quebrando, `<script>` como texto, `pdfinfo` com `Tagged: yes` (`docs/quality.md`)                                                                                                                                                                                                |
+| Banco local                     | Migração `20261119184305_usuario_plano_pago` aplicada, com o ok do João ao SQL. Nenhuma conta tem `planoPago` ligado                                                                                                                                                                                                                                          |
+| Produção                        | O Render publica sozinho a cada merge na `main` (Auto-Deploy). Em 19/11/2026, o endereço público já tinha a versão da #32 ("Baixar PDF (plano pago)"), e acordar levou 58 s; o contêiner aplica as migrações na partida. O merge da #33 libera o PDF lá. Falta: confirmar o `Resolver` (DNS) no Render e medir a memória com a análise e o PDF ao mesmo tempo |
+| Processos                       | Nenhum servidor aberto                                                                                                                                                                                                                                                                                                                                        |
+| Branches locais                 | `docs/fechamento-18-11`, `feat/excluir-conta`, `feat/tela-resultado`, `fix/barra-acessibilidade`, `fix/fila-e-pendentes`, `feat/lista-de-urls` e `feat/relatorio-pdf` já entraram por squash (#26 a #32) e podem ser apagadas                                                                                                                                 |
 
 ## O que a branch `feat/relatorio-pdf` traz
 
@@ -30,7 +31,7 @@ Decisões do João (19/11), registradas em `projeto/contexto_agente/07-pendencia
 - **Sem Tela 7:** "Baixar PDF" fica na Tela 5, junto da nota, com "K de T itens conferidos" e o atalho "Ir para a revisão humana", e em cada linha concluída da Tela 8.
 - **Conteúdo:** cabeçalho, aviso de que não é certificação, resumo, uma caixa por recomendação com todas as ocorrências, revisão humana com o que foi conferido e "Como chegamos na nota". Sem nome de auditor.
 - **Geração:** na hora do clique, um por vez, sem guardar. Chromium sem JavaScript e sem rede, teto de 20 s, 10 PDFs por hora por conta.
-- **Plano pago:** campo `planoPago` na conta, ligado à mão. Sem ele, o botão fica bloqueado (`aria-disabled`, no Tab) com o aviso do RF21.
+- **Plano pago:** campo `planoPago` na conta, ligado à mão. Sem ele, o botão fica bloqueado (`aria-disabled`, no Tab) com o aviso do RF21. Saiu do MVP depois do merge (19/11): o PDF vale para toda conta, e a coluna fica sem uso.
 - **Correções do `/code-review`:**
   - o PDF espera a marcação da revisão ser gravada;
   - o arquivo baixado só é solto 1 s depois do clique (Safari e Firefox);
@@ -66,7 +67,7 @@ Decisões do João (19/11), registradas em `projeto/contexto_agente/07-pendencia
 - Sites lentos dão DEMOROU (RNF06, R7).
 - Avisar o cálculo da nota e o arredondamento para baixo.
 
-**Achados menores do `/code-review` do PDF:** os 5 foram corrigidos com teste, a pedido do João (19/11). Ficou só a decisão de não registrar em log o 403 (sem plano) e o 429 do PDF: o plano é regra de produto, não acesso a dado de outra conta.
+**Achados menores do `/code-review` do PDF:** os 5 foram corrigidos com teste, a pedido do João (19/11). Ficou só a decisão de não registrar em log o 429 do PDF (o 403 sem plano não existe mais).
 
 **Riscos e pequenos ajustes adiados**
 
@@ -97,6 +98,6 @@ Nenhum.
 
 ## Próxima ação
 
-1. O João faz o merge da PR #32 (squash). Na PR ficaram abertos dois itens do checklist: o leitor de tela e o `03` com a situação do marco.
-2. Depois do deploy: ligar `planoPago` nas contas de demonstração e medir a memória no Render.
+1. Na PR #32 ficaram abertos dois itens do checklist: o leitor de tela e o `03` com a situação do marco.
+2. Depois do deploy: medir a memória no Render.
 3. Nova sessão: confira `git status`, a `main` e `npm run verificar`, e escolha com o João entre a automação da revisão humana e o Passo 8 (IA).
