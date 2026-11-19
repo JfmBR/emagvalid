@@ -6,16 +6,16 @@ Antes de retomar, confira os arquivos, o `git status`, as checagens e os process
 
 - **Projeto:** MVP do AcessaWeb (`PRODUCT.md`; guia em `docs/passo-a-passo-mvp.md`).
 - **Feito até aqui:** Passos 3 a 7 e a lista de URLs, com as PRs #21 a #31 mescladas na `main`. A #31 (RF20, Tela 8, link do eMAG em nova aba) entrou em 19/11.
-- **Pronta, sem push:** a branch `feat/relatorio-pdf`, com o Passo 9 (PDF, RF12, RF13, RF21). Design em `docs/superpowers/specs/2026-11-19-relatorio-pdf-design.md`; plano em `docs/superpowers/plans/2026-11-19-relatorio-pdf.md`.
-- **Próximo:** o João pede o push e a PR, e faz o merge. Depois, automatizar parte da revisão humana (Pendências) ou o Passo 8 (IA).
+- **Aberta:** a PR #32 (`feat/relatorio-pdf`), com o Passo 9 (PDF, RF12, RF13, RF21). Os checks `verificar` e `e2e` do CI passaram. Design em `docs/superpowers/specs/2026-11-19-relatorio-pdf-design.md`; plano em `docs/superpowers/plans/2026-11-19-relatorio-pdf.md`.
+- **Próximo:** o João faz o merge da #32. Depois, automatizar parte da revisão humana (Pendências) ou o Passo 8 (IA).
 
 ## Estado verificado (19/11/2026)
 
 | Item                        | Valor                                                                                                                                                                                                                                                                                                                                               |
 | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `main` (origin)             | `8a588fc` (merge da #31)                                                                                                                                                                                                                                                                                                                            |
-| Branch `feat/relatorio-pdf` | Commits da `f732f81` (pendência no handoff) à `2ed1699` (correções do `/code-review`), por cima do design e do plano. Sem push                                                                                                                                                                                                                      |
-| `npm run verificar`         | exit 0 na branch: API 242 testes, web 106, build ok                                                                                                                                                                                                                                                                                                 |
+| Branch `feat/relatorio-pdf` | Commits da `ac68905` (design) à `8dd2739` (achados menores do `/code-review`), no GitHub na PR #32, com o CI passando                                                                                                                                                                                                                               |
+| `npm run verificar`         | exit 0 na branch: API 244 testes, web 108, build ok                                                                                                                                                                                                                                                                                                 |
 | `npm run test:e2e`          | 30 de 30                                                                                                                                                                                                                                                                                                                                            |
 | PDF de verdade              | Exemplo com 51 falhas: 8 páginas A4, "Página X de 8" no rodapé, trecho longo quebrando, `<script>` como texto, `pdfinfo` com `Tagged: yes` (`docs/quality.md`)                                                                                                                                                                                      |
 | Banco local                 | Migração `20261119184305_usuario_plano_pago` aplicada, com o ok do João ao SQL. Nenhuma conta tem `planoPago` ligado                                                                                                                                                                                                                                |
@@ -31,7 +31,14 @@ Decisões do João (19/11), registradas em `projeto/contexto_agente/07-pendencia
 - **Conteúdo:** cabeçalho, aviso de que não é certificação, resumo, uma caixa por recomendação com todas as ocorrências, revisão humana com o que foi conferido e "Como chegamos na nota". Sem nome de auditor.
 - **Geração:** na hora do clique, um por vez, sem guardar. Chromium sem JavaScript e sem rede, teto de 20 s, 10 PDFs por hora por conta.
 - **Plano pago:** campo `planoPago` na conta, ligado à mão. Sem ele, o botão fica bloqueado (`aria-disabled`, no Tab) com o aviso do RF21.
-- **Correções do `/code-review`:** o PDF espera a marcação da revisão ser gravada; o arquivo baixado só é solto 1 s depois do clique (Safari e Firefox).
+- **Correções do `/code-review`:**
+  - o PDF espera a marcação da revisão ser gravada;
+  - o arquivo baixado só é solto 1 s depois do clique (Safari e Firefox);
+  - o teto de 20 s vale também para abrir o Chromium;
+  - trecho vazio não vira caixa vazia;
+  - a conta sem plano não lê a frase sobre o PDF;
+  - o erro do PDF na Tela 8 fica num `div`;
+  - a Tela 5 remonta ao trocar de avaliação.
 
 ## Pedidos do João (18/11)
 
@@ -90,6 +97,6 @@ Nenhum.
 
 ## Próxima ação
 
-1. O João pede o push de `feat/relatorio-pdf` e a PR (checklist de `.github/pull_request_template.md`), e faz o merge (squash).
+1. O João faz o merge da PR #32 (squash). Na PR ficaram abertos dois itens do checklist: o leitor de tela e o `03` com a situação do marco.
 2. Depois do deploy: ligar `planoPago` nas contas de demonstração e medir a memória no Render.
 3. Nova sessão: confira `git status`, a `main` e `npm run verificar`, e escolha com o João entre a automação da revisão humana e o Passo 8 (IA).
