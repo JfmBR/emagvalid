@@ -202,7 +202,7 @@ Requisitos: RF07, RF08, RF10, RF11.
 
 ## Passo 9 · Relatório em PDF (30/11–01/12; feito em 19/11/2026)
 
-Requisitos: RF12, RF13, RF21. Design: `docs/superpowers/specs/2026-11-19-relatorio-pdf-design.md`.
+Requisitos: RF12, RF13, RF21 (o plano pago saiu do MVP em 19/11/2026). Design: `docs/superpowers/specs/2026-11-19-relatorio-pdf-design.md`.
 
 - [x] Montar o relatório como uma página HTML e gerar o PDF com o próprio Playwright (`page.pdf()`), sem biblioteca nova
 - [x] Conteúdo (decisão do João, 19/11/2026): cabeçalho (página, data, "Preparado para"), aviso de que não é certificação, resumo, uma caixa por recomendação com falha (prioridade, porquê, exemplo de correção e todas as ocorrências), "Revisão humana" com o que foi conferido, "Como chegamos na nota" e rodapé com a data e a página. Sem nome de auditor(a), porque o público agora é o dono do site

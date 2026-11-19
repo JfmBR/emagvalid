@@ -8,6 +8,7 @@ import {
   limiteAvaliacaoPorConta,
   limiteAvaliacaoPorIp,
   limitePdfPorConta,
+  limitePdfPorIp,
 } from '../auth/tentativas.js'
 import { GeradorOcupado, gerarPdf } from '../relatorio/pdf.js'
 
@@ -199,6 +200,7 @@ beforeEach(() => {
   limiteAvaliacaoPorConta.zerar()
   limiteAvaliacaoPorIp.zerar()
   limitePdfPorConta.zerar()
+  limitePdfPorIp.zerar()
   vi.mocked(gerarPdf).mockReset().mockResolvedValue(Buffer.from('%PDF-1.7 falso'))
   andamento.clear()
   vi.mocked(fila.adicionar).mockReset()
@@ -846,10 +848,22 @@ describe('GET /api/avaliacoes/:id/pdf', () => {
     )
   })
 
-  it('outro PDF em geração → 503 com Retry-After, sem gastar o limite', async () => {
+  it('21º pedido do mesmo IP com contas diferentes → 429', async () => {
+    for (let i = 0; i < limitePdfPorIp.maximo; i++) {
+      const conta = `conta${i}`
+      expect((await baixar(conta, concluida({ usuarioId: conta }).id)).status).toBe(200)
+    }
+
+    const { status, body } = await baixar('conta-nova', concluida({ usuarioId: 'conta-nova' }).id)
+    expect(status).toBe(429)
+    expect(body.erro).toBe('Muitos relatórios pedidos desta rede. Tente de novo em 1 hora.')
+    expect(gerarPdf).toHaveBeenCalledTimes(limitePdfPorIp.maximo)
+  })
+
+  it('outro PDF em geração → 503 com Retry-After, sem gastar o limite da conta nem o do IP', async () => {
     const id = concluida().id
     vi.mocked(gerarPdf).mockRejectedValue(new GeradorOcupado('ocupado'))
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < limitePdfPorIp.maximo + 1; i++) {
       const { status, body, headers } = await baixar('u1', id)
       expect(status).toBe(503)
       expect(headers['retry-after']).toBe('5')

@@ -25,7 +25,7 @@ Caminho a seguir: o protótipo beta, `projeto/docs/prototipo/beta/index.html` (1
 
 ## MVP
 
-Requisitos de prioridade alta (A) e média (M) do Plano de Projeto v1.1: RF01–RF10, RF12–RF14, RF16, RF17, RNF01–RNF08 e RNF10. RF20 (lista de URLs, baixa) entrou em 19/11/2026, com até 10 links por envio. RF21 (amostra gratuita e PDF só no plano pago) saiu em 19/11/2026, por decisão do João: o PDF fica liberado para toda conta, e o Plano de Projeto v1.1 ainda não foi atualizado (`projeto/contexto_agente/07-pendencias-e-decisoes.md`, seção D). A média só se corta com o aval do mentor; nunca se corta a publicação, a LGPD (RNF05) nem a segurança (RNF04, RNF10).
+Requisitos de prioridade alta (A) e média (M) do Plano de Projeto v1.1: RF01–RF10, RF12–RF14, RF16, RF17, RF21 (só a parte que exige conta para ver o resultado), RNF01–RNF08 e RNF10. RF20 (lista de URLs, baixa) entrou em 19/11/2026, com até 10 links por envio. O plano pago do RF21 (PDF bloqueado sem ele) saiu em 19/11/2026, por decisão do João: o PDF fica liberado para toda conta. Falta o aval do mentor, e o Plano de Projeto v1.1 ainda não foi atualizado (`projeto/contexto_agente/07-pendencias-e-decisoes.md`, seções D e E). A média só se corta com o aval do mentor; nunca se corta a publicação, a LGPD (RNF05) nem a segurança (RNF04, RNF10).
 
 ## Fora do escopo
 

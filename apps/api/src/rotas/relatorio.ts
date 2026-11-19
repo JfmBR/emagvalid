@@ -1,7 +1,8 @@
 import { Router } from 'express'
 import { CAMPOS_DO_RESULTADO, resultadoDaAvaliacao } from '../analise/resultado.js'
 import { exigirLogin, type UsuarioDaSessao } from '../auth/sessao.js'
-import { limitePdfPorConta } from '../auth/tentativas.js'
+import { chaveDoIp } from '../auth/ip.js'
+import { limitePdfPorConta, limitePdfPorIp } from '../auth/tentativas.js'
 import { db } from '../db.js'
 import { htmlDoRelatorio, rodapeDoRelatorio } from '../relatorio/html.js'
 import { GeradorOcupado, gerarPdf } from '../relatorio/pdf.js'
@@ -43,7 +44,14 @@ rotasRelatorio.get('/:id/pdf', exigirLogin, async (req, res) => {
       erro: `Você chegou ao limite de ${limitePdfPorConta.maximo} relatórios por hora. Tente de novo mais tarde.`,
     })
   }
+  const ip = chaveDoIp(req.ip ?? 'desconhecido')
+  if (limitePdfPorIp.bloqueado(ip)) {
+    return res
+      .status(429)
+      .json({ erro: 'Muitos relatórios pedidos desta rede. Tente de novo em 1 hora.' })
+  }
   limitePdfPorConta.registrar(usuario.id)
+  limitePdfPorIp.registrar(ip)
 
   const pagina = avaliacao.urlFinal ?? avaliacao.url
   const avaliadaEm = avaliacao.concluidaEm ?? avaliacao.criadaEm
@@ -69,6 +77,7 @@ rotasRelatorio.get('/:id/pdf', exigirLogin, async (req, res) => {
     if (erro instanceof GeradorOcupado) {
       // não foi culpa da pessoa: o pedido não conta no limite
       limitePdfPorConta.descontar(usuario.id)
+      limitePdfPorIp.descontar(ip)
       return res
         .status(503)
         .set('Retry-After', '5')
