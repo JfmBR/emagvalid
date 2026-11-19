@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { StrictMode } from 'react'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, useNavigate } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App.tsx'
 
@@ -519,6 +519,53 @@ describe('Tela 8 · histórico', () => {
     expect(screen.getByText('2 análises em andamento.')).toBeInTheDocument()
   })
 
+  it('linha concluída tem Baixar PDF com o nome da página; pendente ou com erro não tem', async () => {
+    simularApi({
+      '/api/auth/eu': { status: 200, corpo: { usuario: { ...helena, planoPago: true } } },
+      '/api/avaliacoes': lista([
+        item('a2', { status: 'ANALISANDO', nota: null, etapa: 2 }),
+        item('a1'),
+        item('a0', { status: 'ERRO', nota: null }),
+      ]),
+    })
+    abrir('/avaliacoes')
+
+    expect(
+      await screen.findByRole('button', { name: 'Baixar PDF de https://loja.com.br/a1' }),
+    ).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Baixar PDF/ })).toHaveLength(1)
+  })
+
+  it('erro do PDF na linha aparece num alerta fora de elemento inline (HTML válido)', async () => {
+    simularApi({
+      '/api/auth/eu': { status: 200, corpo: { usuario: { ...helena, planoPago: true } } },
+      '/api/avaliacoes': lista([item('a1')]),
+      '/api/avaliacoes/a1/pdf': { status: 429, corpo: { erro: 'Limite de relatórios.' } },
+    })
+    abrir('/avaliacoes')
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Baixar PDF de https://loja.com.br/a1' }),
+    )
+
+    const alerta = await screen.findByRole('alert')
+    expect(alerta).toHaveTextContent('Limite de relatórios.')
+    expect(alerta.closest('span')).toBeNull()
+  })
+
+  it('sem plano, o aviso aparece uma vez e descreve os botões', async () => {
+    simularApi({ ...logada, '/api/avaliacoes': lista([item('a2'), item('a1')]) })
+    abrir('/avaliacoes')
+
+    const botoes = await screen.findAllByRole('button', { name: /^Baixar PDF \(plano pago\)/ })
+    expect(botoes).toHaveLength(2)
+    expect(screen.getAllByText(/faz parte do plano pago/)).toHaveLength(1)
+    for (const botao of botoes) {
+      expect(botao).toHaveAttribute('aria-disabled', 'true')
+      expect(botao).toHaveAccessibleDescription(/^O relatório em PDF faz parte do plano pago/)
+    }
+  })
+
   it('pergunta de novo a cada 2 s só enquanto houver pendente', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     let resposta = lista([item('a1', { status: 'ANALISANDO', nota: null, etapa: 1 })])
@@ -1003,6 +1050,145 @@ describe('Tela 4 · análise', () => {
       expect(await screen.findByText(/feita antes do cálculo da nota/)).toBeInTheDocument()
       expect(screen.queryByText(/Como chegamos/)).not.toBeInTheDocument()
       expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(2)
+    })
+
+    describe('Baixar PDF e contagem da revisão', () => {
+      const comPlano = {
+        '/api/auth/eu': { status: 200, corpo: { usuario: { ...helena, planoPago: true } } },
+      }
+
+      it('mostra Baixar PDF e a contagem da revisão', async () => {
+        simularApi({ ...comPlano, '/api/avaliacoes/a1': resposta(concluida) })
+        abrir('/avaliacoes/a1')
+
+        expect(await screen.findByRole('button', { name: 'Baixar PDF' })).toBeInTheDocument()
+        expect(
+          screen.getByText(
+            'Revisão humana: 1 de 2 itens conferidos. Os outros saem no PDF como "a conferir".',
+          ),
+        ).toBeInTheDocument()
+      })
+
+      it('marcar um item muda a contagem sem recarregar', async () => {
+        simularApi({
+          ...comPlano,
+          '/api/avaliacoes/a1': resposta(concluida),
+          '/api/avaliacoes/a1/revisao': { status: 204 },
+        })
+        abrir('/avaliacoes/a1')
+        fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana (2)' }))
+
+        fireEvent.click(screen.getByRole('checkbox', { name: /^4\.4, Foco visível$/ }))
+
+        expect(
+          await screen.findByText('Revisão humana: todos os 2 itens conferidos.'),
+        ).toBeInTheDocument()
+        expect(
+          screen.queryByRole('button', { name: 'Ir para a revisão humana' }),
+        ).not.toBeInTheDocument()
+      })
+
+      it('"Ir para a revisão humana" abre a aba e leva o foco até ela', async () => {
+        simularApi({ ...comPlano, '/api/avaliacoes/a1': resposta(concluida) })
+        abrir('/avaliacoes/a1')
+
+        fireEvent.click(await screen.findByRole('button', { name: 'Ir para a revisão humana' }))
+
+        const aba = screen.getByRole('tab', { name: 'Revisão humana (2)' })
+        expect(aba).toHaveAttribute('aria-selected', 'true')
+        expect(aba).toHaveFocus()
+        expect(screen.getByRole('checkbox', { name: /^4\.4, Foco visível$/ })).toBeVisible()
+      })
+
+      it('Baixar PDF espera a marcação da revisão ser gravada', async () => {
+        // a gravação da caixa fica pendente até o teste soltar
+        let gravar: () => void = () => {}
+        const ordem: string[] = []
+        vi.stubGlobal(
+          'fetch',
+          vi.fn(async (caminho: string) => {
+            ordem.push(caminho)
+            if (caminho === '/api/auth/eu') {
+              return new Response(JSON.stringify({ usuario: { ...helena, planoPago: true } }))
+            }
+            if (caminho === '/api/avaliacoes/a1') {
+              return new Response(JSON.stringify({ avaliacao: concluida }))
+            }
+            if (caminho === '/api/avaliacoes/a1/revisao') {
+              await new Promise<void>((pronto) => (gravar = pronto))
+              return new Response(null, { status: 204 })
+            }
+            return new Response('%PDF', {
+              headers: { 'Content-Disposition': 'attachment; filename="r.pdf"' },
+            })
+          }),
+        )
+        URL.createObjectURL = vi.fn<(objeto: Blob) => string>(() => 'blob:falso')
+        URL.revokeObjectURL = vi.fn<(endereco: string) => void>()
+        const clique = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+        abrir('/avaliacoes/a1')
+        fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana (2)' }))
+
+        fireEvent.click(screen.getByRole('checkbox', { name: /^4\.4, Foco visível$/ }))
+        fireEvent.click(screen.getByRole('button', { name: 'Baixar PDF' }))
+        await new Promise((esperar) => setTimeout(esperar, 50))
+        expect(ordem).not.toContain('/api/avaliacoes/a1/pdf')
+
+        await act(async () => gravar())
+        await waitFor(() => expect(clique).toHaveBeenCalled())
+        expect(ordem.indexOf('/api/avaliacoes/a1/pdf')).toBeGreaterThan(
+          ordem.indexOf('/api/avaliacoes/a1/revisao'),
+        )
+        clique.mockRestore()
+      })
+
+      it('trocar de avaliação na mesma tela não leva as marcas da anterior', async () => {
+        simularApi({
+          ...comPlano,
+          '/api/avaliacoes/a1': resposta(concluida),
+          '/api/avaliacoes/a2': resposta({
+            ...concluida,
+            id: 'a2',
+            resultado: {
+              ...resultado,
+              revisao: resultado.revisao.map((item) => ({ ...item, feita: false })),
+            },
+          }),
+        })
+        // a rota /avaliacoes/:id continua montada quando só o id muda (voltar e avançar do navegador)
+        function IrParaA2() {
+          const navegar = useNavigate()
+          return (
+            <button type="button" onClick={() => void navegar('/avaliacoes/a2')}>
+              ir para a2
+            </button>
+          )
+        }
+        render(
+          <MemoryRouter initialEntries={['/avaliacoes/a1']}>
+            <App />
+            <IrParaA2 />
+          </MemoryRouter>,
+        )
+        expect(await screen.findByText(/^Revisão humana: 1 de 2/)).toBeInTheDocument()
+
+        fireEvent.click(screen.getByRole('button', { name: 'ir para a2' }))
+
+        expect(await screen.findByText(/^Revisão humana: 0 de 2/)).toBeInTheDocument()
+      })
+
+      it('sem plano pago, o botão aparece bloqueado', async () => {
+        simularApi({ ...logada, '/api/avaliacoes/a1': resposta(concluida) })
+        abrir('/avaliacoes/a1')
+
+        expect(
+          await screen.findByRole('button', { name: 'Baixar PDF (plano pago)' }),
+        ).toHaveAttribute('aria-disabled', 'true')
+        // quem não pode baixar não lê sobre o que sai no PDF
+        expect(screen.getByText('Revisão humana: 1 de 2 itens conferidos.')).toBeInTheDocument()
+        expect(screen.queryByText(/saem no PDF/)).not.toBeInTheDocument()
+        expect(screen.getByRole('button', { name: 'Ir para a revisão humana' })).toBeInTheDocument()
+      })
     })
   })
 

@@ -5,38 +5,37 @@ import { Ponto } from '../componentes/Ponto.tsx'
 import { useSessao } from '../sessao.tsx'
 import type { ResultadoAvaliacao } from './Resultado.tsx'
 
-// Aba "Revisão humana" da Tela 5 (RF09): uma caixa por item, gravada na hora
+// Aba "Revisão humana" da Tela 5 (RF09): uma caixa por item, gravada na hora.
+// As marcas (feitas) vivem no Resultado, que mostra a contagem junto do "Baixar PDF".
 export function RevisaoHumana({
   id,
   revisao,
+  feitas,
+  marcar,
+  aoGravar,
 }: {
   id: string
   revisao: ResultadoAvaliacao['revisao']
+  feitas: Set<string>
+  marcar: (numero: string, feita: boolean) => void
+  // cada gravação em andamento: o "Baixar PDF" espera por ela
+  aoGravar: (pedido: Promise<unknown>) => void
 }) {
   const { definirUsuario } = useSessao()
-  const [feitas, setFeitas] = useState(
-    () => new Set(revisao.filter((item) => item.feita).map((item) => item.numero)),
-  )
   const [erro, setErro] = useState('')
   // um pedido por item de cada vez: respostas fora de ordem desfariam a marca errada
   const pendentes = useRef(new Set<string>())
-
-  const marcar = (numero: string, feita: boolean) =>
-    setFeitas((atual) => {
-      const nova = new Set(atual)
-      if (feita) nova.add(numero)
-      else nova.delete(numero)
-      return nova
-    })
 
   async function mudar(numero: string, feita: boolean) {
     if (pendentes.current.has(numero)) return // o clique é ignorado e a caixa fica como está
     pendentes.current.add(numero)
     marcar(numero, feita)
-    const { status, corpo } = await enviar<{ erro: string }>(
-      `/api/avaliacoes/${encodeURIComponent(id)}/revisao`,
-      { numero, feita },
-    )
+    const pedido = enviar<{ erro: string }>(`/api/avaliacoes/${encodeURIComponent(id)}/revisao`, {
+      numero,
+      feita,
+    })
+    aoGravar(pedido)
+    const { status, corpo } = await pedido
     pendentes.current.delete(numero)
     if (status === 204) return setErro('')
     marcar(numero, !feita) // não gravou: a caixa volta a mostrar o que está salvo

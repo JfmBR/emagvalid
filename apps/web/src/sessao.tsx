@@ -1,6 +1,6 @@
 import { createContext, use, useEffect, useState, type ReactNode } from 'react'
 
-export type Usuario = { nome: string; email: string }
+export type Usuario = { nome: string; email: string; planoPago: boolean }
 
 type Sessao = {
   usuario: Usuario | null

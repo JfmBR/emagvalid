@@ -96,6 +96,16 @@ function codigoDoErro(erro: unknown): CodigoErro {
   return 'FALHOU'
 }
 
+// O Chromium fica sem rede própria: todo pedido dele vai a um proxy que não existe e falha.
+// Só sai o que o route abaixo conferiu e buscou pela rede do Node. Isso fecha o que o route não
+// intercepta: saltos de redirecionamento, prefetch/prerender, SharedWorker. O WebRTC (UDP) não usa
+// proxy, então fica proibido à parte. O Chromium do PDF (relatorio/pdf.ts) usa os mesmos.
+export const ARGS_SEM_REDE = [
+  '--proxy-server=http://proxy.invalid:1',
+  '--proxy-bypass-list=<-loopback>',
+  '--force-webrtc-ip-handling-policy=disable_non_proxied_udp',
+]
+
 // Abre a página no Chromium, roda o axe-core e devolve as violações e o endereço final.
 // Cada pedido da página (inclusive cada salto de redirecionamento) só sai se o host for público, e a
 // conexão só vai para IP público (SSRF e DNS rebinding, RNF10). Respostas têm teto de tamanho.
@@ -137,15 +147,7 @@ export async function analisar(
 
   const navegador = await chromium.launch({
     env: ambienteDoNavegador(process.env),
-    // O Chromium fica sem rede própria: todo pedido dele vai a um proxy que não existe e falha.
-    // Só sai o que o route abaixo conferiu e buscou pela rede do Node. Isso fecha o que o route não
-    // intercepta: saltos de redirecionamento, prefetch/prerender, SharedWorker. O WebRTC (UDP) não usa
-    // proxy, então fica proibido à parte.
-    args: [
-      '--proxy-server=http://proxy.invalid:1',
-      '--proxy-bypass-list=<-loopback>',
-      '--force-webrtc-ip-handling-policy=disable_non_proxied_udp',
-    ],
+    args: ARGS_SEM_REDE,
   })
 
   // Relógio ou teto total encerram a análise na hora: param os pedidos e fecham o navegador

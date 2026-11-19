@@ -79,3 +79,5 @@ export const limiteAvaliacaoPorIp = criarLimite(60, QUINZE_MINUTOS)
 // Senhas erradas ao excluir a conta, por conta: separado do login, para errar aqui não travar a
 // entrada, e para quem ataca o login não impedir o dono de excluir a conta (LGPD)
 export const limiteExclusaoPorConta = criarLimite(5, QUINZE_MINUTOS)
+// Relatórios em PDF por conta: cada um abre um Chromium (design do PDF, 19/11/2026)
+export const limitePdfPorConta = criarLimite(10, UMA_HORA)

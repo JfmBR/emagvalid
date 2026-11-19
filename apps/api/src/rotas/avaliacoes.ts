@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { classificarEndereco, MSG_URL, prepararUrl } from '../analise/endereco.js'
 import { andamento, fila, MENSAGEM_ERRO } from '../analise/executar.js'
-import { itensDeRevisao, resultadoDaAvaliacao } from '../analise/resultado.js'
+import { CAMPOS_DO_RESULTADO, itensDeRevisao, resultadoDaAvaliacao } from '../analise/resultado.js'
 import { chaveDoIp } from '../auth/ip.js'
 import { exigirLogin, type UsuarioDaSessao } from '../auth/sessao.js'
 import { limiteAvaliacaoPorConta, limiteAvaliacaoPorIp } from '../auth/tentativas.js'
@@ -22,7 +22,7 @@ const MAX_NA_FILA = 30
 const PRAZO_PENDENTE_MS = 10 * 60 * 1000
 // Histórico (Tela 8): avaliações por página, com "Mostrar mais" (decisão do João, 19/11/2026)
 const POR_PAGINA = 20
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const MSG_ENVIANDO = 'Seu envio anterior ainda está sendo processado. Espere um instante.'
 const MSG_MUITOS_PEDIDOS = 'Muitas tentativas. Tente de novo em 15 minutos.'
 const MSG_LIMITE = `Você chegou ao limite de ${MAX_POR_HORA} análises por hora. Tente de novo mais tarde.`
@@ -253,20 +253,7 @@ rotasAvaliacoes.get('/:id', exigirLogin, async (req, res) => {
       mensagemErro: true,
       criadaEm: true,
       concluidaEm: true,
-      nota: true,
-      requisitosAplicaveis: true,
-      requisitosEmDuvida: true,
-      revisados: true,
-      falhas: {
-        select: {
-          requisitoEmag: true,
-          descricao: true,
-          prioridade: true,
-          seletor: true,
-          trecho: true,
-          revisaoHumana: true,
-        },
-      },
+      ...CAMPOS_DO_RESULTADO,
     },
   })
   if (!avaliacao) return naoEncontrada()

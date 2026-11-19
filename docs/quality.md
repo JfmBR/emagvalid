@@ -35,6 +35,7 @@ O `--verificar` não roda no CI, porque a tabela de nomes é privada: ele entra 
 - **Ponta a ponta (Playwright + axe, `apps/web/e2e/`):** cada tela sem violações sérias ou críticas de WCAG 2.1 A/AA, uso por teclado e estados da tela. A resposta da API é simulada com `page.route` para o teste não depender dela.
 - **Leitor de tela (manual):** Orca + Firefox e NVDA; roteiro em `docs/design.md`.
 - **SQL escrito à mão (manual):** o CI não tem banco, então o teste da rota usa um banco falso. O `UPDATE` da revisão humana (`apps/api/src/rotas/avaliacoes.ts`) foi conferido no Postgres local em 19/11/2026 (marcar, repetir, desmarcar); confira de novo se ele mudar.
+- **PDF do relatório (manual):** o teste da rota simula o gerador; o `pdf.test.ts` abre um Chromium de verdade (gera, não busca nada na rede, um por vez, libera depois de falhar). Em 19/11/2026, um PDF de exemplo com 51 falhas (uma com trecho de 1.000 caracteres sem espaço e outra com `</style><script>`) saiu em 8 páginas A4, com "Página X de 8" em todas, o trecho quebrando dentro da margem, o `<script>` como texto e `pdfinfo` dizendo `Tagged: yes`. Confira de novo se `html.ts` ou `pdf.ts` mudarem. Falta ouvir o PDF no Orca ou no NVDA.
 - Correção de bug começa por um teste que reproduz o erro.
 
 ## Navegador para o agente
