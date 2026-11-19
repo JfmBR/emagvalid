@@ -55,6 +55,7 @@ describe('criarFila', () => {
     expect(fila.posicao('b')).toBe(1)
     expect(fila.posicao('c')).toBe(2)
     expect(fila.posicao('x')).toBeNull()
+    expect(fila.tamanho()).toBe(3)
 
     controles.get('a')!.resolver()
     await aguardar()
@@ -62,6 +63,7 @@ describe('criarFila', () => {
     expect(fila.posicao('a')).toBeNull()
     expect(fila.posicao('b')).toBe(0)
     expect(fila.posicao('c')).toBe(1)
+    expect(fila.tamanho()).toBe(2)
   })
 
   it('um erro em uma não para a fila', async () => {

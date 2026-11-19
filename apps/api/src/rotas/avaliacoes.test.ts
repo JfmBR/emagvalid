@@ -66,6 +66,11 @@ vi.mock('../db.js', () => {
         },
         findFirst: async ({ where }: { where: Filtro }) =>
           banco.avaliacoes.find((a) => confere(a, where)) ?? null,
+        updateMany: async ({ where, data }: { where: Filtro; data: Partial<AvaliacaoFalsa> }) => {
+          const achadas = banco.avaliacoes.filter((a) => confere(a, where))
+          for (const a of achadas) Object.assign(a, data)
+          return { count: achadas.length }
+        },
       },
     },
   }
@@ -75,8 +80,10 @@ vi.mock('../analise/executar.js', () => ({
   fila: {
     adicionar: vi.fn<(id: string) => void>(),
     posicao: vi.fn<(id: string) => number | null>(),
+    tamanho: vi.fn<() => number>(),
   },
   andamento: new Map(),
+  MENSAGEM_ERRO: { INTERROMPIDA: 'A análise foi interrompida porque o servidor reiniciou.' },
 }))
 
 vi.mock('../analise/endereco.js', async (importOriginal) => ({
@@ -139,6 +146,7 @@ beforeEach(() => {
   andamento.clear()
   vi.mocked(fila.adicionar).mockReset()
   vi.mocked(fila.posicao).mockReset().mockReturnValue(null)
+  vi.mocked(fila.tamanho).mockReset().mockReturnValue(0)
   vi.mocked(classificarEndereco).mockReset().mockResolvedValue('publico')
 })
 
@@ -225,13 +233,38 @@ describe('POST /api/avaliacoes', () => {
     expect(classificarEndereco).not.toHaveBeenCalled()
   })
 
-  it('pendente criada há mais de 15 min não bloqueia (análise que morreu sem dono)', async () => {
-    semear({ status: 'ANALISANDO', criadaEm: new Date(Date.now() - 16 * 60_000) })
+  it('pendente criada há mais de 10 min não bloqueia (análise que morreu sem dono)', async () => {
+    semear({ status: 'ANALISANDO', criadaEm: new Date(Date.now() - 11 * 60_000) })
 
     expect((await pedir('u1', 'https://www.loja.com.br')).status).toBe(202)
   })
 
-  it('pendente com mais de 15 min que ainda está na fila continua bloqueando', async () => {
+  it('pendente criada há 9 min, fora da fila, ainda bloqueia', async () => {
+    semear({ status: 'NA_FILA', criadaEm: new Date(Date.now() - 9 * 60_000) })
+
+    expect((await pedir('u1', 'https://www.loja.com.br')).status).toBe(409)
+  })
+
+  it('fila com 10 análises de todas as contas → 503, sem criar', async () => {
+    vi.mocked(fila.tamanho).mockReturnValue(10)
+
+    const resposta = await pedir('u1', 'https://www.loja.com.br')
+
+    expect(resposta.status).toBe(503)
+    expect(resposta.body).toEqual({
+      erro: 'Há muitas análises na fila agora. Tente de novo em alguns minutos.',
+    })
+    expect(banco.avaliacoes).toEqual([])
+    expect(fila.adicionar).not.toHaveBeenCalled()
+  })
+
+  it('fila com 9 análises ainda aceita', async () => {
+    vi.mocked(fila.tamanho).mockReturnValue(9)
+
+    expect((await pedir('u1', 'https://www.loja.com.br')).status).toBe(202)
+  })
+
+  it('pendente com mais de 10 min que ainda está na fila continua bloqueando', async () => {
     const antiga = semear({ status: 'NA_FILA', criadaEm: new Date(Date.now() - 40 * 60_000) })
     vi.mocked(fila.posicao).mockImplementation((id) => (id === antiga.id ? 20 : null))
 
@@ -402,6 +435,32 @@ describe('GET /api/avaliacoes/:id', () => {
       paginaGrande: true,
       falhas: [falha],
     })
+  })
+
+  it('pendente fora da fila há mais de 10 min vira ERRO no banco e na resposta', async () => {
+    const avaliacao = semear({ status: 'NA_FILA', criadaEm: new Date(Date.now() - 11 * 60_000) })
+
+    const { body } = await buscar('u1', avaliacao.id)
+
+    expect(body.avaliacao).toMatchObject({
+      status: 'ERRO',
+      mensagemErro: 'A análise foi interrompida porque o servidor reiniciou.',
+      posicaoNaFila: null,
+    })
+    expect(banco.avaliacoes[0]).toMatchObject({ status: 'ERRO' })
+  })
+
+  it('pendente antiga que ainda está na fila, ou recente fora dela, segue pendente', async () => {
+    const naFila = semear({ status: 'NA_FILA', criadaEm: new Date(Date.now() - 30 * 60_000) })
+    const recente = semear({ status: 'ANALISANDO', criadaEm: new Date(Date.now() - 9 * 60_000) })
+    vi.mocked(fila.posicao).mockImplementation((id) => (id === naFila.id ? 4 : null))
+
+    expect((await buscar('u1', naFila.id)).body.avaliacao).toMatchObject({
+      status: 'NA_FILA',
+      posicaoNaFila: 4,
+    })
+    expect((await buscar('u1', recente.id)).body.avaliacao.status).toBe('ANALISANDO')
+    expect(banco.avaliacoes.map((a) => a.status)).toEqual(['NA_FILA', 'ANALISANDO'])
   })
 
   it('com erro traz a mensagem e nenhuma falha', async () => {
