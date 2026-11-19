@@ -103,5 +103,6 @@ Nota = 100 × (soma dos pesos das verificações aprovadas) ÷ (soma dos pesos d
 - **Verificação** é cada recomendação com cobertura Sim ou Parcial que se aplica à página: o axe-core encontrou ao menos um elemento para avaliar.
 - **Aprovada** é a recomendação sem nenhuma violação (resultado "failure") nas regras ligadas a ela.
 - **Peso** pela prioridade do AcessaWeb: Alta 3, Média 2 e Baixa 1.
+- **Arredondamento** para baixo, até o inteiro (decisão de 19/11/2026): a nota 100 só sai sem nenhuma recomendação reprovada. Com o arredondamento normal, 99,5 viraria 100.
 - **Revisão humana:** os resultados "needs review" e as 16 recomendações sem regra não entram na nota. Aparecem à parte, como revisão humana (RF09).
 - **Nota por critério (RF06):** a tela mostra, para cada recomendação, se foi aprovada ou reprovada e o peso dela, com a conta que leva à nota total.
