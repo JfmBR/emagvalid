@@ -5,12 +5,13 @@ import { chaveDoIp } from '../auth/ip.js'
 import { abrirSessao, exigirLogin, fecharSessao, type UsuarioDaSessao } from '../auth/sessao.js'
 import {
   limiteCadastroPorIp,
+  limiteExclusaoPorConta,
   limiteLogin,
   limiteLoginPorEmail,
   limiteLoginPorIp,
 } from '../auth/tentativas.js'
 import { db } from '../db.js'
-import { temAnaliseViva } from './avaliacoes.js'
+import { criando, temAnaliseViva } from './avaliacoes.js'
 
 export const rotasAuth = Router()
 
@@ -161,7 +162,7 @@ rotasAuth.get('/eu', exigirLogin, (_req, res) => {
 // Excluir minha conta (LGPD, art. 18, VI). Pede a senha: quem pegou a sessão aberta não apaga a conta.
 // As avaliações, as falhas e as sessões saem junto (onDelete: Cascade no schema.prisma).
 rotasAuth.post('/excluir-conta', exigirLogin, async (req, res) => {
-  const { id, email } = res.locals.usuario as UsuarioDaSessao
+  const { id } = res.locals.usuario as UsuarioDaSessao
   const senha = texto(req.body?.senha)
   const senhaErrada = () =>
     res.status(400).json({ erro: 'Confira os campos marcados.', campos: { senha: MSG_SENHA } })
@@ -171,29 +172,20 @@ rotasAuth.post('/excluir-conta', exigirLogin, async (req, res) => {
   }
   if (senha.length > 128) return senhaErrada()
 
-  // os mesmos limites do login: a sessão aberta não vira um jeito de adivinhar a senha
-  const ip = ipDe(req)
-  const chave = `${email}|${ip}`
-  if (limiteLogin.bloqueado(chave) || limiteLoginPorIp.bloqueado(ip)) {
+  // limite por conta, de qualquer IP: a sessão aberta não vira um jeito de adivinhar a senha.
+  // Conta antes de esperar o banco, como o login: pedidos simultâneos não furam o limite
+  if (limiteExclusaoPorConta.bloqueado(id)) {
     res.status(429).json({ erro: MSG_MUITAS_TENTATIVAS })
     return
   }
-  if (limiteLoginPorEmail.bloqueado(email)) {
-    res.status(429).json({ erro: 'Muitas tentativas nesta conta. Tente de novo em 1 hora.' })
-    return
-  }
-  limiteLogin.registrar(chave)
-  limiteLoginPorIp.registrar(ip)
-  limiteLoginPorEmail.registrar(email)
+  limiteExclusaoPorConta.registrar(id)
 
   let senhaCerta: boolean
   try {
     const usuario = await db.usuario.findUnique({ where: { id }, select: { senhaHash: true } })
     senhaCerta = usuario ? await conferirSenha(senha, usuario.senhaHash) : false
   } catch (erro) {
-    limiteLogin.descontar(chave)
-    limiteLoginPorIp.descontar(ip)
-    limiteLoginPorEmail.descontar(email)
+    limiteExclusaoPorConta.descontar(id)
     throw erro
   }
   if (!senhaCerta) {
@@ -202,21 +194,19 @@ rotasAuth.post('/excluir-conta', exigirLogin, async (req, res) => {
     console.error(`Exclusão de conta recusada (senha errada): conta ${id}`)
     return senhaErrada()
   }
-  limiteLogin.limpar(chave)
-  limiteLoginPorIp.descontar(ip)
-  limiteLoginPorEmail.descontar(email)
+  limiteExclusaoPorConta.descontar(id)
 
-  // a análise em andamento gravaria numa conta que já não existe (decisão do João, 19/11/2026)
-  // shortcut: um pedido de análise no mesmo instante passa pela checagem e falha no create (500); trava em memória se aparecer
-  if (await temAnaliseViva(id)) {
+  // A análise em andamento gravaria numa conta que já não existe (decisão do João, 19/11/2026).
+  // `criando`: o pedido de análise que ainda está conferindo o endereço e não gravou a linha
+  if (criando.has(id) || (await temAnaliseViva(id))) {
     res.status(409).json({ erro: MSG_ANALISE_EM_ANDAMENTO })
     return
   }
 
   // deleteMany: dois pedidos juntos não dão erro no segundo; o cascade é do próprio banco
-  await db.usuario.deleteMany({ where: { id } })
+  const { count } = await db.usuario.deleteMany({ where: { id } })
   await fecharSessao(req, res)
-  // evento de segurança: o id da conta, sem e-mail
-  console.warn(`Conta excluída: ${id}`)
+  // evento de segurança: o id da conta, sem e-mail; só uma vez, mesmo com dois pedidos juntos
+  if (count > 0) console.warn(`Conta excluída: ${id}`)
   res.status(204).end()
 })

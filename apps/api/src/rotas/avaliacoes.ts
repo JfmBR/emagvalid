@@ -35,7 +35,8 @@ export async function temAnaliseViva(usuarioId: string) {
 }
 
 // shortcut: a trava vive na memória de uma instância só, como a fila; com mais de uma instância, o count do banco ainda barra o caso comum
-const criando = new Set<string>()
+// a exclusão da conta também consulta (rotas/auth.ts)
+export const criando = new Set<string>()
 
 rotasAvaliacoes.post('/', exigirLogin, async (req, res) => {
   const { id: usuarioId } = res.locals.usuario as UsuarioDaSessao

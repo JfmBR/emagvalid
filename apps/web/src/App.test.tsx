@@ -213,6 +213,20 @@ describe('Minha conta · excluir a conta', () => {
     expect(within(menu).getByRole('link', { name: 'Entrar' })).toBeInTheDocument()
   })
 
+  it('dois envios seguidos mandam um pedido só', async () => {
+    simularApi({ ...logada, '/api/auth/excluir-conta': { status: 204 } })
+    abrir('/conta')
+
+    await pedirExclusao('Senha-forte-1')
+    fireEvent.click(screen.getByRole('button', { name: /Exclu/ }))
+
+    await screen.findByRole('heading', { level: 1, name: 'Conta excluída' })
+    const pedidos = vi
+      .mocked(fetch)
+      .mock.calls.filter(([caminho]) => caminho === '/api/auth/excluir-conta')
+    expect(pedidos).toHaveLength(1)
+  })
+
   it('senha errada: o erro fica no campo, que recebe o foco', async () => {
     simularApi({
       ...logada,

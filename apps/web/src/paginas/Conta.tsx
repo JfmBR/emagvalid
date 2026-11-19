@@ -18,6 +18,7 @@ export function Conta() {
   const [erros, setErros] = useState<Campos>({})
   const [erroGeral, setErroGeral] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const travado = useRef(false)
   const [excluida, setExcluida] = useState(false)
 
   // senha errada: o foco volta ao campo, que já diz o que fazer
@@ -51,10 +52,13 @@ export function Conta() {
 
   async function excluir(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
-    if (enviando) return
+    // ref, não o estado: dois Enter seguidos chegam antes de o React desenhar de novo
+    if (travado.current) return
+    travado.current = true
     setEnviando(true)
     const dados = Object.fromEntries(new FormData(evento.currentTarget))
     const { status, corpo } = await enviar<RespostaExcluir>('/api/auth/excluir-conta', dados)
+    travado.current = false
     setEnviando(false)
     if (status === 204) {
       setExcluida(true)

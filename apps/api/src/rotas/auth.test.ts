@@ -1,8 +1,10 @@
 import request from 'supertest'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { criarApp } from '../app.js'
+import { fila } from '../analise/executar.js'
 import {
   limiteCadastroPorIp,
+  limiteExclusaoPorConta,
   limiteLogin,
   limiteLoginPorEmail,
   limiteLoginPorIp,
@@ -46,9 +48,11 @@ vi.mock('../db.js', async () => {
           banco.usuarios.find((u) => u.email === where.email || u.id === where.id) ?? null,
         // o banco apaga as sessões e as avaliações junto (onDelete: Cascade)
         deleteMany: async ({ where }: { where: { id: string } }) => {
+          const antes = banco.usuarios.length
           banco.usuarios = banco.usuarios.filter((u) => u.id !== where.id)
           banco.sessoes = banco.sessoes.filter((s) => s.usuarioId !== where.id)
           banco.avaliacoes = banco.avaliacoes.filter((a) => a.usuarioId !== where.id)
+          return { count: antes - banco.usuarios.length }
         },
       },
       avaliacao: {
@@ -86,6 +90,8 @@ beforeEach(() => {
   banco.usuarios = []
   banco.sessoes = []
   banco.avaliacoes = []
+  limiteExclusaoPorConta.zerar()
+  vi.restoreAllMocks()
   limiteLogin.zerar()
   limiteLoginPorIp.zerar()
   limiteLoginPorEmail.zerar()
@@ -469,16 +475,48 @@ describe('excluir a conta', () => {
     log.mockRestore()
   })
 
-  it(`depois de ${MAX_TENTATIVAS} senhas erradas → 429, mesmo com a senha certa`, async () => {
+  it(`depois de ${limiteExclusaoPorConta.maximo} senhas erradas → 429, mesmo com a senha certa; o login segue livre`, async () => {
     const agente = await entrarComoHelena()
     vi.spyOn(console, 'error').mockImplementation(() => {})
-    for (let i = 0; i < MAX_TENTATIVAS; i++) await excluir(agente, 'Outra-senha-1')
+    for (let i = 0; i < limiteExclusaoPorConta.maximo; i++) await excluir(agente, 'Outra-senha-1')
 
     const resposta = await excluir(agente, helena.senha)
 
     expect(resposta.status).toBe(429)
     expect(banco.usuarios).toHaveLength(1)
-    vi.mocked(console.error).mockRestore()
+    // limite separado: errar a confirmação não trava a entrada na conta
+    const entrar = await request(criarApp())
+      .post('/api/auth/entrar')
+      .send({ email: helena.email, senha: helena.senha })
+    expect(entrar.status).toBe(200)
+  })
+
+  it('login travado por ataque à conta não impede o dono de excluir', async () => {
+    const agente = await entrarComoHelena()
+    for (let i = 0; i < limiteLoginPorEmail.maximo; i++)
+      limiteLoginPorEmail.registrar(helena.email.toLowerCase())
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    expect((await excluir(agente, helena.senha)).status).toBe(204)
+  })
+
+  it('dois pedidos juntos com a senha certa: um registro só no log', async () => {
+    const agente = await entrarComoHelena()
+    const log = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    await Promise.all([excluir(agente, helena.senha), excluir(agente, helena.senha)])
+
+    expect(log).toHaveBeenCalledTimes(1)
+  })
+
+  it('análise antiga que ainda está na fila desta instância → 409', async () => {
+    const agente = await entrarComoHelena()
+    const antiga = new Date(Date.now() - 30 * 60_000)
+    banco.avaliacoes.push({ id: 'a1', usuarioId: 'u1', status: 'ANALISANDO', criadaEm: antiga })
+    vi.spyOn(fila, 'posicao').mockImplementation((id) => (id === 'a1' ? 0 : null))
+
+    expect((await excluir(agente, helena.senha)).status).toBe(409)
+    expect(banco.usuarios).toHaveLength(1)
   })
 
   it('com uma análise em andamento → 409 e não apaga', async () => {
