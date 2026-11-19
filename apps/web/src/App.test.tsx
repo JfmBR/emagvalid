@@ -497,7 +497,16 @@ describe('Tela 4 · análise', () => {
     const atual = await screen.findByRole('listitem', { current: 'step' })
     expect(atual).toHaveTextContent('Verificando as recomendações do eMAG 3.1')
     expect(screen.getAllByRole('listitem')).toHaveLength(3)
-    expect(screen.getByRole('list')).toHaveAttribute('aria-live', 'polite')
+  })
+
+  it('o leitor ouve só a frase do passo atual, não a lista inteira', async () => {
+    simularApi({ ...logada, '/api/avaliacoes/a1': resposta(base) })
+    abrir('/avaliacoes/a1')
+
+    // a região existe vazia antes da resposta: o leitor só anuncia quando o texto muda
+    const frase = await screen.findByText('Passo 2 de 3: verificando as recomendações do eMAG 3.1.')
+    expect(frase.tagName).toBe('OUTPUT') // papel status: o leitor anuncia quando muda
+    expect(screen.getByRole('list')).not.toHaveAttribute('aria-live')
   })
 
   it('pergunta de novo a cada 2 s e para quando conclui', async () => {
@@ -516,8 +525,10 @@ describe('Tela 4 · análise', () => {
     avaliacao = concluida
     await vi.advanceTimersByTimeAsync(2_000)
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Resultado da avaliação' }),
+      await screen.findByRole('heading', { level: 1, name: /^Resultado da avaliação/ }),
     ).toBeVisible()
+    // o painel dos passos sai junto: nenhum anúncio do passo disputa com o foco no título
+    expect(screen.queryByText(/^Passo \d de 3/)).not.toBeInTheDocument()
     const depois = chamadasDoGet()
     await vi.advanceTimersByTimeAsync(10_000)
     expect(chamadasDoGet()).toBe(depois)
@@ -607,22 +618,28 @@ describe('Tela 4 · análise', () => {
       })
       abrir('/avaliacoes/a1')
 
+      // o foco vai para o título, e o leitor ouve a nota junto
       const titulo = await screen.findByRole('heading', {
         level: 1,
-        name: 'Resultado da avaliação',
+        name: 'Resultado da avaliação: nota 57 de 100',
       })
       await waitFor(() => expect(titulo).toHaveFocus())
-      expect(screen.getByText('Nota 57 de 100')).toBeInTheDocument()
+      // o número grande só aparece: o leitor já ouviu a nota no título
+      expect(document.querySelector('.nota-num')).toHaveAttribute('aria-hidden', 'true')
       expect(
         screen.getByText('Não é certificação. A conclusão de conformidade é sua.'),
       ).toBeVisible()
-      expect(
-        screen.getByText(
-          '2 de 3 verificações automáticas aprovadas · 3 falhas em 2 requisitos · 2 itens para revisão humana',
-        ),
-      ).toBeInTheDocument()
+      expect(document.querySelector('.nota .meta')).toHaveTextContent(
+        '2 de 3 verificações automáticas aprovadas ·, 3 falhas em 2 requisitos ·, 2 itens para revisão humana',
+      )
       expect(screen.getByText('Como chegamos a 57')).toBeInTheDocument()
-      expect(screen.getByText('100 × 4 ÷ 7 = 57')).toBeInTheDocument()
+      expect(screen.getByText('100 × 4 ÷ 7 = 57')).toHaveAttribute('aria-hidden', 'true')
+      expect(screen.getByText('100 vezes 4, dividido por 7, igual a 57')).toHaveClass('so-leitor')
+      // a tabela fica numa região que recebe o Tab
+      expect(screen.getByRole('region', { name: 'Conta da nota' })).toHaveAttribute('tabindex', '0')
+      expect(
+        screen.getByRole('table', { name: 'Recomendações que se aplicam à página' }),
+      ).toBeInTheDocument()
       expect(screen.getByText(/Avaliamos/)).toHaveTextContent('https://www.loja.com.br/inicio')
       expect(screen.getByRole('link', { name: 'Nova avaliação' })).toHaveAttribute(
         'href',
@@ -634,14 +651,22 @@ describe('Tela 4 · análise', () => {
       simularApi({ ...logada, '/api/avaliacoes/a1': resposta(concluida) })
       abrir('/avaliacoes/a1')
 
+      // o leitor ouve "3.6, Recomendação…", sem "ponto médio"
       const cartoes = await screen.findAllByRole('heading', { level: 2 })
       expect(cartoes.map((c) => c.textContent)).toEqual([
-        '3.6 · Recomendação 3.6',
-        '1.8 · Recomendação 1.8',
+        '3.6 ·, Recomendação 3.6',
+        '1.8 ·, Recomendação 1.8',
       ])
+      expect(screen.getByRole('heading', { name: '3.6, Recomendação 3.6' })).toBeInTheDocument()
+      // título antes dos selos no código; "Automático" só na tela
+      const cartao = cartoes[0]?.closest('li')
+      expect(cartao?.textContent?.indexOf('Recomendação 3.6')).toBeLessThan(
+        cartao?.textContent?.indexOf('Prioridade alta') ?? 0,
+      )
+      expect(screen.getAllByText('Automático')[0]?.closest('[aria-hidden="true"]')).not.toBeNull()
       expect(screen.getByText('Prioridade baixa')).toBeInTheDocument()
       expect(screen.getByText('Por que 3.6 é falha.')).toBeInTheDocument()
-      expect(screen.getByText('2 ocorrências · img.a e mais 1')).toBeInTheDocument()
+      expect(cartao?.querySelector('.local')).toHaveTextContent('2 ocorrências ·, img.a e mais 1')
       // o trecho da página avaliada aparece escrito, sem virar elemento
       expect(screen.getAllByText('<img src="a.png" onerror="alert(1)">')).toHaveLength(3)
       expect(document.querySelector('img[onerror]')).toBeNull()
@@ -651,15 +676,17 @@ describe('Tela 4 · análise', () => {
       simularApi({ ...logada, '/api/avaliacoes/a1': resposta(concluida) })
       abrir('/avaliacoes/a1')
 
-      const falhas = await screen.findByRole('tab', { name: 'Falhas automáticas (2)' })
-      const humana = screen.getByRole('tab', { name: 'Revisão humana (2)' })
+      // "(2)" fica na tela; o leitor ouve "2 requisitos"
+      const falhas = await screen.findByRole('tab', { name: 'Falhas automáticas, 2 requisitos' })
+      expect(falhas).toHaveTextContent('Falhas automáticas (2)')
+      const humana = screen.getByRole('tab', { name: 'Revisão humana, 2 itens' })
       expect(falhas).toHaveAttribute('aria-selected', 'true')
       expect(humana).toHaveAttribute('tabindex', '-1')
 
       fireEvent.keyDown(falhas, { key: 'ArrowRight' })
       expect(humana).toHaveFocus()
       expect(humana).toHaveAttribute('aria-selected', 'true')
-      expect(screen.getByRole('tabpanel')).toHaveAccessibleName('Revisão humana (2)')
+      expect(screen.getByRole('tabpanel')).toHaveAccessibleName('Revisão humana, 2 itens')
 
       fireEvent.keyDown(humana, { key: 'ArrowRight' })
       expect(falhas).toHaveFocus()
@@ -676,11 +703,17 @@ describe('Tela 4 · análise', () => {
         '/api/avaliacoes/a1/revisao': { status: 204 },
       })
       abrir('/avaliacoes/a1')
-      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana (2)' }))
+      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana, 2 itens' }))
 
-      const foco = screen.getByRole('checkbox', { name: /4\.4 · Foco visível/ })
+      // nome curto; o que conferir (e a dúvida do axe) vem como descrição, lida depois
+      const foco = screen.getByRole('checkbox', { name: /^4\.4, Foco visível$/ })
+      expect(foco).toHaveAccessibleDescription('Use o Tab.')
       expect(foco).not.toBeChecked()
-      expect(screen.getByRole('checkbox', { name: /4\.1 · Contraste/ })).toBeChecked()
+      const contraste = screen.getByRole('checkbox', { name: /^4\.1, Contraste$/ })
+      expect(contraste).toHaveAccessibleDescription(
+        '(o axe-core ficou em dúvida nesta página) Confira.',
+      )
+      expect(contraste).toBeChecked()
 
       fireEvent.click(foco)
 
@@ -698,8 +731,8 @@ describe('Tela 4 · análise', () => {
         '/api/avaliacoes/a1/revisao': { status: 204 },
       })
       abrir('/avaliacoes/a1')
-      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana (2)' }))
-      const foco = screen.getByRole('checkbox', { name: /4\.4 · Foco visível/ })
+      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana, 2 itens' }))
+      const foco = screen.getByRole('checkbox', { name: /^4\.4, Foco visível$/ })
 
       fireEvent.click(foco)
       fireEvent.click(foco)
@@ -720,8 +753,8 @@ describe('Tela 4 · análise', () => {
         '/api/avaliacoes/a1/revisao': { status: 500, corpo: { erro: 'Erro interno.' } },
       })
       abrir('/avaliacoes/a1')
-      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana (2)' }))
-      const foco = screen.getByRole('checkbox', { name: /4\.4 · Foco visível/ })
+      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana, 2 itens' }))
+      const foco = screen.getByRole('checkbox', { name: /^4\.4, Foco visível$/ })
 
       fireEvent.click(foco)
 

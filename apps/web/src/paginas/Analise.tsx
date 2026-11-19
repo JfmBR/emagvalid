@@ -4,6 +4,7 @@ import { buscar, mensagemDeErro } from '../api.ts'
 import { Aviso } from '../componentes/Aviso.tsx'
 import { Selo } from '../componentes/Selo.tsx'
 import { useSessao } from '../sessao.tsx'
+import { Ponto } from '../componentes/Ponto.tsx'
 import { Resultado, type ResultadoAvaliacao } from './Resultado.tsx'
 
 type Avaliacao = {
@@ -30,6 +31,9 @@ const passos = [
 function plural(n: number, singular: string, mais: string) {
   return `${n} ${n === 1 ? singular : mais}`
 }
+
+// só a primeira letra: "eMAG" continua "eMAG"
+const minusculaInicial = (texto: string) => texto.charAt(0).toLowerCase() + texto.slice(1)
 
 const dataHora = (iso: string) =>
   new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
@@ -84,6 +88,7 @@ export function Analise() {
 
   const etapa = avaliacao?.etapa ?? 0
   const fila = status === 'NA_FILA' ? (avaliacao?.posicaoNaFila ?? null) : null
+  const nota = avaliacao?.resultado?.nota ?? null
 
   const erro = naoEncontrada || status === 'ERRO'
   const textoTitulo = naoEncontrada
@@ -105,13 +110,22 @@ export function Analise() {
         ) : (
           <p className="sobre">{status === 'CONCLUIDA' ? 'Resultado' : 'Analisando'}</p>
         )}
+        {/* ao concluir, o foco vem para cá: o leitor de tela ouve a nota junto com o título */}
         <h1 ref={titulo} tabIndex={-1}>
           {textoTitulo}
+          {status === 'CONCLUIDA' && nota !== null ? (
+            <span className="so-leitor">: nota {nota} de 100</span>
+          ) : null}
         </h1>
         {avaliacao && !erro ? (
           <p className="meta">
             {avaliacao.url}
-            {avaliacao.concluidaEm ? ` · ${dataHora(avaliacao.concluidaEm)}` : null}
+            {avaliacao.concluidaEm ? (
+              <>
+                <Ponto />
+                {dataHora(avaliacao.concluidaEm)}
+              </>
+            ) : null}
           </p>
         ) : null}
         {avaliacao?.urlFinal && avaliacao.urlFinal !== avaliacao.url && status === 'CONCLUIDA' ? (
@@ -162,7 +176,14 @@ export function Analise() {
                 : `Na fila: ${plural(fila, 'análise', 'análises')} antes da sua.`}
             </output>
           ) : null}
-          <ol className="passos" aria-live="polite">
+          {/* Só a frase do passo atual é anunciada (a lista inteira relida a cada passo atropelava a fala).
+              Ao concluir, este painel sai junto e o único anúncio é o foco no título. */}
+          <output className="so-leitor">
+            {etapa > 0
+              ? `Passo ${etapa} de ${passos.length}: ${minusculaInicial(passos[etapa - 1] ?? '')}.`
+              : ''}
+          </output>
+          <ol className="passos">
             {passos.map((texto, indice) => {
               const n = indice + 1
               const situacao = etapa > n ? 'feito' : etapa === n ? 'agora' : undefined

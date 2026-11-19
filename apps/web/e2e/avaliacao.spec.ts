@@ -151,26 +151,32 @@ test('só com teclado: pedir a avaliação, acompanhar e ver a análise concluí
     concluidaEm: '2026-11-19T14:32:00.000Z',
     resultado,
   }
+  // o foco vai para o título, e o leitor de tela ouve a nota junto
   const titulo = page.getByRole('heading', { level: 1 })
-  await expect(titulo).toHaveText('Resultado da avaliação', { timeout: 5_000 })
+  // o Chrome põe um espaço antes do trecho só para leitor ("avaliação : nota"); na fala é a mesma pausa
+  await expect(titulo).toHaveAccessibleName(/^Resultado da avaliação ?: nota 57 de 100$/, {
+    timeout: 5_000,
+  })
   await expect(titulo).toBeFocused()
   await expect(
     page.getByText('Não é certificação. A conclusão de conformidade é sua.'),
   ).toBeVisible()
   await semViolacoesSerias(page)
 
-  // Tab abre "Como chegamos" pelo teclado; o próximo Tab chega à aba ativa
+  // Tab abre "Como chegamos" pelo teclado; o próximo Tab para na tabela, e o seguinte, na aba ativa
   await page.keyboard.press('Tab')
   await expect(page.getByText('Como chegamos a 57')).toBeFocused()
   await page.keyboard.press('Enter')
   await expect(page.getByText('100 × 4 ÷ 7 = 57')).toBeVisible()
   await semViolacoesSerias(page)
   await page.keyboard.press('Tab')
-  await expect(page.getByRole('tab', { name: 'Falhas automáticas (2)' })).toBeFocused()
+  await expect(page.getByRole('region', { name: 'Conta da nota' })).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(page.getByRole('tab', { name: 'Falhas automáticas, 2 requisitos' })).toBeFocused()
 
   // seta troca de aba; Tab entra no painel e Espaço marca a primeira caixa
   await page.keyboard.press('ArrowRight')
-  await expect(page.getByRole('tab', { name: 'Revisão humana (2)' })).toBeFocused()
+  await expect(page.getByRole('tab', { name: 'Revisão humana, 2 itens' })).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(page.getByRole('tabpanel')).toBeFocused()
   await page.keyboard.press('Tab')
@@ -228,13 +234,13 @@ for (const [tema, salvo] of Object.entries({
     }))
     await page.setViewportSize({ width: 640, height: 900 })
     await page.goto('/avaliacoes/a1')
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Resultado da avaliação')
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Resultado da avaliação')
     await expect(page.locator('html')).toHaveAttribute('data-theme', tema)
 
     await page.getByText('Como chegamos a 57').click()
     for (const resumo of await page.getByText(/^Onde está/).all()) await resumo.click()
     await semViolacoesSerias(page)
-    await page.getByRole('tab', { name: 'Revisão humana (2)' }).click()
+    await page.getByRole('tab', { name: 'Revisão humana, 2 itens' }).click()
     await semViolacoesSerias(page)
 
     const sobra = await page.evaluate(

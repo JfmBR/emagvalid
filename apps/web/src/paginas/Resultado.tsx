@@ -1,8 +1,8 @@
 import { useRef, useState, type KeyboardEvent } from 'react'
-import { enviar, mensagemDeErro } from '../api.ts'
 import { Aviso } from '../componentes/Aviso.tsx'
+import { Ponto } from '../componentes/Ponto.tsx'
 import { Selo } from '../componentes/Selo.tsx'
-import { useSessao } from '../sessao.tsx'
+import { RevisaoHumana } from './RevisaoHumana.tsx'
 
 type Prioridade = 'alta' | 'media' | 'baixa'
 
@@ -55,13 +55,11 @@ export function Resultado({ id, resultado }: { id: string; resultado: ResultadoA
     <>
       <div className="painel">
         <div className="nota">
+          {/* o leitor de tela já ouve a nota no h1 (Analise.tsx): aqui ela só aparece */}
           {nota === null ? null : (
-            <p className="nota-num">
-              <span aria-hidden="true">
-                {nota}
-                <small>/100</small>
-              </span>
-              <span className="so-leitor">Nota {nota} de 100</span>
+            <p className="nota-num" aria-hidden="true">
+              {nota}
+              <small>/100</small>
             </p>
           )}
           <div style={{ display: 'grid', gap: 10, minWidth: 0 }}>
@@ -72,11 +70,20 @@ export function Resultado({ id, resultado }: { id: string; resultado: ResultadoA
               <strong>Não é certificação. A conclusão de conformidade é sua.</strong>
             </p>
             <p className="meta">
-              {nota === null
-                ? null
-                : `${aprovadas.length} de ${plural(verificacoes.length, 'verificação automática aprovada', 'verificações automáticas aprovadas')} · `}
+              {nota === null ? null : (
+                <>
+                  {aprovadas.length} de{' '}
+                  {plural(
+                    verificacoes.length,
+                    'verificação automática aprovada',
+                    'verificações automáticas aprovadas',
+                  )}
+                  <Ponto />
+                </>
+              )}
               {plural(falhas, 'falha', 'falhas')} em{' '}
-              {plural(cartoes.length, 'requisito', 'requisitos')} ·{' '}
+              {plural(cartoes.length, 'requisito', 'requisitos')}
+              <Ponto />
               {plural(revisao.length, 'item', 'itens')} para revisão humana
             </p>
           </div>
@@ -91,12 +98,13 @@ export function Resultado({ id, resultado }: { id: string; resultado: ResultadoA
         ) : (
           <details className="conta">
             <summary>Como chegamos a {nota}</summary>
-            <div className="rolar">
+            {/* Região focável: o Tab para na tabela e o leitor de tela a anuncia (como a tabela-rolagem do
+                protótipo). Área com rolagem precisa receber foco (axe scrollable-region-focusable). */}
+            {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+            <section className="rolar" tabIndex={0} aria-label="Conta da nota">
               <table>
-                <caption className="dica" style={{ textAlign: 'left', captionSide: 'bottom' }}>
-                  Nota = 100 × soma dos pesos das recomendações aprovadas ÷ soma dos pesos das
-                  recomendações que se aplicam à página. Peso pela prioridade: alta 3, média 2,
-                  baixa 1.
+                <caption className="dica" style={{ textAlign: 'left' }}>
+                  Recomendações que se aplicam à página
                 </caption>
                 <thead>
                   <tr>
@@ -112,7 +120,9 @@ export function Resultado({ id, resultado }: { id: string; resultado: ResultadoA
                   {verificacoes.map((v) => (
                     <tr key={v.numero}>
                       <th scope="row" style={LINHA}>
-                        {v.numero} · {v.nome}
+                        {v.numero}
+                        <Ponto />
+                        {v.nome}
                       </th>
                       <td>{ROTULO[v.prioridade]}</td>
                       <td className="n">{v.peso}</td>
@@ -128,12 +138,23 @@ export function Resultado({ id, resultado }: { id: string; resultado: ResultadoA
                   <tr>
                     <td colSpan={3}>Total</td>
                     <td className="n">
-                      100 × {soma(aprovadas)} ÷ {soma(verificacoes)} = {nota}
+                      <span aria-hidden="true">
+                        100 × {soma(aprovadas)} ÷ {soma(verificacoes)} = {nota}
+                      </span>
+                      <span className="so-leitor">
+                        100 vezes {soma(aprovadas)}, dividido por {soma(verificacoes)}, igual a{' '}
+                        {nota}
+                      </span>
                     </td>
                   </tr>
                 </tfoot>
               </table>
-            </div>
+              <p className="dica" style={{ paddingTop: 8 }}>
+                Nota = 100 × soma dos pesos das recomendações aprovadas ÷ soma dos pesos das
+                recomendações que se aplicam à página. Peso pela prioridade: alta 3, média 2, baixa
+                1.
+              </p>
+            </section>
           </details>
         )}
       </div>
@@ -170,6 +191,11 @@ function Abas({
   }
 
   const rotulos = [`Falhas automáticas (${cartoes.length})`, `Revisão humana (${revisao.length})`]
+  // para o leitor de tela: "(5)" pode virar "abre parêntese 5 fecha parêntese"
+  const nomes = [
+    `Falhas automáticas, ${plural(cartoes.length, 'requisito', 'requisitos')}`,
+    `Revisão humana, ${plural(revisao.length, 'item', 'itens')}`,
+  ]
   return (
     <div className="painel">
       <div role="tablist" aria-label="Tipo de verificação">
@@ -183,6 +209,7 @@ function Abas({
             role="tab"
             id={`aba-${nome}`}
             aria-controls={`painel-${nome}`}
+            aria-label={nomes[indice]}
             aria-selected={aba === indice}
             tabIndex={aba === indice ? 0 : -1}
             onClick={() => setAba(indice)}
@@ -229,16 +256,24 @@ function Cartao({ cartao }: { cartao: ResultadoAvaliacao['cartoes'][number] }) {
   return (
     <li className="falha">
       <div style={{ display: 'grid', gap: 8, minWidth: 0 }}>
-        <p className="linha1">
+        {/* o título vem antes dos selos no código (o leitor de tela ouve primeiro o requisito); na tela, os selos ficam em cima */}
+        <h2 style={{ fontSize: '1.1rem' }}>
+          {numero}
+          <Ponto />
+          {nome}
+        </h2>
+        <p className="linha1" style={{ order: -1 }}>
           <Selo variante={SELO[prioridade]}>Prioridade {ROTULO[prioridade]}</Selo>
-          <Selo variante="auto">Automático</Selo>
+          {/* a aba já diz "Falhas automáticas": o leitor não precisa ouvir de novo em cada cartão */}
+          <span aria-hidden="true">
+            <Selo variante="auto">Automático</Selo>
+          </span>
           {revisaoHumana ? <Selo variante="humana">Confirme à mão</Selo> : null}
         </p>
-        <h2 style={{ fontSize: '1.1rem' }}>
-          {numero} · {nome}
-        </h2>
         <p className="local">
-          {plural(ocorrencias.length, 'ocorrência', 'ocorrências')} · {primeira}
+          {plural(ocorrencias.length, 'ocorrência', 'ocorrências')}
+          <Ponto />
+          {primeira}
           {ocorrencias.length > 1 ? ` e mais ${ocorrencias.length - 1}` : ''}
         </p>
         {porque ? (
@@ -279,72 +314,5 @@ function Cartao({ cartao }: { cartao: ResultadoAvaliacao['cartoes'][number] }) {
         </p>
       </div>
     </li>
-  )
-}
-
-function RevisaoHumana({ id, revisao }: { id: string; revisao: ResultadoAvaliacao['revisao'] }) {
-  const { definirUsuario } = useSessao()
-  const [feitas, setFeitas] = useState(
-    () => new Set(revisao.filter((item) => item.feita).map((item) => item.numero)),
-  )
-  const [erro, setErro] = useState('')
-  // um pedido por item de cada vez: respostas fora de ordem desfariam a marca errada
-  const pendentes = useRef(new Set<string>())
-
-  const marcar = (numero: string, feita: boolean) =>
-    setFeitas((atual) => {
-      const nova = new Set(atual)
-      if (feita) nova.add(numero)
-      else nova.delete(numero)
-      return nova
-    })
-
-  async function mudar(numero: string, feita: boolean) {
-    if (pendentes.current.has(numero)) return // o clique é ignorado e a caixa fica como está
-    pendentes.current.add(numero)
-    marcar(numero, feita)
-    const { status, corpo } = await enviar<{ erro: string }>(
-      `/api/avaliacoes/${encodeURIComponent(id)}/revisao`,
-      { numero, feita },
-    )
-    pendentes.current.delete(numero)
-    if (status === 204) return setErro('')
-    marcar(numero, !feita) // não gravou: a caixa volta a mostrar o que está salvo
-    if (status === 401) return definirUsuario(null)
-    setErro(mensagemDeErro(status, corpo.erro))
-  }
-
-  return (
-    <>
-      <p className="dica" style={{ margin: '16px 0 12px' }}>
-        A ferramenta não consegue julgar estes itens. Eles não entram na nota. Marque cada um depois
-        de conferir à mão.
-      </p>
-      {erro ? (
-        <Aviso tipo="alerta" papel="alert">
-          <p>{erro}</p>
-        </Aviso>
-      ) : null}
-      <ul className="checks">
-        {revisao.map((item) => (
-          <li key={item.numero}>
-            <label>
-              <input
-                type="checkbox"
-                checked={feitas.has(item.numero)}
-                onChange={(evento) => void mudar(item.numero, evento.target.checked)}
-              />
-              <span style={{ display: 'grid', gap: 4 }}>
-                <span>
-                  <strong>{item.numero}</strong> · {item.nome}
-                  {item.motivo === 'duvida' ? ' (o axe-core ficou em dúvida nesta página)' : ''}
-                </span>
-                {item.conferir ? <span className="dica">{item.conferir}</span> : null}
-              </span>
-            </label>
-          </li>
-        ))}
-      </ul>
-    </>
   )
 }
