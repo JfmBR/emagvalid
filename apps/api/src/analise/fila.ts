@@ -28,6 +28,10 @@ export function criarFila(processar: (id: string) => Promise<void>) {
       itens.push(id)
       void rodar()
     },
+    // quantas estão na fila, contando a que está rodando
+    tamanho(): number {
+      return itens.length
+    },
     posicao(id: string): number | null {
       const indice = itens.indexOf(id)
       return indice === -1 ? null : indice

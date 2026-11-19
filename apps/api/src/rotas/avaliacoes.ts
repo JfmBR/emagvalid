@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { classificarEndereco, MSG_URL, prepararUrl } from '../analise/endereco.js'
-import { andamento, fila } from '../analise/executar.js'
+import { andamento, fila, MENSAGEM_ERRO } from '../analise/executar.js'
 import { chaveDoIp } from '../auth/ip.js'
 import { exigirLogin, type UsuarioDaSessao } from '../auth/sessao.js'
 import { limiteAvaliacaoPorConta, limiteAvaliacaoPorIp } from '../auth/tentativas.js'
@@ -10,12 +10,17 @@ export const rotasAvaliacoes = Router()
 
 const MAX_POR_HORA = 10 // RNF10
 const UMA_HORA_MS = 60 * 60 * 1000
-// pendente mais velha que isso morreu sem dono (deploy ou banco fora) e não trava mais a conta
-const PRAZO_PENDENTE_MS = 15 * 60 * 1000
+// Teto da fila de todas as contas (decisão do João, 19/11/2026): com até 60 s por análise, a última
+// espera cerca de 10 min
+const MAX_NA_FILA = 10
+// Pendente fora da fila desta instância e mais velha que isso morreu sem dono (deploy ou banco fora):
+// não trava mais a conta e vira ERRO quando a Tela 4 pergunta (decisão do João, 19/11/2026)
+const PRAZO_PENDENTE_MS = 10 * 60 * 1000
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const MSG_PENDENTE = 'Você já tem uma análise em andamento. Espere ela terminar para começar outra.'
 const MSG_MUITOS_PEDIDOS = 'Muitas tentativas. Tente de novo em 15 minutos.'
 const MSG_LIMITE = `Você chegou ao limite de ${MAX_POR_HORA} análises por hora. Tente de novo mais tarde.`
+const MSG_FILA_CHEIA = 'Há muitas análises na fila agora. Tente de novo em alguns minutos.'
 
 // shortcut: a trava vive na memória de uma instância só, como a fila; com mais de uma instância, o count do banco ainda barra o caso comum
 const criando = new Set<string>()
@@ -69,6 +74,10 @@ rotasAvaliacoes.post('/', exigirLogin, async (req, res) => {
       res.status(429).json({ erro: MSG_LIMITE })
       return
     }
+    if (fila.tamanho() >= MAX_NA_FILA) {
+      res.status(503).json({ erro: MSG_FILA_CHEIA })
+      return
+    }
 
     // o DNS só roda depois de todas as recusas baratas
     const tipo = await classificarEndereco(url.hostname)
@@ -82,6 +91,12 @@ rotasAvaliacoes.post('/', exigirLogin, async (req, res) => {
       return
     }
 
+    // de novo: o DNS pode levar até 3 s, e a fila enche nesse meio-tempo
+    // shortcut: pedidos de contas diferentes no mesmo instante do create podem passar do teto por 1 ou 2; trocar por reserva se a fila crescer
+    if (fila.tamanho() >= MAX_NA_FILA) {
+      res.status(503).json({ erro: MSG_FILA_CHEIA })
+      return
+    }
     const { id } = await db.avaliacao.create({
       data: { usuarioId, url: url.href },
       select: { id: true },
@@ -110,6 +125,7 @@ rotasAvaliacoes.get('/:id', exigirLogin, async (req, res) => {
       status: true,
       paginaGrande: true,
       mensagemErro: true,
+      criadaEm: true,
       falhas: {
         select: {
           requisitoEmag: true,
@@ -124,7 +140,24 @@ rotasAvaliacoes.get('/:id', exigirLogin, async (req, res) => {
   })
   if (!avaliacao) return naoEncontrada()
 
-  const { status } = avaliacao
+  let { status, mensagemErro } = avaliacao
+  // pendente que morreu sem dono: sem isso, a Tela 4 perguntaria para sempre
+  const morta =
+    (status === 'NA_FILA' || status === 'ANALISANDO') &&
+    fila.posicao(id) === null &&
+    avaliacao.criadaEm.getTime() < Date.now() - PRAZO_PENDENTE_MS
+  if (morta) {
+    // só se ainda estiver pendente: outra instância pode ter terminado nesse meio-tempo
+    const { count } = await db.avaliacao.updateMany({
+      where: { id, status: { in: ['NA_FILA', 'ANALISANDO'] } },
+      data: { status: 'ERRO', mensagemErro: MENSAGEM_ERRO.INTERROMPIDA },
+    })
+    // se outra terminou antes, a próxima pergunta da Tela 4 traz o que ela gravou
+    if (count > 0) {
+      status = 'ERRO'
+      mensagemErro = MENSAGEM_ERRO.INTERROMPIDA
+    }
+  }
   // enquanto roda, o estado vive na memória; depois, vale o que foi gravado
   const emAndamento = status === 'ANALISANDO' ? andamento.get(id) : undefined
   res.json({
@@ -136,7 +169,7 @@ rotasAvaliacoes.get('/:id', exigirLogin, async (req, res) => {
       etapa: emAndamento?.etapa ?? null,
       posicaoNaFila: status === 'NA_FILA' ? fila.posicao(id) : null,
       paginaGrande: emAndamento?.paginaGrande ?? avaliacao.paginaGrande,
-      mensagemErro: avaliacao.mensagemErro,
+      mensagemErro,
       falhas: status === 'CONCLUIDA' ? avaliacao.falhas : [],
     },
   })
