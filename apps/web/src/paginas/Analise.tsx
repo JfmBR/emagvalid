@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router'
 import { buscar, mensagemDeErro } from '../api.ts'
 import { Aviso } from '../componentes/Aviso.tsx'
+import { Ponto } from '../componentes/Ponto.tsx'
 import { Selo } from '../componentes/Selo.tsx'
 import { useSessao } from '../sessao.tsx'
-import { Ponto } from '../componentes/Ponto.tsx'
 import { Resultado, type ResultadoAvaliacao } from './Resultado.tsx'
 
 type Avaliacao = {

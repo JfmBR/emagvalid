@@ -102,7 +102,8 @@ export function Resultado({ id, resultado }: { id: string; resultado: ResultadoA
                 protótipo). Área com rolagem precisa receber foco (axe scrollable-region-focusable). */}
             {/* oxlint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
             <section className="rolar" tabIndex={0} aria-label="Conta da nota">
-              <table>
+              {/* a fórmula vem depois da tabela, mas quem pula direto para ela (tecla T) também a ouve */}
+              <table aria-describedby="formula-nota">
                 <caption className="dica" style={{ textAlign: 'left' }}>
                   Recomendações que se aplicam à página
                 </caption>
@@ -149,7 +150,7 @@ export function Resultado({ id, resultado }: { id: string; resultado: ResultadoA
                   </tr>
                 </tfoot>
               </table>
-              <p className="dica" style={{ paddingTop: 8 }}>
+              <p className="dica" id="formula-nota" style={{ paddingTop: 8 }}>
                 Nota = 100 × soma dos pesos das recomendações aprovadas ÷ soma dos pesos das
                 recomendações que se aplicam à página. Peso pela prioridade: alta 3, média 2, baixa
                 1.
@@ -190,12 +191,9 @@ function Abas({
     botoes.current[nova]?.focus()
   }
 
+  // O nome é o texto visível: quem usa comando de voz fala o que vê (WCAG 2.5.3). Na pontuação
+  // padrão, o Orca e o NVDA não leem os parênteses.
   const rotulos = [`Falhas automáticas (${cartoes.length})`, `Revisão humana (${revisao.length})`]
-  // para o leitor de tela: "(5)" pode virar "abre parêntese 5 fecha parêntese"
-  const nomes = [
-    `Falhas automáticas, ${plural(cartoes.length, 'requisito', 'requisitos')}`,
-    `Revisão humana, ${plural(revisao.length, 'item', 'itens')}`,
-  ]
   return (
     <div className="painel">
       <div role="tablist" aria-label="Tipo de verificação">
@@ -209,7 +207,6 @@ function Abas({
             role="tab"
             id={`aba-${nome}`}
             aria-controls={`painel-${nome}`}
-            aria-label={nomes[indice]}
             aria-selected={aba === indice}
             tabIndex={aba === indice ? 0 : -1}
             onClick={() => setAba(indice)}

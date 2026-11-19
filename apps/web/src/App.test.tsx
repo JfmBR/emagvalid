@@ -639,7 +639,7 @@ describe('Tela 4 · análise', () => {
       expect(screen.getByRole('region', { name: 'Conta da nota' })).toHaveAttribute('tabindex', '0')
       expect(
         screen.getByRole('table', { name: 'Recomendações que se aplicam à página' }),
-      ).toBeInTheDocument()
+      ).toHaveAccessibleDescription(/^Nota = 100 × soma dos pesos/)
       expect(screen.getByText(/Avaliamos/)).toHaveTextContent('https://www.loja.com.br/inicio')
       expect(screen.getByRole('link', { name: 'Nova avaliação' })).toHaveAttribute(
         'href',
@@ -676,17 +676,16 @@ describe('Tela 4 · análise', () => {
       simularApi({ ...logada, '/api/avaliacoes/a1': resposta(concluida) })
       abrir('/avaliacoes/a1')
 
-      // "(2)" fica na tela; o leitor ouve "2 requisitos"
-      const falhas = await screen.findByRole('tab', { name: 'Falhas automáticas, 2 requisitos' })
-      expect(falhas).toHaveTextContent('Falhas automáticas (2)')
-      const humana = screen.getByRole('tab', { name: 'Revisão humana, 2 itens' })
+      // o nome é o texto visível (WCAG 2.5.3)
+      const falhas = await screen.findByRole('tab', { name: 'Falhas automáticas (2)' })
+      const humana = screen.getByRole('tab', { name: 'Revisão humana (2)' })
       expect(falhas).toHaveAttribute('aria-selected', 'true')
       expect(humana).toHaveAttribute('tabindex', '-1')
 
       fireEvent.keyDown(falhas, { key: 'ArrowRight' })
       expect(humana).toHaveFocus()
       expect(humana).toHaveAttribute('aria-selected', 'true')
-      expect(screen.getByRole('tabpanel')).toHaveAccessibleName('Revisão humana, 2 itens')
+      expect(screen.getByRole('tabpanel')).toHaveAccessibleName('Revisão humana (2)')
 
       fireEvent.keyDown(humana, { key: 'ArrowRight' })
       expect(falhas).toHaveFocus()
@@ -703,7 +702,7 @@ describe('Tela 4 · análise', () => {
         '/api/avaliacoes/a1/revisao': { status: 204 },
       })
       abrir('/avaliacoes/a1')
-      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana, 2 itens' }))
+      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana (2)' }))
 
       // nome curto; o que conferir (e a dúvida do axe) vem como descrição, lida depois
       const foco = screen.getByRole('checkbox', { name: /^4\.4, Foco visível$/ })
@@ -731,7 +730,7 @@ describe('Tela 4 · análise', () => {
         '/api/avaliacoes/a1/revisao': { status: 204 },
       })
       abrir('/avaliacoes/a1')
-      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana, 2 itens' }))
+      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana (2)' }))
       const foco = screen.getByRole('checkbox', { name: /^4\.4, Foco visível$/ })
 
       fireEvent.click(foco)
@@ -753,7 +752,7 @@ describe('Tela 4 · análise', () => {
         '/api/avaliacoes/a1/revisao': { status: 500, corpo: { erro: 'Erro interno.' } },
       })
       abrir('/avaliacoes/a1')
-      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana, 2 itens' }))
+      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana (2)' }))
       const foco = screen.getByRole('checkbox', { name: /^4\.4, Foco visível$/ })
 
       fireEvent.click(foco)

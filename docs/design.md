@@ -30,7 +30,8 @@ O AcessaWeb é uma ferramenta de acessibilidade: a própria interface precisa se
   - a tabela de "Como chegamos" fica numa região focável ("Conta da nota"): o Tab para nela;
   - nos cartões, o título vem antes dos selos no código (na tela, os selos continuam em cima), e o selo "Automático" não é lido;
   - na revisão humana, a caixa tem nome curto (número e recomendação) e o que conferir como descrição;
-  - as abas se chamam "Falhas automáticas, 5 requisitos" e "Revisão humana, 17 itens" para o leitor.
+  - a tabela tem a fórmula da nota como descrição (`aria-describedby`): quem pula direto para a tabela também a ouve;
+  - as abas não têm nome diferente do texto visível ("Revisão humana (17)"): quem usa comando de voz fala o que vê (WCAG 2.5.3), e na pontuação padrão o Orca e o NVDA não leem os parênteses.
   - Roteiro do teste manual: do fim da análise até dentro de "Como chegamos", o leitor deve dizer o título com a nota, sem atropelo; com as setas, o aviso "Não é certificação" e o resumo; com Tab, "Como chegamos", a tabela e as abas.
 - Barra de acessibilidade (`componentes/BarraAcessibilidade.tsx`, eMAG 3.1 seção 4.3), no topo de toda tela:
   - atalhos "Ir para o conteúdo [1]", "Ir para o menu [2]" e "Ir para o rodapé [4]" (`accesskey` 1, 2 e 4, para `#conteudo`, `#menu` e `#rodape`). O primeiro é o primeiro link da página e faz o papel do antigo "Pular para o conteúdo". Sem busca no site, não há atalho 3. No Chrome e no Firefox do Linux, Alt + número troca de aba antes de chegar ao `accesskey`; por isso a barra também escuta Alt + número (com ou sem Shift) pela página, fora dos campos de texto. Troca consciente, como em sites do governo que seguem o eMAG: nas telas do AcessaWeb, Alt + 1, 2 e 4 deixam de trocar de aba (a troca segue em Ctrl + Page Up/Down). Falta conferir à mão no Chrome e no Firefox do Linux, porque o e2e não passa pelos atalhos do navegador. O destino ganha contorno de foco mesmo com clique do mouse (`data-atalho`);

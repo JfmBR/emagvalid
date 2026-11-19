@@ -172,11 +172,11 @@ test('só com teclado: pedir a avaliação, acompanhar e ver a análise concluí
   await page.keyboard.press('Tab')
   await expect(page.getByRole('region', { name: 'Conta da nota' })).toBeFocused()
   await page.keyboard.press('Tab')
-  await expect(page.getByRole('tab', { name: 'Falhas automáticas, 2 requisitos' })).toBeFocused()
+  await expect(page.getByRole('tab', { name: 'Falhas automáticas (2)' })).toBeFocused()
 
   // seta troca de aba; Tab entra no painel e Espaço marca a primeira caixa
   await page.keyboard.press('ArrowRight')
-  await expect(page.getByRole('tab', { name: 'Revisão humana, 2 itens' })).toBeFocused()
+  await expect(page.getByRole('tab', { name: 'Revisão humana (2)' })).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(page.getByRole('tabpanel')).toBeFocused()
   await page.keyboard.press('Tab')
@@ -240,7 +240,7 @@ for (const [tema, salvo] of Object.entries({
     await page.getByText('Como chegamos a 57').click()
     for (const resumo of await page.getByText(/^Onde está/).all()) await resumo.click()
     await semViolacoesSerias(page)
-    await page.getByRole('tab', { name: 'Revisão humana, 2 itens' }).click()
+    await page.getByRole('tab', { name: 'Revisão humana (2)' }).click()
     await semViolacoesSerias(page)
 
     const sobra = await page.evaluate(
