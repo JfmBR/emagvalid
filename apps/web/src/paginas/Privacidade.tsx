@@ -20,6 +20,13 @@ export function Privacidade() {
         </p>
       </section>
       <section className="cabeca">
+        <h2>Excluir seus dados</h2>
+        <p>
+          Em "Minha conta", no topo da tela, você pode excluir a sua conta. Isso apaga para sempre
+          seu nome, seu e-mail, a sua senha e todas as suas avaliações.
+        </p>
+      </section>
+      <section className="cabeca">
         <h2>Cookie</h2>
         <p>
           Usamos um único cookie, para manter você dentro da sua conta. Ele não serve para

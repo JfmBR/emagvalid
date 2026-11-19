@@ -66,6 +66,9 @@ export function Layout() {
             {carregando ? null : usuario ? (
               <>
                 <span className="ola">Olá, {usuario.nome.split(' ')[0]}</span>
+                <Link className="btn txt" to="/conta">
+                  Minha conta
+                </Link>
                 <Botao variante="txt" onClick={() => void sair()}>
                   Sair
                 </Botao>

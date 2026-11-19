@@ -72,3 +72,6 @@ export const limiteCadastroPorIp = criarLimite(10, UMA_HORA)
 export const limiteAvaliacaoPorConta = criarLimite(30, QUINZE_MINUTOS)
 // O mesmo por IP, somando todas as contas: criar contas novas não zera a conta
 export const limiteAvaliacaoPorIp = criarLimite(60, QUINZE_MINUTOS)
+// Senhas erradas ao excluir a conta, por conta: separado do login, para errar aqui não travar a
+// entrada, e para quem ataca o login não impedir o dono de excluir a conta (LGPD)
+export const limiteExclusaoPorConta = criarLimite(5, QUINZE_MINUTOS)

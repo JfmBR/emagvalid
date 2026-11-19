@@ -22,8 +22,21 @@ const MSG_MUITOS_PEDIDOS = 'Muitas tentativas. Tente de novo em 15 minutos.'
 const MSG_LIMITE = `Você chegou ao limite de ${MAX_POR_HORA} análises por hora. Tente de novo mais tarde.`
 const MSG_FILA_CHEIA = 'Há muitas análises na fila agora. Tente de novo em alguns minutos.'
 
+// Conta pelo banco, não pela memória: a regra vale depois de o Render reiniciar. Viva: ainda na fila
+// desta instância (a que está rodando também) ou recente demais para ter morrido. Também barra a
+// exclusão da conta (rotas/auth.ts).
+export async function temAnaliseViva(usuarioId: string) {
+  const pendentes = await db.avaliacao.findMany({
+    where: { usuarioId, status: { in: ['NA_FILA', 'ANALISANDO'] } },
+    select: { id: true, criadaEm: true },
+  })
+  const recente = Date.now() - PRAZO_PENDENTE_MS
+  return pendentes.some((p) => fila.posicao(p.id) !== null || p.criadaEm.getTime() >= recente)
+}
+
 // shortcut: a trava vive na memória de uma instância só, como a fila; com mais de uma instância, o count do banco ainda barra o caso comum
-const criando = new Set<string>()
+// a exclusão da conta também consulta (rotas/auth.ts)
+export const criando = new Set<string>()
 
 rotasAvaliacoes.post('/', exigirLogin, async (req, res) => {
   const { id: usuarioId } = res.locals.usuario as UsuarioDaSessao
@@ -53,17 +66,7 @@ rotasAvaliacoes.post('/', exigirLogin, async (req, res) => {
   }
   criando.add(usuarioId)
   try {
-    // conta pelo banco, não pela memória: o limite vale depois de o Render reiniciar
-    const pendentes = await db.avaliacao.findMany({
-      where: { usuarioId, status: { in: ['NA_FILA', 'ANALISANDO'] } },
-      select: { id: true, criadaEm: true },
-    })
-    // viva: ainda na fila desta instância (a que está rodando também) ou recente demais para ter morrido
-    const recente = Date.now() - PRAZO_PENDENTE_MS
-    const viva = pendentes.some(
-      (p) => fila.posicao(p.id) !== null || p.criadaEm.getTime() >= recente,
-    )
-    if (viva) {
+    if (await temAnaliseViva(usuarioId)) {
       res.status(409).json({ erro: MSG_PENDENTE })
       return
     }

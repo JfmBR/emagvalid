@@ -3,6 +3,7 @@ import { Layout } from './componentes/Layout.tsx'
 import { Acessibilidade } from './paginas/Acessibilidade.tsx'
 import { Analise } from './paginas/Analise.tsx'
 import { Cadastro } from './paginas/Cadastro.tsx'
+import { Conta } from './paginas/Conta.tsx'
 import { Entrar } from './paginas/Entrar.tsx'
 import { Inicial } from './paginas/Inicial.tsx'
 import { NaoEncontrada } from './paginas/NaoEncontrada.tsx'
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="entrar" element={<Entrar />} />
           <Route path="avaliacoes/nova" element={<NovaAvaliacao />} />
           <Route path="avaliacoes/:id" element={<Analise />} />
+          <Route path="conta" element={<Conta />} />
           <Route path="privacidade" element={<Privacidade />} />
           <Route path="acessibilidade" element={<Acessibilidade />} />
           <Route path="*" element={<NaoEncontrada />} />

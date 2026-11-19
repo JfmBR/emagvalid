@@ -173,6 +173,98 @@ describe('Tela 2 · entrar e sair', () => {
   })
 })
 
+describe('Minha conta · excluir a conta', () => {
+  const logada = { '/api/auth/eu': { status: 200, corpo: { usuario: helena } } }
+
+  async function pedirExclusao(senha: string) {
+    fireEvent.change(await screen.findByLabelText('Digite sua senha para confirmar'), {
+      target: { value: senha },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Excluir minha conta' }))
+  }
+
+  it('sem login, /conta leva para /entrar', async () => {
+    simularApi()
+    abrir('/conta')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Entrar' })).toBeInTheDocument()
+  })
+
+  it('o topo leva à Minha conta, que mostra nome e e-mail', async () => {
+    simularApi(logada)
+    abrir('/')
+
+    fireEvent.click(await screen.findByRole('link', { name: 'Minha conta' }))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Minha conta' })).toHaveFocus()
+    expect(screen.getByText('helena@empresa.com.br')).toBeInTheDocument()
+  })
+
+  it('com a senha certa, envia a senha, diz que excluiu, leva o foco ao título e sai da conta', async () => {
+    const enviados = simularApi({ ...logada, '/api/auth/excluir-conta': { status: 204 } })
+    abrir('/conta')
+
+    await pedirExclusao('Senha-forte-1')
+
+    const titulo = await screen.findByRole('heading', { level: 1, name: 'Conta excluída' })
+    expect(titulo).toHaveFocus()
+    expect(enviados['/api/auth/excluir-conta']).toEqual({ senha: 'Senha-forte-1' })
+    const menu = screen.getByRole('navigation', { name: 'Principal' })
+    expect(within(menu).getByRole('link', { name: 'Entrar' })).toBeInTheDocument()
+  })
+
+  it('dois envios seguidos mandam um pedido só', async () => {
+    simularApi({ ...logada, '/api/auth/excluir-conta': { status: 204 } })
+    abrir('/conta')
+
+    await pedirExclusao('Senha-forte-1')
+    fireEvent.click(screen.getByRole('button', { name: /Exclu/ }))
+
+    await screen.findByRole('heading', { level: 1, name: 'Conta excluída' })
+    const pedidos = vi
+      .mocked(fetch)
+      .mock.calls.filter(([caminho]) => caminho === '/api/auth/excluir-conta')
+    expect(pedidos).toHaveLength(1)
+  })
+
+  it('senha errada: o erro fica no campo, que recebe o foco', async () => {
+    simularApi({
+      ...logada,
+      '/api/auth/excluir-conta': {
+        status: 400,
+        corpo: {
+          erro: 'Confira os campos marcados.',
+          campos: { senha: 'Senha incorreta. Confira e tente de novo.' },
+        },
+      },
+    })
+    abrir('/conta')
+
+    await pedirExclusao('errada')
+
+    const campo = await screen.findByLabelText('Digite sua senha para confirmar')
+    await waitFor(() => expect(campo).toHaveFocus())
+    expect(campo).toHaveAccessibleDescription(/Senha incorreta/)
+  })
+
+  it('com análise em andamento, mostra o alerta da API', async () => {
+    simularApi({
+      ...logada,
+      '/api/auth/excluir-conta': {
+        status: 409,
+        corpo: {
+          erro: 'Você tem uma análise em andamento. Espere ela terminar para excluir a conta.',
+        },
+      },
+    })
+    abrir('/conta')
+
+    await pedirExclusao('Senha-forte-1')
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/análise em andamento/)
+  })
+})
+
 describe('Tela 3 · nova avaliação', () => {
   const logada = { '/api/auth/eu': { status: 200, corpo: { usuario: helena } } }
   const titulo = 'Qual página você quer avaliar?'

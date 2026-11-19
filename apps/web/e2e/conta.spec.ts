@@ -79,3 +79,29 @@ test('só com teclado: criar conta, sair e entrar de novo', async ({ page }) => 
   await page.keyboard.press('Enter')
   await expect(menu.getByText('Olá, Helena')).toBeVisible()
 })
+
+test('só com teclado: abrir Minha conta e excluir a conta com a senha', async ({ page }) => {
+  await page.route('**/api/auth/eu', (rota) =>
+    rota.fulfill({ status: 200, json: { usuario: helena } }),
+  )
+  let senhaEnviada: unknown
+  await page.route('**/api/auth/excluir-conta', (rota) => {
+    senhaEnviada = rota.request().postDataJSON()?.senha
+    return rota.fulfill({ status: 204 })
+  })
+  const menu = page.getByRole('navigation', { name: 'Principal' })
+
+  await page.goto('/')
+  await menu.getByRole('link', { name: 'Minha conta' }).focus()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('heading', { level: 1, name: 'Minha conta' })).toBeFocused()
+  await semViolacoesSerias(page)
+
+  await page.getByLabel('Digite sua senha para confirmar').focus()
+  await page.keyboard.type('Senha-forte-1')
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('heading', { level: 1, name: 'Conta excluída' })).toBeFocused()
+  expect(senhaEnviada).toBe('Senha-forte-1')
+  await expect(menu.getByRole('link', { name: 'Entrar' })).toBeVisible()
+  await semViolacoesSerias(page)
+})

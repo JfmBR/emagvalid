@@ -25,6 +25,22 @@ body {
   margin: 0;
 }
 
+/* Minha conta: rótulo em negrito e o valor embaixo */
+.dados {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.dados dt {
+  font-weight: 700;
+}
+
+.dados dd {
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+}
+
 /* A marca é um link: alvo de 44 px (RNF02); o ícone sozinho tem 28 px */
 .marca {
   min-height: 44px;
