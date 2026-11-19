@@ -10,6 +10,7 @@ import {
   limiteLoginPorIp,
 } from '../auth/tentativas.js'
 import { db } from '../db.js'
+import { temAnaliseViva } from './avaliacoes.js'
 
 export const rotasAuth = Router()
 
@@ -17,6 +18,10 @@ const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MSG_EMAIL = 'Digite um e-mail válido, como nome@empresa.com.br.'
 const MSG_LOGIN = 'E-mail ou senha incorretos.'
 const MSG_MUITAS_TENTATIVAS = 'Muitas tentativas. Tente de novo em 15 minutos.'
+const MSG_SEM_SENHA = 'Digite sua senha para confirmar.'
+const MSG_SENHA = 'Senha incorreta. Confira e tente de novo.'
+const MSG_ANALISE_EM_ANDAMENTO =
+  'Você tem uma análise em andamento. Espere ela terminar para excluir a conta.'
 // hash de uma senha qualquer: quem tenta um e-mail sem conta espera o mesmo tempo de quem erra a senha
 const HASH_FALSO = gerarHashSenha('senha-que-ninguem-usa')
 
@@ -151,4 +156,67 @@ rotasAuth.post('/sair', async (req, res) => {
 
 rotasAuth.get('/eu', exigirLogin, (_req, res) => {
   res.json({ usuario: publico(res.locals.usuario as UsuarioDaSessao) })
+})
+
+// Excluir minha conta (LGPD, art. 18, VI). Pede a senha: quem pegou a sessão aberta não apaga a conta.
+// As avaliações, as falhas e as sessões saem junto (onDelete: Cascade no schema.prisma).
+rotasAuth.post('/excluir-conta', exigirLogin, async (req, res) => {
+  const { id, email } = res.locals.usuario as UsuarioDaSessao
+  const senha = texto(req.body?.senha)
+  const senhaErrada = () =>
+    res.status(400).json({ erro: 'Confira os campos marcados.', campos: { senha: MSG_SENHA } })
+  if (!senha) {
+    res.status(400).json({ erro: 'Confira os campos marcados.', campos: { senha: MSG_SEM_SENHA } })
+    return
+  }
+  if (senha.length > 128) return senhaErrada()
+
+  // os mesmos limites do login: a sessão aberta não vira um jeito de adivinhar a senha
+  const ip = ipDe(req)
+  const chave = `${email}|${ip}`
+  if (limiteLogin.bloqueado(chave) || limiteLoginPorIp.bloqueado(ip)) {
+    res.status(429).json({ erro: MSG_MUITAS_TENTATIVAS })
+    return
+  }
+  if (limiteLoginPorEmail.bloqueado(email)) {
+    res.status(429).json({ erro: 'Muitas tentativas nesta conta. Tente de novo em 1 hora.' })
+    return
+  }
+  limiteLogin.registrar(chave)
+  limiteLoginPorIp.registrar(ip)
+  limiteLoginPorEmail.registrar(email)
+
+  let senhaCerta: boolean
+  try {
+    const usuario = await db.usuario.findUnique({ where: { id }, select: { senhaHash: true } })
+    senhaCerta = usuario ? await conferirSenha(senha, usuario.senhaHash) : false
+  } catch (erro) {
+    limiteLogin.descontar(chave)
+    limiteLoginPorIp.descontar(ip)
+    limiteLoginPorEmail.descontar(email)
+    throw erro
+  }
+  if (!senhaCerta) {
+    // Log de segurança: a conta, nunca a senha nem o e-mail
+    // oxlint-disable-next-line no-console
+    console.error(`Exclusão de conta recusada (senha errada): conta ${id}`)
+    return senhaErrada()
+  }
+  limiteLogin.limpar(chave)
+  limiteLoginPorIp.descontar(ip)
+  limiteLoginPorEmail.descontar(email)
+
+  // a análise em andamento gravaria numa conta que já não existe (decisão do João, 19/11/2026)
+  // shortcut: um pedido de análise no mesmo instante passa pela checagem e falha no create (500); trava em memória se aparecer
+  if (await temAnaliseViva(id)) {
+    res.status(409).json({ erro: MSG_ANALISE_EM_ANDAMENTO })
+    return
+  }
+
+  // deleteMany: dois pedidos juntos não dão erro no segundo; o cascade é do próprio banco
+  await db.usuario.deleteMany({ where: { id } })
+  await fecharSessao(req, res)
+  // evento de segurança: o id da conta, sem e-mail
+  console.warn(`Conta excluída: ${id}`)
+  res.status(204).end()
 })

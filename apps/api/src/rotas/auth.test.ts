@@ -22,6 +22,7 @@ type SessaoFalsa = { id: string; tokenHash: string; usuarioId: string; expiraEm:
 const banco = vi.hoisted(() => ({
   usuarios: [] as UsuarioFalso[],
   sessoes: [] as SessaoFalsa[],
+  avaliacoes: [] as { id: string; usuarioId: string; status: string; criadaEm: Date }[],
 }))
 
 vi.mock('../db.js', async () => {
@@ -41,8 +42,20 @@ vi.mock('../db.js', async () => {
           banco.usuarios.push(usuario)
           return publico(usuario)
         },
-        findUnique: async ({ where }: { where: { email: string } }) =>
-          banco.usuarios.find((u) => u.email === where.email) ?? null,
+        findUnique: async ({ where }: { where: { email?: string; id?: string } }) =>
+          banco.usuarios.find((u) => u.email === where.email || u.id === where.id) ?? null,
+        // o banco apaga as sessões e as avaliações junto (onDelete: Cascade)
+        deleteMany: async ({ where }: { where: { id: string } }) => {
+          banco.usuarios = banco.usuarios.filter((u) => u.id !== where.id)
+          banco.sessoes = banco.sessoes.filter((s) => s.usuarioId !== where.id)
+          banco.avaliacoes = banco.avaliacoes.filter((a) => a.usuarioId !== where.id)
+        },
+      },
+      avaliacao: {
+        findMany: async ({ where }: { where: { usuarioId: string; status: { in: string[] } } }) =>
+          banco.avaliacoes.filter(
+            (a) => a.usuarioId === where.usuarioId && where.status.in.includes(a.status),
+          ),
       },
       sessao: {
         create: async ({ data }: { data: Omit<SessaoFalsa, 'id'> }) => {
@@ -72,6 +85,7 @@ function cadastrar(agente: ReturnType<typeof request.agent>, dados: object = hel
 beforeEach(() => {
   banco.usuarios = []
   banco.sessoes = []
+  banco.avaliacoes = []
   limiteLogin.zerar()
   limiteLoginPorIp.zerar()
   limiteLoginPorEmail.zerar()
@@ -402,5 +416,91 @@ describe('proteções', () => {
     expect(porOutroSite.status).toBe(403)
     expect(porOrigemEstranha.status).toBe(403)
     expect(pelasTelas.status).toBe(204)
+  })
+})
+
+describe('excluir a conta', () => {
+  async function entrarComoHelena() {
+    const agente = request.agent(criarApp())
+    await cadastrar(agente)
+    return agente
+  }
+  const excluir = (agente: ReturnType<typeof request.agent>, senha: unknown) =>
+    agente.post('/api/auth/excluir-conta').send({ senha })
+
+  it('com a senha certa apaga a conta, as sessões e as avaliações, e tira o cookie', async () => {
+    const agente = await entrarComoHelena()
+    const outraSessao = request.agent(criarApp())
+    await outraSessao.post('/api/auth/entrar').send({ email: helena.email, senha: helena.senha })
+    banco.avaliacoes.push({ id: 'a1', usuarioId: 'u1', status: 'CONCLUIDA', criadaEm: new Date() })
+    const log = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    const resposta = await excluir(agente, helena.senha)
+
+    expect(resposta.status).toBe(204)
+    expect(banco.usuarios).toEqual([])
+    expect(banco.sessoes).toEqual([])
+    expect(banco.avaliacoes).toEqual([])
+    expect(String(resposta.headers['set-cookie'])).toMatch(/sessao=;/)
+    expect((await agente.get('/api/auth/eu')).status).toBe(401)
+    expect((await outraSessao.get('/api/auth/eu')).status).toBe(401)
+    // log com o id, sem o e-mail
+    expect(log).toHaveBeenCalledWith('Conta excluída: u1')
+    log.mockRestore()
+  })
+
+  it('sem login → 401', async () => {
+    expect((await request(criarApp()).post('/api/auth/excluir-conta').send({})).status).toBe(401)
+  })
+
+  it('sem senha pede a senha; com a senha errada, avisa no campo, loga e não apaga', async () => {
+    const agente = await entrarComoHelena()
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    const vazia = await excluir(agente, undefined)
+    const errada = await excluir(agente, 'Outra-senha-1')
+
+    expect(vazia.status).toBe(400)
+    expect(vazia.body.campos).toEqual({ senha: 'Digite sua senha para confirmar.' })
+    expect(errada.status).toBe(400)
+    expect(errada.body.campos).toEqual({ senha: 'Senha incorreta. Confira e tente de novo.' })
+    expect(log).toHaveBeenCalledWith('Exclusão de conta recusada (senha errada): conta u1')
+    expect(banco.usuarios).toHaveLength(1)
+    log.mockRestore()
+  })
+
+  it(`depois de ${MAX_TENTATIVAS} senhas erradas → 429, mesmo com a senha certa`, async () => {
+    const agente = await entrarComoHelena()
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    for (let i = 0; i < MAX_TENTATIVAS; i++) await excluir(agente, 'Outra-senha-1')
+
+    const resposta = await excluir(agente, helena.senha)
+
+    expect(resposta.status).toBe(429)
+    expect(banco.usuarios).toHaveLength(1)
+    vi.mocked(console.error).mockRestore()
+  })
+
+  it('com uma análise em andamento → 409 e não apaga', async () => {
+    const agente = await entrarComoHelena()
+    banco.avaliacoes.push({ id: 'a1', usuarioId: 'u1', status: 'NA_FILA', criadaEm: new Date() })
+
+    const resposta = await excluir(agente, helena.senha)
+
+    expect(resposta.status).toBe(409)
+    expect(resposta.body).toEqual({
+      erro: 'Você tem uma análise em andamento. Espere ela terminar para excluir a conta.',
+    })
+    expect(banco.usuarios).toHaveLength(1)
+  })
+
+  it('pendente que morreu sem dono (mais de 10 min, fora da fila) não impede', async () => {
+    const agente = await entrarComoHelena()
+    const antiga = new Date(Date.now() - 11 * 60_000)
+    banco.avaliacoes.push({ id: 'a1', usuarioId: 'u1', status: 'ANALISANDO', criadaEm: antiga })
+    const log = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    expect((await excluir(agente, helena.senha)).status).toBe(204)
+    log.mockRestore()
   })
 })
