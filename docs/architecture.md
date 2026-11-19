@@ -57,7 +57,7 @@ Estado em 10/11/2026: estrutura pronta, ainda sem telas nem regras do MVP. A arq
 
 ## Dados e migrações
 
-- Esquema em `apps/api/prisma/schema.prisma`; migrações em `apps/api/prisma/migrations/` (`20261105122347_inicial`, `20261117000628_sessoes`).
+- Esquema em `apps/api/prisma/schema.prisma`; migrações em `apps/api/prisma/migrations/` (`20261105122347_inicial`, `20261117000628_sessoes`, `20261118002249_avaliacao_url_final_pagina_grande`, `20261119142307_avaliacao_nota_e_revisao` e `20261119184305_usuario_plano_pago`, esta com a coluna `planoPago` hoje sem uso).
 - Mudança no esquema entra como migração (`npm run db:migrate -w apps/api`), revisada antes de aplicar. Nunca migrar durante o build ou por requisição.
 - O DBeaver serve para ver e testar dados locais, não para mudar tabelas.
 

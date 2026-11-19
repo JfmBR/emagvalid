@@ -78,7 +78,7 @@ Instalação detalhada, com os links de download: [`instalacao.md`](instalacao.m
 - [x] Abrir http://localhost:5173 e ver "API conectada."
 - [x] Baixar o navegador do Playwright: `npx playwright install chromium` (no Linux, `npx playwright install --with-deps chromium`)
 - [ ] Fazer o "Quick Start" e o "Tutorial: Tic-Tac-Toe" de [react.dev](https://react.dev/learn)
-- [ ] Convidar o Luiz Felipe e o Luis Otavio para o repositório no GitHub, se forem contribuir pelo GitHub. Desde 10/11/2026 a equipe é João, Luiz Felipe e Luis Otavio, e o João faz o merge das PRs como administrador (`projeto/contexto_agente/07-pendencias-e-decisoes.md`, seção D).
+- [ ] Convidar o Luiz Felipe e o Luis Otavio para o repositório no GitHub, se forem contribuir pelo GitHub. Em 19/11/2026, o repositório tinha um colaborador além do João e nenhum convite pendente: falta conferir de quem é a conta e convidar o outro. Desde 10/11/2026 a equipe é João, Luiz Felipe e Luis Otavio, e o João faz o merge das PRs como administrador (`projeto/contexto_agente/07-pendencias-e-decisoes.md`, seção D).
 - [ ] Combinar com o grupo a dependência `concurrently`, que entrou na PR #1 sem ser combinada (mesma seção)
 
 **Terminou quando:** o projeto roda no seu computador com o banco ligado.
@@ -91,7 +91,7 @@ Instalação detalhada, com os links de download: [`instalacao.md`](instalacao.m
 
 - [x] Criar `apps/api/src/analise/analisar.ts`: abre a URL com Playwright, roda o axe-core e devolve as violações
 - [x] Criar um script `npm run analisar -- <url>` (`npm run analisar -w apps/api -- <url>`) que imprime o resultado no terminal
-- [ ] Testar em 3 a 5 páginas públicas reais (inclusive uma do governo). Em 12/11: funcionou em example.com e na página de demonstração do W3C (28 s); `gov.br`, `planalto.gov.br` (a página navega depois de abrir, o axe perde o contexto), `python.org` e o site do eMAG estouraram os 30 s ou falharam, com a rede lenta neste computador (`curl` no `gov.br` leva 11 s). Falta: tratar a espera (`waitUntil`) e o redirecionamento, e repetir numa rede boa
+- [x] Testar em 3 a 5 páginas públicas reais (inclusive uma do governo). Em 12/11: funcionou em example.com e na página de demonstração do W3C (28 s); `gov.br`, `planalto.gov.br` (a página navega depois de abrir, o axe perde o contexto), `python.org` e o site do eMAG estouraram os 30 s ou falharam, com a rede lenta neste computador (`curl` no `gov.br` leva 11 s). A espera (`waitUntil: 'load'`) e o redirecionamento (`urlFinal`) foram tratados no Passo 6. Em 18/11/2026, 11 páginas reais: 6 concluíram (`python.org` com 100 falhas) e 5 deram DEMOROU, entre elas `gov.br` (`projeto/contexto_agente/07-pendencias-e-decisoes.md`, seções D e E). Os 60 s seguem com o mentor
 - [x] Montar a **tabela de requisitos** em `apps/api/src/emag/requisitos.ts` a partir de `projeto/docs/rascunhos/Cobertura_eMAG_axe-core.md`: as 29 recomendações do eMAG 3.1 que o axe-core cobre no todo ou em parte, cada uma com número, nome oficial, seção, link para a seção oficial, regras do axe-core e prioridade (peso 3, 2 ou 1). Essa tabela é a "lista fechada" do RF08; as recomendações sem cobertura vão para a revisão humana (RF09)
 - [ ] Conferir o mapeamento e os pesos com o mentor José Alves e os nomes de 6.5 a 6.8 no PDF oficial do eMAG (`07`, seções B e E)
 
@@ -102,7 +102,7 @@ Instalação detalhada, com os links de download: [`instalacao.md`](instalacao.m
 
 ## Passo 2 · Fechar as decisões para o Plano v1.1 (09–11/11)
 
-O Plano v1.1 (13/11) pede arquitetura e tecnologias. No Plano v1 (Marcos de Entrega), o responsável pela v1.1 era o Matheus, que saiu da equipe (10/11/2026); o novo responsável não consta nos arquivos. Passe ao responsável o que o código decidir e leve ao mentor (Rodrigo Pereira) e ao arquiteto (Fábio Rezente).
+O Plano v1.1 (13/11) pede arquitetura e tecnologias. No Plano v1 (Marcos de Entrega), o responsável pela v1.1 era o Matheus, que saiu da equipe (10/11/2026); a v1.1 saiu em 11/11/2026, feita pelo João (controle de versão do Plano v1.1). Passe ao responsável o que o código decidir e leve ao mentor (Rodrigo Pereira) e ao arquiteto (Fábio Rezente).
 
 Já decidido em 05/11 (Plano v1, Arquitetura e tecnologias e legenda dos requisitos):
 
@@ -112,7 +112,7 @@ Já decidido em 05/11 (Plano v1, Arquitetura e tecnologias e legenda dos requisi
 
 Ainda a fechar:
 
-- [ ] **Esquema do banco:** revisar `apps/api/prisma/schema.prisma` com o que o Passo 1 mostrou
+- [x] **Esquema do banco:** revisar `apps/api/prisma/schema.prisma` com o que o Passo 1 mostrou. Revisado aos poucos, por migração: sessões (17/11), `urlFinal` e página grande (18/11), nota e revisão humana (19/11)
 - [ ] Bibliotecas novas que vão ser precisas (ver sugestões), combinadas com o grupo
 - [ ] Ferramentas de apoio, que não vão para o produto: `concurrently` (sobe API e front-end juntos com `npm run dev`) e DBeaver Community (ver e testar os dados do banco, local e na nuvem)
 
@@ -181,24 +181,24 @@ Requisitos: RF04, RF05, RF06, RF09.
 - [x] `apps/api/src/analise/nota.ts` com a fórmula decidida (Passo 2), com testes. A análise passou a guardar também as regras aplicáveis e as em dúvida do axe (19/11/2026)
 - [x] Tela 5: nota, aviso "não é certificação", "Como chegamos a [nota]" (tabela que abre e fecha, uma linha por recomendação em vez de por seção, para mostrar o peso de cada uma, RF06), abas "Falhas automáticas" e "Revisão humana", cartões por requisito ordenados por prioridade
 - [x] Lista de revisão humana com caixas de marcar, gravadas no banco: as 16 recomendações que a máquina não julga mais as que o axe deixou em dúvida na página (decisões do João, 19/11/2026)
-- [ ] **Publicar** (primeira publicação do Plano, semana de 23/11)
+- [x] **Publicar** (primeira publicação do Plano, semana de 23/11). O Render publica sozinho a cada merge na `main` (Auto-Deploy); em 19/11/2026, o endereço público já tinha a Tela 5 e o "Baixar PDF" da PR #32
 
 **Terminou quando:** no endereço público, uma URL real mostra a nota com a conta e as falhas.
 
 ## Passo 8 · Orientações de correção — Tela 6 (25–27/11)
 
-Requisitos: RF07, RF08, RF10, RF11.
+Requisitos: RF07, RF08, RF10. O RF11 (editar as orientações) saiu do MVP no Plano v1.1 (11/11/2026), e o RF10 passou a "sugestão, com aviso para conferir antes de aplicar": não há aprovar, editar nem descartar.
 
-- [ ] **Primeiro o texto padrão:** em `requisitos.ts`, para cada requisito, um "por que é falha" e um exemplo de correção escritos pelo grupo. Isso já funciona sem IA (contingência do R5). Rascunho do Claude pronto em 19/11/2026 e já na Tela 5 (decisão do João); falta a revisão do grupo
+- [ ] **Primeiro o texto padrão:** em `apps/api/src/emag/textos.ts`, para cada requisito, um "por que é falha" e um exemplo de correção escritos pelo grupo. Isso já funciona sem IA (contingência do R5). Rascunho do Claude pronto em 19/11/2026 e já na Tela 5 (decisão do João); falta a revisão do grupo
 - [ ] **Depois a IA (Google Gemini):** `apps/api/src/orientacoes/ia.ts` manda ao Gemini a falha, o trecho e o requisito da lista fechada, e pede a resposta em formato fixo (JSON). Se a IA citar requisito fora da lista, descartar e usar o texto padrão
 - [ ] Mandar à IA só o trecho da página pública com a falha, sem dado do usuário, e dizer isso na Tela 6 (RNF05)
 - [ ] Guardar as orientações já geradas para não chamar o Gemini de novo pela mesma falha: o plano gratuito limita as chamadas (R7)
 - [ ] Se o limite do Gemini acabar (R7): mostrar "Serviço de IA indisponível no momento." e, abaixo, o texto padrão do requisito
 - [ ] Chave da IA só no `.env` e no Render; nunca no código
-- [ ] Tela 6: requisito com link oficial, ocorrência com local e trecho, bloco "Sugestão da IA — revise antes de usar", botões Aprovar, Editar e Descartar, navegação entre falhas
-- [ ] Gravar `orientacaoFinal` e `orientacaoAprovada`
+- [ ] Tela 6: requisito com link oficial, ocorrência com local e trecho, explicação simples e código antes e depois (RF07), no bloco "Sugestão da IA — confira antes de aplicar" (RF10), navegação entre falhas
+- [ ] Rever no design do Passo 8 os campos `orientacaoFinal` e `orientacaoAprovada` do esquema: vinham do aprovar e editar, que saíram com o RF11
 
-**Terminou quando:** dá para aprovar ou editar todas as orientações de uma avaliação.
+**Terminou quando:** todas as falhas de uma avaliação mostram a sugestão da IA, ou o texto padrão, marcada como sugestão.
 
 ## Passo 9 · Relatório em PDF (30/11–01/12; feito em 19/11/2026)
 
@@ -224,13 +224,13 @@ Requisitos: RF16, RF17.
 
 - [ ] Ajuda curta nas telas 3, 5 e 6, com exemplo
 - [ ] Revisar todas as mensagens de erro: dizem o que houve e o próximo passo
-- [ ] Página de erro para endereço inexistente
+- [x] Página de erro para endereço inexistente (`apps/web/src/paginas/NaoEncontrada.tsx`, desde o Passo 4)
 
 ## Passo 12 · Testes, acessibilidade e publicação do MVP (02–04/12)
 
 Requisitos: RNF01, RNF02, RNF07, RNF08, RNF09. **MVP em produção em 04/12.**
 
-- [ ] Passar o próprio AcessaWeb em todas as telas dele (a ferramenta não pode ser inacessível)
+- [ ] Passar o próprio AcessaWeb em todas as telas dele (a ferramenta não pode ser inacessível). Em 18/11/2026, a página inicial pública deu 0 falhas; as telas com login ficam fora, porque o AcessaWeb não analisa página atrás de login, e são cobertas pelo axe no `npm run test:e2e`
 - [ ] Testar o fluxo nos navegadores atuais de computador: Chrome, Firefox e Edge (RNF09)
 - [ ] Teste completo com teclado e leitor de tela, tela por tela (NVDA no Windows, Orca no Linux). Se o desenvolvimento for só no Linux, faça ao menos uma rodada com o NVDA num Windows antes de 04/12: os leitores leem a mesma página de jeitos diferentes, e o NVDA é o que a persona usa
 - [ ] Luis Otavio: testes do fluxo e checklist de aceite; teste de usabilidade com uma pessoa de fora do grupo
@@ -249,7 +249,7 @@ Requisitos: RNF01, RNF02, RNF07, RNF08, RNF09. **MVP em produção em 04/12.**
 
 ## Se atrasar: o que cortar primeiro
 
-Dos riscos R2 e R4 do Plano v1: a prioridade baixa (RF15, RF18, RF19) já está fora do MVP. Se faltar tempo, cortar primeiro **RF11** (editar orientação) e **RF16** (ajuda na tela), e qualquer requisito de prioridade média só com o aval do mentor. Nunca cortar a publicação nem a LGPD (RNF05). Se a IA travar ou estourar o limite do plano gratuito, o texto padrão do Passo 8 segura o RF07.
+Do risco R2 do Plano v1.1: a prioridade baixa (RF11, RF15, RF18, RF19) já está fora do MVP. Se faltar tempo, cortar primeiro **RF20** (lista de URLs, baixa) e depois **RF16** (ajuda na tela), este e qualquer outro requisito de prioridade média só com o aval do mentor. Nunca cortar a publicação nem a LGPD (RNF05). Se a IA travar ou estourar o limite do plano gratuito, o texto padrão do Passo 8 segura o RF07.
 
 ## Sugestões de melhoria
 
