@@ -43,7 +43,7 @@ O AcessaWeb é uma ferramenta de acessibilidade: a própria interface precisa se
   - o "·" (componente `Ponto`) vira vírgula para o leitor, e a conta vira "100 vezes 30, dividido por 39, igual a 77";
   - a tabela de "Como chegamos" fica numa região focável ("Conta da nota"): o Tab para nela;
   - nos cartões, o título vem antes dos selos no código (na tela, os selos continuam em cima), e o selo "Automático" não é lido;
-  - na revisão humana, a caixa tem nome curto (número e recomendação) e o que conferir como descrição. O indício (texto e exemplos) e o motivo do grupo também entram na descrição (`aria-describedby`), nunca no nome. O título do grupo é um `<h2>`, lido como título;
+  - na revisão humana, a caixa tem nome curto (número e recomendação) e o que conferir como descrição. A frase do indício e o motivo do grupo também entram na descrição (`aria-describedby`), nunca no nome. Os exemplos do indício (até 5 trechos longos) ficam fora da descrição: visíveis e lidos na navegação de leitura. O título do grupo é um `<h2>`, lido como título;
   - a tabela tem a fórmula da nota como descrição (`aria-describedby`): quem pula direto para a tabela também a ouve;
   - as abas não têm nome diferente do texto visível ("Revisão humana (17)"): quem usa comando de voz fala o que vê (WCAG 2.5.3), e na pontuação padrão o Orca e o NVDA não leem os parênteses.
   - Roteiro do teste manual: do fim da análise até dentro de "Como chegamos", o leitor deve dizer o título com a nota, sem atropelo; com as setas, o aviso "Não é certificação" e o resumo; com Tab, "Como chegamos", a tabela e as abas.

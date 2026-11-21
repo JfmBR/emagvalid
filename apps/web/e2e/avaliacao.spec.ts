@@ -342,11 +342,10 @@ test('revisão humana com indício e grupo: sem violação séria, Tab chega às
   ).toBeVisible()
   await semViolacoesSerias(page)
 
-  // descrição lida: indício e exemplos, depois o "conferir"; no grupo, só o motivo
+  // descrição lida: só a frase do indício, depois o "conferir"; no grupo, só o motivo
   const nove = page.getByRole('checkbox', { name: /^1\.9/ })
-  await expect(nove).toHaveAccessibleDescription(
-    /^Indício: 1 link abre .* Onde achamos: footer > a .*X.* Confira à mão\.$/,
-  )
+  await expect(nove).toHaveAccessibleDescription(/^Indício: 1 link abre [^<]*\. Confira à mão\.$/)
+  await expect(page.getByText('Onde achamos:')).toBeVisible()
   await expect(page.getByRole('checkbox', { name: /^1\.6/ })).toHaveAccessibleDescription(
     'Não achamos tabela (<table>) na página.',
   )

@@ -132,7 +132,7 @@ function revisao({ resultado }: DadosDoRelatorio) {
       grupo.length > 0
         ? `
     <h3>Provavelmente não se aplicam nesta página</h3>
-    <p>A ferramenta não achou na página o que estes itens pedem. Ela pode ter deixado algo passar, como um vídeo que só carrega ao rolar a página. Marque se conferir.</p>
+    <p>A ferramenta não achou na página o que estes itens pedem. Ela pode ter deixado algo passar, como um vídeo que só carrega ao rolar a página. Confira à mão; as marcações vêm da aba Revisão humana.</p>
     <ul class="revisao">${grupo.join('')}
     </ul>`
         : ''

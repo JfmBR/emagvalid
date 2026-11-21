@@ -55,15 +55,17 @@ Roda depois do `AxeBuilder.analyze()` em `apps/api/src/analise/analisar.ts`, com
 
 Frame que nem carregou documento (página de erro `chrome-error://`, por exemplo um anúncio de host bloqueado ou que falhou na rede) ou que foi destacado durante a leitura é **ignorado**: não conta como lido nem como falha. Sem isso, um `iframe` quebrado, comum em sites reais, sumiria com o grupo em quase toda página. O "provavelmente" já cobre o risco. _(Escolha do Claude, 21/11, depois da leitura do revisor.)_
 
+A busca entra em shadow root aberto, como o axe. Não enxerga shadow root fechado nem player que só carrega ao clicar (por exemplo, `<lite-youtube>`). O limite de 20 frames conta só os frames carregados.
+
 ### Provavelmente não se aplica (quando nada disto é achado em nenhum frame)
 
-| Itens                   | O que procuramos                                                                                                                                                                                       | Motivo mostrado                                                                            |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| 1.6                     | `table`                                                                                                                                                                                                | "Não achamos tabela (`<table>`) na página."                                                |
-| 3.8                     | `a[href]` cujo caminho termina em `.pdf .doc .docx .xls .xlsx .ppt .pptx .odt .ods .odp .rtf` (sem diferença de maiúsculas)                                                                            | "Não achamos link para documento (PDF, DOC, ODT, planilha ou apresentação)."               |
-| 5.2                     | `audio`; `a[href]` para `.mp3 .wav .ogg .oga .m4a .aac .opus .flac`; `iframe` de `soundcloud.com`, `open.spotify.com`, `anchor.fm`                                                                     | "Não achamos áudio na página (`<audio>`, link para arquivo de áudio ou player conhecido)." |
-| 5.3                     | `video`; `iframe` de `youtube.com`, `youtube-nocookie.com`, `player.vimeo.com`, `dailymotion.com`; `a[href]` para `.mp4 .webm .mov .m4v .ogv`                                                          | "Não achamos vídeo na página (`<video>`, YouTube, Vimeo ou link para arquivo de vídeo)."   |
-| 6.4, 6.5, 6.6, 6.7, 6.8 | `form`; `input` que não seja `type="hidden"`; `select`; `textarea`; `[contenteditable]`; `[role]` igual a `textbox`, `searchbox`, `combobox`, `listbox`, `radio`, `checkbox`, `spinbutton` ou `slider` | "Não achamos formulário nem campo de preenchimento na página."                             |
+| Itens                   | O que procuramos                                                                                                                                                                                                              | Motivo mostrado                                                                            |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 1.6                     | `table`                                                                                                                                                                                                                       | "Não achamos tabela (`<table>`) na página."                                                |
+| 3.8                     | `a[href]` cujo caminho termina em `.pdf .doc .docx .xls .xlsx .ppt .pptx .odt .ods .odp .rtf` (sem diferença de maiúsculas)                                                                                                   | "Não achamos link para documento (PDF, DOC, ODT, planilha ou apresentação)."               |
+| 5.2                     | `audio`; `a[href]` para `.mp3 .wav .ogg .oga .m4a .aac .opus .flac`; `iframe` de `soundcloud.com`, `open.spotify.com`, `anchor.fm`                                                                                            | "Não achamos áudio na página (`<audio>`, link para arquivo de áudio ou player conhecido)." |
+| 5.3                     | `video`; `iframe` de `youtube.com`, `youtube-nocookie.com`, `player.vimeo.com`, `dailymotion.com`; `a[href]` para `.mp4 .webm .mov .m4v .ogv`                                                                                 | "Não achamos vídeo na página (`<video>`, YouTube, Vimeo ou link para arquivo de vídeo)."   |
+| 6.4, 6.5, 6.6, 6.7, 6.8 | `form`; `input` que não seja `type="hidden"`; `select`; `textarea`; `[contenteditable]` que não seja `"false"`; `[role]` igual a `textbox`, `searchbox`, `combobox`, `listbox`, `radio`, `checkbox`, `spinbutton` ou `slider` | "Não achamos formulário nem campo de preenchimento na página."                             |
 
 O motivo é fixo por item. Por isso grava-se só o número do item, e o texto fica no código (`textos.ts` ou vizinho), como o "conferir".
 
@@ -78,6 +80,8 @@ O motivo é fixo por item. Por isso grava-se só o número do item, e o texto fi
 No 1.9, `target=""` conta como `_self` (sem indício). Limite: `<base target="_blank">` não é detectado.
 
 Se um item tem indício, ele se aplica: o indício vence o "não se aplica". Exemplo: reCAPTCHA invisível numa página sem formulário deixa 6.8 com indício, e 6.4 a 6.7 no grupo.
+
+No 6.8, um CAPTCHA conta uma vez: conta o widget, o `iframe` dentro de `.g-recaptcha`, `.h-captcha` ou `.cf-turnstile` não conta de novo, e o `script` só conta quando é o único sinal (reCAPTCHA invisível).
 
 **Exemplos:** até 5 por item, na ordem do documento. Cada um tem o caminho, gerado pelo `axe.utils.getSelector` (a mesma função dos caminhos das falhas; o axe já está em cada frame depois do `analyze`), e o trecho (`outerHTML`). Num frame filho, o caminho leva o do `iframe` na frente, separado por espaço, como o `n.target.join(' ')` das falhas. Se `axe.utils.getSelector` não existir, o caminho fica vazio e o trecho continua.
 
@@ -104,7 +108,7 @@ O `evaluate` roda no contexto da página avaliada, e o JavaScript do site pode t
 
 - O pior caso de uma página maliciosa é mentir sobre si mesma na revisão (ex.: dizer que não tem formulário). Isso não muda a nota, e o item continua visível no grupo.
 - Seletor e trecho sempre aparecem como texto: escapados no PDF e sem `innerHTML` na Tela 5 (RNF10).
-- O `evaluate` usa o tempo que sobra do `limiteMs` da análise. Erro ou demora na detecção dá resultado vazio; a análise não falha por isso. No log vai só o nome do erro, como em `diagnostico`.
+- A leitura toda tem prazo próprio de 10 s, dentro do que sobra do `limiteMs` da análise. Erro ou prazo estourado na detecção dá resultado vazio; a análise não falha por isso. No log vai só o nome do erro, como em `diagnostico`.
 - Se o relógio da análise (`limiteMs`) estourar durante a detecção, o navegador fecha e o `evaluate` lança erro. A avaliação conclui com o resultado do axe, que já estava completo, sem grupo e sem indícios. Ela **não** vira DEMOROU. _(Escolha do Claude, 21/11.)_
 
 ## Resultado (API)

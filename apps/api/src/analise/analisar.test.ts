@@ -76,6 +76,59 @@ beforeAll(async () => {
           ),
         )
         return
+      case '/sombra':
+        // web component com campo e vídeo dentro de shadow root aberto
+        res.setHeader('content-type', 'text/html')
+        res.end(
+          html.replace(
+            '<img src="x.png">',
+            `<x-busca></x-busca><script>
+  customElements.define('x-busca', class extends HTMLElement {
+    constructor() {
+      super()
+      this.attachShadow({ mode: 'open' }).innerHTML = '<input aria-label="Busca"><video></video>'
+    }
+  })
+</script>`,
+          ),
+        )
+        return
+      case '/iframes-quebrados':
+        res.setHeader('content-type', 'text/html')
+        res.end(
+          html.replace(
+            '<img src="x.png">',
+            Array.from(
+              { length: 25 },
+              (_, n) => `<iframe src="${interno}/x${n}" title="Anúncio ${n}"></iframe>`,
+            ).join(''),
+          ),
+        )
+        return
+      case '/captcha-completo':
+        // o widget do reCAPTCHA, o iframe que ele cria e o script: um CAPTCHA só
+        res.setHeader('content-type', 'text/html')
+        res.end(
+          html.replace(
+            '<img src="x.png">',
+            `<div class="g-recaptcha"><iframe src="https://www.google.com/recaptcha/api2/anchor" title="reCAPTCHA"></iframe></div>
+<script src="https://www.google.com/recaptcha/api.js"></script>`,
+          ),
+        )
+        return
+      case '/so-script-captcha':
+        res.setHeader('content-type', 'text/html')
+        res.end(
+          html.replace(
+            '<img src="x.png">',
+            '<script src="https://www.google.com/recaptcha/api.js?render=x"></script>',
+          ),
+        )
+        return
+      case '/editavel-falso':
+        res.setHeader('content-type', 'text/html')
+        res.end(html.replace('<img src="x.png">', '<div contenteditable="false">Texto</div>'))
+        return
       case '/so-captcha':
         res.setHeader('content-type', 'text/html')
         res.end(html.replace('<img src="x.png">', '<div class="g-recaptcha"></div>'))
@@ -102,8 +155,8 @@ beforeAll(async () => {
             `</main><script>
   addEventListener('load', () => {
     window.axe = { utils: { getSelector: () => { throw 1 } } }
-    // o axe não usa; o evaluate da revisão automática usa e lança erro
-    Document.prototype.querySelector = () => { throw 1 }
+    // o axe não sente (sonda, 21/11); o evaluate da revisão automática usa e lança erro
+    Element.prototype.matches = () => { throw 1 }
   })
 </script>`,
           ),
@@ -530,6 +583,42 @@ describe('analisar', { timeout: 20_000 }, () => {
     const sabotada = await analisar(`${url}/sabotada`, { conferirEndereco: soLocal })
     expect(sabotada.aplicaveis.sort()).toEqual(normal.aplicaveis.sort())
     expect(sabotada.revisaoAutomatica.naoAplicaveis).toEqual([]) // erro no frame: nada afirmado
+  })
+
+  it('campo e vídeo dentro de shadow root aberto contam', async () => {
+    const { revisaoAutomatica } = await analisar(`${url}/sombra`, { conferirEndereco: soLocal })
+    expect(revisaoAutomatica.naoAplicaveis).toEqual(['1.6', '3.8', '5.2'])
+  })
+
+  it('25 iframes que não carregaram não passam do limite de 20 frames', async () => {
+    const { revisaoAutomatica } = await analisar(`${url}/iframes-quebrados`, {
+      conferirEndereco: soLocal,
+    })
+    expect(revisaoAutomatica.naoAplicaveis).toContain('6.5')
+  })
+
+  it('reCAPTCHA com iframe e script é um indício só; script sozinho também conta', async () => {
+    const completo = await analisar(`${url}/captcha-completo`, { conferirEndereco: soLocal })
+    const captcha = completo.revisaoAutomatica.indicios.find((i) => i.numero === '6.8')
+    expect(captcha).toMatchObject({ total: 1 })
+    expect(captcha?.exemplos).toHaveLength(1)
+    expect(captcha?.exemplos[0]?.trecho).toContain('g-recaptcha')
+
+    const soScript = await analisar(`${url}/so-script-captcha`, { conferirEndereco: soLocal })
+    expect(soScript.revisaoAutomatica.indicios).toEqual([
+      {
+        numero: '6.8',
+        total: 1,
+        exemplos: [expect.objectContaining({ trecho: expect.stringContaining('<script') })],
+      },
+    ])
+  })
+
+  it('contenteditable="false" não é campo', async () => {
+    const { revisaoAutomatica } = await analisar(`${url}/editavel-falso`, {
+      conferirEndereco: soLocal,
+    })
+    expect(revisaoAutomatica.naoAplicaveis).toContain('6.5')
   })
 
   it('contagem para em 10.000', async () => {

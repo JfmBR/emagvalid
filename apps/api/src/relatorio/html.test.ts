@@ -121,6 +121,9 @@ describe('htmlDoRelatorio', () => {
 
     expect(html).toContain('Revisão humana: 1 de 15 itens conferidos')
     expect(html).toContain('Provavelmente não se aplicam nesta página')
+    // num PDF não se marca nada
+    expect(html).toContain('Confira à mão; as marcações vêm da aba Revisão humana.')
+    expect(html).not.toContain('Marque se conferir')
     expect(html.indexOf('Não achamos tabela')).toBeGreaterThan(
       html.indexOf('Provavelmente não se aplicam'),
     )

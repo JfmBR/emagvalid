@@ -1052,11 +1052,13 @@ describe('Tela 4 · análise', () => {
         screen.getByText(/A ferramenta não achou na página o que estes itens pedem/),
       ).toBeVisible()
 
-      // indício e exemplos na descrição, antes do "conferir"; seletor vazio não vira <code>
+      // só a frase do indício na descrição, antes do "conferir"; os exemplos ficam visíveis fora dela
       const nove = screen.getByRole('checkbox', { name: /^1\.9, Não abrir novas instâncias$/ })
       expect(nove).toHaveAccessibleDescription(
-        'Indício: 2 links abrem em nova aba ou janela sem aviso no texto. Onde achamos: footer > a <a target="_blank"><b>X</b></a> <a target="_blank">Y</a> Confira os links.',
+        'Indício: 2 links abrem em nova aba ou janela sem aviso no texto. Confira os links.',
       )
+      expect(screen.getByText('Onde achamos:')).toBeVisible()
+      // seletor vazio não vira <code>
       const painel = screen.getByRole('tabpanel')
       expect(painel.querySelectorAll('code')).toHaveLength(3)
       expect(painel.querySelector('b')).toBeNull() // o trecho é só texto

@@ -133,9 +133,9 @@ function Item({
         // 48px à esquerda: 14 de margem + 22 da caixa + 12 de espaço, alinha com o nome
         <div style={{ display: 'grid', gap: 4, minWidth: 0, padding: '0 14px 12px 48px' }}>
           {indicio ? (
-            <span id={`${base}-indicio`} style={{ display: 'grid', gap: 4 }}>
-              {/* os espaços não aparecem na grade, mas separam as frases na descrição lida */}
-              <span>Indício: {indicio.texto}</span>{' '}
+            <span style={{ display: 'grid', gap: 4 }}>
+              {/* só a frase é descrição da caixa; os exemplos (até 5 trechos longos) se leem navegando */}
+              <span id={`${base}-indicio`}>Indício: {indicio.texto}</span>
               {indicio.exemplos.length > 0 ? (
                 <>
                   <span className="dica">Onde achamos:</span>

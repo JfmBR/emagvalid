@@ -108,3 +108,35 @@ describe('lerRevisaoAutomatica', { timeout: 20_000 }, () => {
     }
   })
 })
+
+describe('lerRevisaoAutomatica: prefixo e prazo', { timeout: 20_000 }, () => {
+  it('axe do frame pai que falha: os indícios do frame filho ficam, com prefixo vazio', async () => {
+    const navegador = await chromium.launch()
+    try {
+      const pagina = await navegador.newPage()
+      await pagina.setContent(`<!doctype html><html lang="pt-BR"><title>T</title><body>
+<iframe title="Filho" srcdoc='<a href="/x" target="_blank">x</a>'></iframe>
+<script>window.axe = { setup() { throw 1 }, utils: { getSelector() { throw 1 } } }</script>
+</body></html>`)
+      await pagina.frames()[1]?.waitForLoadState()
+      const r = await lerRevisaoAutomatica(pagina)
+      expect(r.indicios).toEqual([
+        {
+          numero: '1.9',
+          total: 1,
+          exemplos: [{ seletor: '', trecho: expect.stringContaining('target="_blank"') }],
+        },
+      ])
+      expect(r.naoAplicaveis).toEqual(NAO_APLICAVEIS_POSSIVEIS)
+    } finally {
+      await navegador.close()
+    }
+  })
+
+  it('leitura que não termina no prazo: sai vazia', async () => {
+    const pagina = paginaFalsa([
+      { url: 'http://127.0.0.1/', evaluate: () => new Promise<never>(() => {}) },
+    ])
+    expect(await lerRevisaoAutomatica(pagina, 50)).toEqual({ naoAplicaveis: [], indicios: [] })
+  })
+})
