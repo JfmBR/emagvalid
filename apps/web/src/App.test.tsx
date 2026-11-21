@@ -1063,9 +1063,12 @@ describe('Tela 4 · análise', () => {
 
       // o motivo do grupo é a descrição da caixa
       const seis = screen.getByRole('checkbox', { name: /^1\.6, Tabelas$/ })
-      expect(seis).toHaveAccessibleDescription(
-        'Não achamos tabela (<table>) na página. Confira as tabelas.',
-      )
+      // só o motivo, sem o "conferir" (como no PDF)
+      expect(seis).toHaveAccessibleDescription('Não achamos tabela (<table>) na página.')
+      expect(screen.queryByText('Confira as tabelas.')).not.toBeInTheDocument()
+
+      // o indício fica fora do <label>: selecionar o exemplo não marca a caixa
+      expect(nove.closest('label')).not.toContainElement(painel.querySelector('code'))
 
       // marcar um do grupo grava, mas não muda o "K de T"
       fireEvent.click(seis)

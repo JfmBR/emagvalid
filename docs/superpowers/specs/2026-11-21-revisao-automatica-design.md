@@ -75,6 +75,8 @@ O motivo é fixo por item. Por isso grava-se só o número do item, e o texto fi
 | 6.7  | grupos de `input[type="radio"]` (mesmo `name` no mesmo `form`; radio sem `name` conta sozinho) em que algum radio não está dentro de `fieldset` nem de `[role="radiogroup"]`. Exemplo: o primeiro radio do grupo                                                 | "N grupo(s) de botões de opção (radio) fora de `<fieldset>`."                            |
 | 6.8  | `iframe` ou `script` com `src` de `google.com/recaptcha`, `www.gstatic.com/recaptcha`, `recaptcha.net`, `hcaptcha.com` ou `challenges.cloudflare.com`; elementos `.g-recaptcha`, `.h-captcha`, `.cf-turnstile`                                                   | "Achamos CAPTCHA conhecido na página (reCAPTCHA, hCaptcha ou Turnstile)." (sem contagem) |
 
+No 1.9, `target=""` conta como `_self` (sem indício). Limite: `<base target="_blank">` não é detectado.
+
 Se um item tem indício, ele se aplica: o indício vence o "não se aplica". Exemplo: reCAPTCHA invisível numa página sem formulário deixa 6.8 com indício, e 6.4 a 6.7 no grupo.
 
 **Exemplos:** até 5 por item, na ordem do documento. Cada um tem o caminho, gerado pelo `axe.utils.getSelector` (a mesma função dos caminhos das falhas; o axe já está em cada frame depois do `analyze`), e o trecho (`outerHTML`). Num frame filho, o caminho leva o do `iframe` na frente, separado por espaço, como o `n.target.join(' ')` das falhas. Se `axe.utils.getSelector` não existir, o caminho fica vazio e o trecho continua.

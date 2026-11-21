@@ -147,6 +147,15 @@ describe('htmlDoRelatorio', () => {
     expect(html).not.toContain('<script>x')
   })
 
+  it('exemplo sem seletor não gera <code> vazio', () => {
+    const html = gerar({
+      indicios: [{ numero: '1.9', total: 1, exemplos: [{ seletor: '', trecho: '<a>X</a>' }] }],
+    })
+
+    expect(html).toContain('<br><code>&lt;a&gt;X&lt;/a&gt;</code>')
+    expect(html).not.toContain('<code></code>')
+  })
+
   it('trecho longo quebra a linha', () => {
     expect(gerar()).toContain('overflow-wrap: anywhere')
   })

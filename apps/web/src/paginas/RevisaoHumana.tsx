@@ -97,17 +97,20 @@ function Item({
 }) {
   const base = `rev-${item.numero}`
   const { indicio } = item
+  // no grupo dos que não se aplicam, só o motivo (como no PDF); o "conferir" fica na lista principal
+  const mostraConferir = Boolean(item.conferir) && !item.naoSeAplica
   const descricao = [
     item.motivo === 'duvida' ? `${base}-duvida` : '',
     indicio ? `${base}-indicio` : '',
     item.naoSeAplica ? `${base}-motivo` : '',
-    item.conferir ? `${base}-conferir` : '',
+    mostraConferir ? `${base}-conferir` : '',
   ]
     .filter(Boolean)
     .join(' ')
   return (
-    <li>
-      <label>
+    // o cartão é o <li>: o indício (com <code> para copiar) fica fora do <label>, senão selecionar o texto marca a caixa
+    <li style={{ border: '1px solid var(--line)', borderRadius: 8 }}>
+      <label style={{ border: 0 }}>
         <input
           type="checkbox"
           aria-labelledby={`${base}-nome`}
@@ -115,17 +118,20 @@ function Item({
           checked={feita}
           onChange={(evento) => void mudar(item.numero, evento.target.checked)}
         />
-        <span style={{ display: 'grid', gap: 4, minWidth: 0 }}>
-          <span>
-            <span id={`${base}-nome`}>
-              <strong>{item.numero}</strong>
-              <Ponto />
-              {item.nome}
-            </span>
-            {item.motivo === 'duvida' ? (
-              <span id={`${base}-duvida`}> (o axe-core ficou em dúvida nesta página)</span>
-            ) : null}
+        <span style={{ minWidth: 0 }}>
+          <span id={`${base}-nome`}>
+            <strong>{item.numero}</strong>
+            <Ponto />
+            {item.nome}
           </span>
+          {item.motivo === 'duvida' ? (
+            <span id={`${base}-duvida`}> (o axe-core ficou em dúvida nesta página)</span>
+          ) : null}
+        </span>
+      </label>
+      {indicio || item.naoSeAplica || mostraConferir ? (
+        // 48px à esquerda: 14 de margem + 22 da caixa + 12 de espaço, alinha com o nome
+        <div style={{ display: 'grid', gap: 4, minWidth: 0, padding: '0 14px 12px 48px' }}>
           {indicio ? (
             <span id={`${base}-indicio`} style={{ display: 'grid', gap: 4 }}>
               {/* os espaços não aparecem na grade, mas separam as frases na descrição lida */}
@@ -155,13 +161,13 @@ function Item({
               {item.naoSeAplica}
             </span>
           ) : null}
-          {item.conferir ? (
+          {mostraConferir ? (
             <span className="dica" id={`${base}-conferir`}>
               {item.conferir}
             </span>
           ) : null}
-        </span>
-      </label>
+        </div>
+      ) : null}
     </li>
   )
 }

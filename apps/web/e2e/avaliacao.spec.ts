@@ -342,6 +342,18 @@ test('revisão humana com indício e grupo: sem violação séria, Tab chega às
   ).toBeVisible()
   await semViolacoesSerias(page)
 
+  // descrição lida: indício e exemplos, depois o "conferir"; no grupo, só o motivo
+  const nove = page.getByRole('checkbox', { name: /^1\.9/ })
+  await expect(nove).toHaveAccessibleDescription(
+    /^Indício: 1 link abre .* Onde achamos: footer > a .*X.* Confira à mão\.$/,
+  )
+  await expect(page.getByRole('checkbox', { name: /^1\.6/ })).toHaveAccessibleDescription(
+    'Não achamos tabela (<table>) na página.',
+  )
+  // clicar no exemplo (texto copiável) não marca a caixa: ele está fora do <label>
+  await page.getByText('footer > a', { exact: true }).click()
+  await expect(nove).not.toBeChecked()
+
   // Tab no painel até o grupo: cada caixa recebe foco e mostra contorno
   await page.getByRole('checkbox', { name: /^1\.9/ }).focus()
   for (const nome of [/^4\.4/, /^4\.1/, /^1\.6/, /^5\.2/]) {

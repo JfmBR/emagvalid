@@ -109,7 +109,7 @@ function revisao({ resultado }: DadosDoRelatorio) {
               ? `<br>Onde achamos:${r.indicio.exemplos
                   .map(
                     (e) =>
-                      `<br><code>${escapar(e.seletor)}</code> <code>${escapar(e.trecho)}</code>`,
+                      `<br>${e.seletor ? `<code>${escapar(e.seletor)}</code> ` : ''}<code>${escapar(e.trecho)}</code>`,
                   )
                   .join('')}`
               : ''
