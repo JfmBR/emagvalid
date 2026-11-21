@@ -116,6 +116,37 @@ describe('htmlDoRelatorio', () => {
     expect(html).toContain('☐ a conferir')
   })
 
+  it('K de T conta só a lista principal; o grupo vem depois, com subtítulo e motivo', () => {
+    const html = gerar({ requisitosNaoAplicaveis: ['1.6'], revisados: ['1.6', '1.1'] })
+
+    expect(html).toContain('Revisão humana: 1 de 15 itens conferidos')
+    expect(html).toContain('Provavelmente não se aplicam nesta página')
+    expect(html.indexOf('Não achamos tabela')).toBeGreaterThan(
+      html.indexOf('Provavelmente não se aplicam'),
+    )
+  })
+
+  it('sem grupo não mostra o subtítulo', () => {
+    expect(gerar()).not.toContain('Provavelmente não se aplicam')
+  })
+
+  it('indício com exemplos escapados', () => {
+    const html = gerar({
+      indicios: [
+        {
+          numero: '1.9',
+          total: 1,
+          exemplos: [{ seletor: 'a', trecho: '<a target="_blank"><script>x</script></a>' }],
+        },
+      ],
+    })
+
+    expect(html).toContain('Indício: 1 link abre em nova aba ou janela sem aviso no texto.')
+    expect(html).toContain('Onde achamos:')
+    expect(html).toContain('&lt;script&gt;')
+    expect(html).not.toContain('<script>x')
+  })
+
   it('trecho longo quebra a linha', () => {
     expect(gerar()).toContain('overflow-wrap: anywhere')
   })
