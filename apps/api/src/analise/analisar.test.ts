@@ -76,6 +76,10 @@ beforeAll(async () => {
           ),
         )
         return
+      case '/so-captcha':
+        res.setHeader('content-type', 'text/html')
+        res.end(html.replace('<img src="x.png">', '<div class="g-recaptcha"></div>'))
+        return
       case '/form-no-iframe':
         res.setHeader('content-type', 'text/html')
         res.end(html.replace('<img src="x.png">', '<iframe src="/so-form" title="Busca"></iframe>'))
@@ -497,6 +501,14 @@ describe('analisar', { timeout: 20_000 }, () => {
     expect(por('6.8')).toBeDefined()
     // indício vence: 6.8 sai do grupo; 6.7 tem indício (radio é campo), então nenhum 6.x fica
     expect(r.naoAplicaveis).not.toContain('6.8')
+  })
+
+  it('indício vence o "não se aplica": CAPTCHA sem formulário tira só o 6.8 do grupo', async () => {
+    const { revisaoAutomatica: r } = await analisar(`${url}/so-captcha`, {
+      conferirEndereco: soLocal,
+    })
+    expect(r.naoAplicaveis).toEqual(['1.6', '3.8', '5.2', '5.3', '6.4', '6.5', '6.6', '6.7'])
+    expect(r.indicios.find((i) => i.numero === '6.8')).toBeDefined()
   })
 
   it('formulário dentro de iframe conta', async () => {

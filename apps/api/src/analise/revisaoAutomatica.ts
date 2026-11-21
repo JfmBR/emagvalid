@@ -1,5 +1,7 @@
 /// <reference lib="dom" />
-// Tipos do DOM só para `lerFrame`, que roda dentro da página avaliada (frame.evaluate)
+/// <reference lib="es2024.string" />
+// Tipos do DOM só para `lerFrame`, que roda dentro da página avaliada (frame.evaluate);
+// es2024.string para o toWellFormed (o tsconfig fica no ES2023)
 import type { Frame, Page } from 'playwright'
 import type { Ocorrencia } from './analisar.js'
 
@@ -170,29 +172,40 @@ function lerFrame() {
   }
 
   const achados = [novaJanela, radios, captcha].filter((indicio) => indicio.total > 0)
+  // o mesmo caminho das falhas; sem o axe, ou se ele falhar, o caminho fica vazio e o trecho continua
   const axe = (window as JanelaComAxe).axe
   const montar = !axe?._tree && achados.length > 0
-  if (montar) axe?.setup?.(document)
   try {
-    return {
-      achou,
-      indicios: achados.map((indicio) => ({
-        numero: indicio.numero,
-        total: indicio.total,
-        // o mesmo caminho das falhas; sem o axe, fica vazio e o trecho continua
-        exemplos: indicio.elementos.map((el) => ({
-          seletor: axe?.utils?.getSelector?.(el) ?? '',
-          trecho: el.outerHTML.slice(0, 1000),
-        })),
-      })),
-    }
-  } finally {
-    if (montar) axe?.teardown?.()
+    if (montar) axe?.setup?.(document)
+  } catch {
+    // sem árvore do axe: o getSelector abaixo falha e o caminho fica vazio
   }
+  const indicios = achados.map((indicio) => ({
+    numero: indicio.numero,
+    total: indicio.total,
+    exemplos: indicio.elementos.map((el) => {
+      let seletor = ''
+      try {
+        seletor = axe?.utils?.getSelector?.(el) ?? ''
+      } catch {
+        // caminho vazio
+      }
+      return { seletor, trecho: el.outerHTML.slice(0, 1000) }
+    }),
+  }))
+  try {
+    if (montar) axe?.teardown?.()
+  } catch {
+    // nada a desfazer do nosso lado
+  }
+  return { achou, indicios }
 }
 
+// toWellFormed: o corte (ou a página) pode deixar meio emoji, que o jsonb do Postgres recusa
 function texto(valor: unknown): string | null {
-  return typeof valor === 'string' ? valor.replaceAll('\u0000', '').slice(0, MAX_TRECHO) : null
+  return typeof valor === 'string'
+    ? valor.replaceAll('\u0000', '').slice(0, MAX_TRECHO).toWellFormed()
+    : null
 }
 
 // Descarta o que foge do formato e corta exemplos e textos (dado da página ou da coluna Json)
