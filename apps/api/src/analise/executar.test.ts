@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { requisitosDaRegra } from '../emag/requisitos.js'
 import type { Violacao } from './analisar.js'
+import { SEM_REVISAO_AUTOMATICA } from './revisaoAutomatica.js'
 import {
   LIMITE_PAGINA_GRANDE,
   MAX_OCORRENCIAS_POR_REGRA,
@@ -64,7 +65,12 @@ const imagemSemAlt: Violacao = {
 }
 
 // análise sem falha, sem regra aplicável e sem dúvida
-const semNada = { violacoes: [], aplicaveis: [], duvidas: [] }
+const semNada = {
+  violacoes: [],
+  aplicaveis: [],
+  duvidas: [],
+  revisaoAutomatica: SEM_REVISAO_AUTOMATICA,
+}
 
 beforeEach(() => {
   analisar.mockReset()
@@ -142,6 +148,10 @@ describe('executarAvaliacao', () => {
         // image-alt também falhou: 3.6 fica no cartão, não na dúvida
         duvidas: ['color-contrast', 'image-alt'],
         urlFinal: 'https://exemplo.com.br/inicio',
+        revisaoAutomatica: {
+          naoAplicaveis: ['1.6'],
+          indicios: [{ numero: '1.9', total: 2, exemplos: [] }],
+        },
       }
     })
 
@@ -159,6 +169,8 @@ describe('executarAvaliacao', () => {
       // 3.1 e 3.3 média (2 + 2) aprovadas; 3.6 alta (3) reprovada: 100 × 4 ÷ 7
       requisitosAplicaveis: ['3.1', '3.3', '3.6'],
       requisitosEmDuvida: ['4.1'],
+      requisitosNaoAplicaveis: ['1.6'],
+      indicios: [{ numero: '1.9', total: 2, exemplos: [] }],
       nota: 57,
     })
     expect(banco.atualizacoes[1]?.concluidaEm).toBeInstanceOf(Date)

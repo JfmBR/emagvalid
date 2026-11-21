@@ -63,13 +63,15 @@ function resumo({ resultado }: DadosDoRelatorio) {
   const { nota, cartoes, revisao } = resultado
   const falhas = cartoes.reduce((total, c) => total + c.ocorrencias.length, 0)
   const porPrioridade = (p: keyof typeof ROTULO) => cartoes.filter((c) => c.prioridade === p).length
-  const feitas = revisao.filter((r) => r.feita).length
+  // o grupo "não se aplicam" fica fora do K de T
+  const principal = revisao.filter((r) => !r.naoSeAplica)
+  const feitas = principal.filter((r) => r.feita).length
   return `
     <h2>Resumo</h2>
     <ul>
       <li><strong>${nota === null ? 'Sem nota (avaliação anterior ao cálculo da nota)' : `Nota ${nota}/100`}</strong></li>
       <li>${plural(falhas, 'falha', 'falhas')} em ${plural(cartoes.length, 'recomendação', 'recomendações')}: ${porPrioridade('alta')} de prioridade alta, ${porPrioridade('media')} média, ${porPrioridade('baixa')} baixa</li>
-      <li>Revisão humana: ${feitas} de ${plural(revisao.length, 'item conferido', 'itens conferidos')}</li>
+      <li>Revisão humana: ${feitas} de ${plural(principal.length, 'item conferido', 'itens conferidos')}</li>
     </ul>`
 }
 
@@ -97,15 +99,44 @@ function falhas({ resultado }: DadosDoRelatorio) {
 }
 
 function revisao({ resultado }: DadosDoRelatorio) {
-  const itens = resultado.revisao.map(
-    (r) => `
-      <li><strong>${r.feita ? '☑ conferido' : '☐ a conferir'}</strong> · ${escapar(`${r.numero} ${r.nome}`)}${r.conferir ? `<br>${escapar(r.conferir)}` : ''}</li>`,
-  )
+  const marca = (feita: boolean) => (feita ? '☑ conferido' : '☐ a conferir')
+  const itens = resultado.revisao
+    .filter((r) => !r.naoSeAplica)
+    .map((r) => {
+      const indicio = r.indicio
+        ? `<br>Indício: ${escapar(r.indicio.texto)}${
+            r.indicio.exemplos.length > 0
+              ? `<br>Onde achamos:${r.indicio.exemplos
+                  .map(
+                    (e) =>
+                      `<br>${e.seletor ? `<code>${escapar(e.seletor)}</code> ` : ''}<code>${escapar(e.trecho)}</code>`,
+                  )
+                  .join('')}`
+              : ''
+          }`
+        : ''
+      return `
+      <li><strong>${marca(r.feita)}</strong> · ${escapar(`${r.numero} ${r.nome}`)}${indicio}${r.conferir ? `<br>${escapar(r.conferir)}` : ''}</li>`
+    })
+  const grupo = resultado.revisao
+    .filter((r) => r.naoSeAplica)
+    .map(
+      (r) => `
+      <li><strong>${marca(r.feita)}</strong> · ${escapar(`${r.numero} ${r.nome}`)}<br>${escapar(r.naoSeAplica ?? '')}</li>`,
+    )
   return `
     <h2>Revisão humana</h2>
     <p>O que a ferramenta não confere sozinha. As marcações vêm da aba "Revisão humana" do resultado.</p>
     <ul class="revisao">${itens.join('')}
+    </ul>${
+      grupo.length > 0
+        ? `
+    <h3>Provavelmente não se aplicam nesta página</h3>
+    <p>A ferramenta não achou na página o que estes itens pedem. Ela pode ter deixado algo passar, como um vídeo que só carrega ao rolar a página. Confira à mão; as marcações vêm da aba Revisão humana.</p>
+    <ul class="revisao">${grupo.join('')}
     </ul>`
+        : ''
+    }`
 }
 
 function conta({ resultado }: DadosDoRelatorio) {

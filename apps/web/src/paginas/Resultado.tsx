@@ -34,6 +34,9 @@ export type ResultadoAvaliacao = {
     motivo: 'fixa' | 'duvida'
     conferir: string | null
     feita: boolean
+    // motivo de provavelmente não se aplicar (só nos itens do grupo)
+    naoSeAplica: string | null
+    indicio: { texto: string; exemplos: { seletor: string; trecho: string }[] } | null
   }[]
 }
 
@@ -50,12 +53,15 @@ export function Resultado({ id, resultado }: { id: string; resultado: ResultadoA
   const { nota, verificacoes, cartoes, revisao } = resultado
   const aprovadas = verificacoes.filter((v) => v.aprovada)
   const soma = (lista: typeof verificacoes) => lista.reduce((total, v) => total + v.peso, 0)
+  // o grupo "não se aplica" fica fora das contagens; K conta só as marcas da lista principal
+  const principal = revisao.filter((item) => !item.naoSeAplica)
   const falhas = cartoes.reduce((total, c) => total + c.ocorrencias.length, 0)
   const [aba, setAba] = useState(0)
   // marcas da revisão humana: a aba muda, e a contagem junto do "Baixar PDF" acompanha
   const [feitas, setFeitas] = useState(
     () => new Set(revisao.filter((item) => item.feita).map((item) => item.numero)),
   )
+  const conferidos = principal.filter((item) => feitas.has(item.numero)).length
   const marcar = (numero: string, feita: boolean) =>
     setFeitas((atual) => {
       const nova = new Set(atual)
@@ -108,20 +114,20 @@ export function Resultado({ id, resultado }: { id: string; resultado: ResultadoA
               {plural(falhas, 'falha', 'falhas')} em{' '}
               {plural(cartoes.length, 'requisito', 'requisitos')}
               <Ponto />
-              {plural(revisao.length, 'item', 'itens')} para revisão humana
+              {plural(principal.length, 'item', 'itens')} para revisão humana
             </p>
           </div>
         </div>
         {/* RF12: o PDF leva as marcas da revisão; a frase diz o que ainda sai como "a conferir" */}
         <div style={{ display: 'grid', gap: 8, justifyItems: 'start' }}>
           <BaixarPdf id={id} antes={() => Promise.all(gravando.current)} />
-          {feitas.size === revisao.length ? (
-            <p className="dica">Revisão humana: todos os {revisao.length} itens conferidos.</p>
+          {conferidos === principal.length ? (
+            <p className="dica">Revisão humana: todos os {principal.length} itens conferidos.</p>
           ) : (
             <p className="dica">
-              Revisão humana: {feitas.size} de{' '}
-              {plural(revisao.length, 'item conferido', 'itens conferidos')}. Os outros saem no PDF
-              como "a conferir".{' '}
+              Revisão humana: {conferidos} de{' '}
+              {plural(principal.length, 'item conferido', 'itens conferidos')}. Os outros saem no
+              PDF como "a conferir".{' '}
               <Botao variante="txt" onClick={irParaRevisao}>
                 Ir para a revisão humana
               </Botao>
@@ -251,7 +257,10 @@ function Abas({
 
   // O nome é o texto visível: quem usa comando de voz fala o que vê (WCAG 2.5.3). Na pontuação
   // padrão, o Orca e o NVDA não leem os parênteses.
-  const rotulos = [`Falhas automáticas (${cartoes.length})`, `Revisão humana (${revisao.length})`]
+  const rotulos = [
+    `Falhas automáticas (${cartoes.length})`,
+    `Revisão humana (${revisao.filter((item) => !item.naoSeAplica).length})`,
+  ]
   return (
     <div className="painel">
       <div role="tablist" aria-label="Tipo de verificação">

@@ -85,12 +85,15 @@ export async function executarAvaliacao(id: string): Promise<void> {
     })
     if (count === 0) return
 
-    const { violacoes, aplicaveis, duvidas, urlFinal } = await analisar(avaliacao.url, {
-      aoCarregar: (elementos) => {
-        estado.etapa = 2
-        estado.paginaGrande = elementos > LIMITE_PAGINA_GRANDE
+    const { violacoes, aplicaveis, duvidas, urlFinal, revisaoAutomatica } = await analisar(
+      avaliacao.url,
+      {
+        aoCarregar: (elementos) => {
+          estado.etapa = 2
+          estado.paginaGrande = elementos > LIMITE_PAGINA_GRANDE
+        },
       },
-    })
+    )
     estado.etapa = 3
 
     const falhas = falhasDaAnalise(violacoes)
@@ -108,6 +111,9 @@ export async function executarAvaliacao(id: string): Promise<void> {
           // o que já tem falha não está "em dúvida": aparece no cartão
           requisitosEmDuvida: requisitosDasRegras(duvidas).filter((n) => !reprovados.includes(n)),
           nota: calcularNota(requisitosAplicaveis, reprovados),
+          // a revisão automática fica guardada para o revisor humano; não entra na nota
+          requisitosNaoAplicaveis: revisaoAutomatica.naoAplicaveis,
+          indicios: revisaoAutomatica.indicios,
         },
       })
       // já virou ERRO ou sumiu: as falhas não entram

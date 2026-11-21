@@ -57,7 +57,14 @@ Estado em 10/11/2026: estrutura pronta, ainda sem telas nem regras do MVP. A arq
 
 ## Dados e migrações
 
-- Esquema em `apps/api/prisma/schema.prisma`; migrações em `apps/api/prisma/migrations/` (`20261105122347_inicial`, `20261117000628_sessoes`, `20261118002249_avaliacao_url_final_pagina_grande`, `20261119142307_avaliacao_nota_e_revisao` e `20261119184305_usuario_plano_pago`, esta com a coluna `planoPago` hoje sem uso).
+- Esquema em `apps/api/prisma/schema.prisma`; migrações em `apps/api/prisma/migrations/`:
+  - `20261105122347_inicial`: usuários e avaliações;
+  - `20261117000628_sessoes`: sessões de login;
+  - `20261118002249_avaliacao_url_final_pagina_grande`: `urlFinal` e `paginaGrande` na avaliação;
+  - `20261119142307_avaliacao_nota_e_revisao`: `requisitosAplicaveis`, `requisitosEmDuvida` e `revisados`;
+  - `20261119184305_usuario_plano_pago`: coluna `planoPago`, hoje sem uso;
+  - `20261121120000_revisao_automatica`: `requisitosNaoAplicaveis` (lista de números do eMAG) e `indicios` (JSON com número, total e exemplos). Linhas antigas ficam com os padrões vazios.
+- `analise/revisaoAutomatica.ts` tem `/// <reference lib="dom" />` e `/// <reference lib="es2024.string" />`, porque `lerFrame` roda dentro da página (`frame.evaluate`) e usa tipos do DOM e `toWellFormed`. Efeito: os tipos do DOM ficam visíveis no `typecheck` de todo o `apps/api`. Troca aceita para o código da página ser conferido pelo compilador; fique atento para não usar `document` ou `window` por engano fora dele.
 - Mudança no esquema entra como migração (`npm run db:migrate -w apps/api`), revisada antes de aplicar. Nunca migrar durante o build ou por requisição.
 - O DBeaver serve para ver e testar dados locais, não para mudar tabelas.
 

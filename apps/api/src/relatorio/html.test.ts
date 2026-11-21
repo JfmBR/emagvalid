@@ -15,6 +15,8 @@ const avaliacao = {
   requisitosAplicaveis: ['1.8', '3.1', '3.6'],
   requisitosEmDuvida: [],
   revisados: [] as string[],
+  requisitosNaoAplicaveis: [] as string[],
+  indicios: [] as unknown,
   falhas: [falha('1.8', 'main'), falha('3.6')],
 }
 
@@ -112,6 +114,49 @@ describe('htmlDoRelatorio', () => {
 
     expect(html).toMatch(/☑ conferido[\s\S]*1\.1/)
     expect(html).toContain('☐ a conferir')
+  })
+
+  it('K de T conta só a lista principal; o grupo vem depois, com subtítulo e motivo', () => {
+    const html = gerar({ requisitosNaoAplicaveis: ['1.6'], revisados: ['1.6', '1.1'] })
+
+    expect(html).toContain('Revisão humana: 1 de 15 itens conferidos')
+    expect(html).toContain('Provavelmente não se aplicam nesta página')
+    // num PDF não se marca nada
+    expect(html).toContain('Confira à mão; as marcações vêm da aba Revisão humana.')
+    expect(html).not.toContain('Marque se conferir')
+    expect(html.indexOf('Não achamos tabela')).toBeGreaterThan(
+      html.indexOf('Provavelmente não se aplicam'),
+    )
+  })
+
+  it('sem grupo não mostra o subtítulo', () => {
+    expect(gerar()).not.toContain('Provavelmente não se aplicam')
+  })
+
+  it('indício com exemplos escapados', () => {
+    const html = gerar({
+      indicios: [
+        {
+          numero: '1.9',
+          total: 1,
+          exemplos: [{ seletor: 'a', trecho: '<a target="_blank"><script>x</script></a>' }],
+        },
+      ],
+    })
+
+    expect(html).toContain('Indício: 1 link abre em nova aba ou janela sem aviso no texto.')
+    expect(html).toContain('Onde achamos:')
+    expect(html).toContain('&lt;script&gt;')
+    expect(html).not.toContain('<script>x')
+  })
+
+  it('exemplo sem seletor não gera <code> vazio', () => {
+    const html = gerar({
+      indicios: [{ numero: '1.9', total: 1, exemplos: [{ seletor: '', trecho: '<a>X</a>' }] }],
+    })
+
+    expect(html).toContain('<br><code>&lt;a&gt;X&lt;/a&gt;</code>')
+    expect(html).not.toContain('<code></code>')
   })
 
   it('trecho longo quebra a linha', () => {

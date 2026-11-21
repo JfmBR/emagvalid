@@ -26,6 +26,8 @@ type AvaliacaoFalsa = {
   requisitosAplicaveis: string[]
   requisitosEmDuvida: string[]
   revisados: string[]
+  requisitosNaoAplicaveis: string[]
+  indicios: unknown
   falhas: object[]
 }
 type Filtro = {
@@ -78,6 +80,8 @@ vi.mock('../db.js', () => {
             requisitosAplicaveis: [],
             requisitosEmDuvida: [],
             revisados: [],
+            requisitosNaoAplicaveis: [],
+            indicios: [],
             falhas: [],
           }
           banco.avaliacoes.push(avaliacao)
@@ -187,6 +191,8 @@ function semear(dados: Partial<AvaliacaoFalsa> = {}) {
     requisitosAplicaveis: [],
     requisitosEmDuvida: [],
     revisados: [],
+    requisitosNaoAplicaveis: [],
+    indicios: [],
     falhas: [],
     ...dados,
   }
