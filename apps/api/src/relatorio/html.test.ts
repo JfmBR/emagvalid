@@ -15,6 +15,8 @@ const avaliacao = {
   requisitosAplicaveis: ['1.8', '3.1', '3.6'],
   requisitosEmDuvida: [],
   revisados: [] as string[],
+  requisitosNaoAplicaveis: [] as string[],
+  indicios: [] as unknown,
   falhas: [falha('1.8', 'main'), falha('3.6')],
 }
 
