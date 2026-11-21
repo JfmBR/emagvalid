@@ -13,6 +13,11 @@ import {
   pedidoDoSalto,
   type Pedido,
 } from './rede.js'
+import {
+  lerRevisaoAutomatica,
+  SEM_REVISAO_AUTOMATICA,
+  type RevisaoAutomatica,
+} from './revisaoAutomatica.js'
 
 export interface Ocorrencia {
   seletor: string
@@ -58,6 +63,8 @@ export interface ResultadoAnalise {
   // ids das regras que o axe não conseguiu decidir ("needs review"): vão para a revisão humana (RF09)
   duvidas: string[]
   urlFinal: string
+  // o que o axe não cobre, para a revisão humana: "provavelmente não se aplica" e indícios
+  revisaoAutomatica: RevisaoAutomatica
 }
 
 // Teto de cada resposta já descomprimida (documento principal e cada sub-recurso) (RNF10)
@@ -254,6 +261,8 @@ export async function analisar(
       page: pagina,
       axeSource: axeEmPortugues,
     }).analyze()
+    // não lança erro; se o relógio estourar aqui, a análise conclui com o axe e sem revisão automática
+    const lida = await lerRevisaoAutomatica(pagina)
 
     return {
       violacoes: violations.map((v) => ({
@@ -266,6 +275,7 @@ export async function analisar(
       aplicaveis: [...passes, ...violations].map((r) => r.id),
       duvidas: incomplete.map((r) => r.id),
       urlFinal: pagina.url(),
+      revisaoAutomatica: encerrada ? SEM_REVISAO_AUTOMATICA : lida,
     }
   } catch (erro) {
     if (encerrada) throw new ErroDeAnalise(encerrada, erro)

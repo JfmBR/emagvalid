@@ -64,7 +64,12 @@ const imagemSemAlt: Violacao = {
 }
 
 // análise sem falha, sem regra aplicável e sem dúvida
-const semNada = { violacoes: [], aplicaveis: [], duvidas: [] }
+const semNada = {
+  violacoes: [],
+  aplicaveis: [],
+  duvidas: [],
+  revisaoAutomatica: { naoAplicaveis: [], indicios: [] },
+}
 
 beforeEach(() => {
   analisar.mockReset()
@@ -142,6 +147,7 @@ describe('executarAvaliacao', () => {
         // image-alt também falhou: 3.6 fica no cartão, não na dúvida
         duvidas: ['color-contrast', 'image-alt'],
         urlFinal: 'https://exemplo.com.br/inicio',
+        revisaoAutomatica: { naoAplicaveis: [], indicios: [] },
       }
     })
 
