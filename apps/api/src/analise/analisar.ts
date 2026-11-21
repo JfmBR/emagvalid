@@ -19,7 +19,7 @@ import {
   type RevisaoAutomatica,
 } from './revisaoAutomatica.js'
 
-export interface Ocorrencia {
+export type Ocorrencia = {
   seletor: string
   trecho: string
 }

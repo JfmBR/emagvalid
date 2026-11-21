@@ -8,13 +8,14 @@ import type { Ocorrencia } from './analisar.js'
 // Itens do eMAG que a análise aponta para a revisão humana (spec da revisão automática, "Detecção")
 export type NumeroIndicio = '1.9' | '6.7' | '6.8'
 
-export interface Indicio {
+// type (não interface): o tipo Json do Prisma só aceita objetos com assinatura implícita
+export type Indicio = {
   numero: NumeroIndicio
   total: number
   exemplos: Ocorrencia[]
 }
 
-export interface RevisaoAutomatica {
+export type RevisaoAutomatica = {
   // itens que provavelmente não se aplicam: nada do objeto deles foi achado em nenhum frame
   naoAplicaveis: string[]
   indicios: Indicio[]
