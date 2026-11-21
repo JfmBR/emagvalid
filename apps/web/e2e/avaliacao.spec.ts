@@ -90,6 +90,8 @@ const resultado = {
       motivo: 'fixa',
       conferir: 'Navegue com Tab.',
       feita: false,
+      naoSeAplica: null,
+      indicio: null,
     },
     {
       numero: '4.1',
@@ -97,6 +99,8 @@ const resultado = {
       motivo: 'duvida',
       conferir: 'Confira à mão.',
       feita: false,
+      naoSeAplica: null,
+      indicio: null,
     },
   ],
 }
@@ -287,3 +291,69 @@ for (const [tema, salvo] of Object.entries({
     expect(sobra).toBeLessThanOrEqual(0)
   })
 }
+
+test('revisão humana com indício e grupo: sem violação séria, Tab chega às caixas e o foco aparece', async ({
+  page,
+}) => {
+  const [quatro, ...resto] = resultado.revisao
+  const item = (numero: string, nome: string, extra: object) => ({
+    numero,
+    nome,
+    motivo: 'fixa',
+    conferir: 'Confira à mão.',
+    feita: false,
+    naoSeAplica: null,
+    indicio: null,
+    ...extra,
+  })
+  // na ordem da API: indício, lista principal, grupo
+  const revisao = [
+    item('1.9', 'Não abrir novas instâncias sem a solicitação do usuário', {
+      indicio: {
+        texto: '1 link abre em nova aba ou janela sem aviso no texto.',
+        exemplos: [
+          { seletor: 'footer > a', trecho: '<a href="https://x.com" target="_blank">X</a>' },
+        ],
+      },
+    }),
+    quatro,
+    ...resto,
+    item('1.6', 'Fornecer alternativa em texto para as tabelas', {
+      naoSeAplica: 'Não achamos tabela (<table>) na página.',
+    }),
+    item('5.2', 'Fornecer alternativa para áudio', {
+      naoSeAplica:
+        'Não achamos áudio na página (<audio>, link para arquivo de áudio ou player conhecido).',
+    }),
+  ]
+  await simularApi(page, () => ({
+    ...avaliacao,
+    status: 'CONCLUIDA',
+    etapa: null,
+    concluidaEm: '2026-11-19T14:32:00.000Z',
+    resultado: { ...resultado, revisao },
+  }))
+  await page.setViewportSize({ width: 640, height: 900 })
+  await page.goto('/avaliacoes/a1')
+
+  await page.getByRole('tab', { name: 'Revisão humana (3)' }).click()
+  await expect(
+    page.getByRole('heading', { level: 2, name: 'Provavelmente não se aplicam nesta página (2)' }),
+  ).toBeVisible()
+  await semViolacoesSerias(page)
+
+  // Tab no painel até o grupo: cada caixa recebe foco e mostra contorno
+  await page.getByRole('checkbox', { name: /^1\.9/ }).focus()
+  for (const nome of [/^4\.4/, /^4\.1/, /^1\.6/, /^5\.2/]) {
+    await page.keyboard.press('Tab')
+    const caixa = page.getByRole('checkbox', { name: nome })
+    await expect(caixa).toBeFocused()
+    await expect(caixa).not.toHaveCSS('outline-style', 'none')
+  }
+  await page.keyboard.press('Space')
+  await expect(page.getByRole('checkbox', { name: /^5\.2/ })).toBeChecked()
+  await semViolacoesSerias(page)
+
+  const sobra = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+  expect(sobra).toBeLessThanOrEqual(0)
+})

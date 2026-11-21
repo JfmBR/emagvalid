@@ -675,8 +675,24 @@ describe('Tela 4 · análise', () => {
     ],
     cartoes: [cartao('3.6', 'alta', ['img.a', 'img.b']), cartao('1.8', 'baixa', ['main'])],
     revisao: [
-      { numero: '4.4', nome: 'Foco visível', motivo: 'fixa', conferir: 'Use o Tab.', feita: false },
-      { numero: '4.1', nome: 'Contraste', motivo: 'duvida', conferir: 'Confira.', feita: true },
+      {
+        numero: '4.4',
+        nome: 'Foco visível',
+        motivo: 'fixa',
+        conferir: 'Use o Tab.',
+        feita: false,
+        naoSeAplica: null,
+        indicio: null,
+      },
+      {
+        numero: '4.1',
+        nome: 'Contraste',
+        motivo: 'duvida',
+        conferir: 'Confira.',
+        feita: true,
+        naoSeAplica: null,
+        indicio: null,
+      },
     ],
   }
   const concluida = {
@@ -685,6 +701,40 @@ describe('Tela 4 · análise', () => {
     etapa: null,
     concluidaEm: '2026-11-19T14:32:00.000Z',
     resultado,
+  }
+  // já na ordem da API: indício, lista principal, grupo que provavelmente não se aplica
+  const comAutomacao = {
+    ...concluida,
+    resultado: {
+      ...resultado,
+      revisao: [
+        {
+          numero: '1.9',
+          nome: 'Não abrir novas instâncias',
+          motivo: 'fixa',
+          conferir: 'Confira os links.',
+          feita: false,
+          naoSeAplica: null,
+          indicio: {
+            texto: '2 links abrem em nova aba ou janela sem aviso no texto.',
+            exemplos: [
+              { seletor: 'footer > a', trecho: '<a target="_blank"><b>X</b></a>' },
+              { seletor: '', trecho: '<a target="_blank">Y</a>' },
+            ],
+          },
+        },
+        ...resultado.revisao,
+        {
+          numero: '1.6',
+          nome: 'Tabelas',
+          motivo: 'fixa',
+          conferir: 'Confira as tabelas.',
+          feita: false,
+          naoSeAplica: 'Não achamos tabela (<table>) na página.',
+          indicio: null,
+        },
+      ],
+    },
   }
   const resposta = (avaliacao: object) => ({ status: 200, corpo: { avaliacao } })
   const chamadasDoGet = () =>
@@ -979,6 +1029,60 @@ describe('Tela 4 · análise', () => {
         expect(enviados['/api/avaliacoes/a1/revisao']).toEqual({ numero: '4.4', feita: true }),
       )
       expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    })
+
+    it('indício no item e grupo dos que provavelmente não se aplicam, fora da contagem', async () => {
+      const enviados = simularApi({
+        ...logada,
+        '/api/avaliacoes/a1': resposta(comAutomacao),
+        '/api/avaliacoes/a1/revisao': { status: 204 },
+      })
+      abrir('/avaliacoes/a1')
+
+      // a aba e a contagem só têm a lista principal (3 itens, sem o 1.6)
+      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana (3)' }))
+      expect(screen.getByText(/1 de 3 itens conferidos/)).toBeInTheDocument()
+      expect(
+        screen.getByRole('heading', {
+          level: 2,
+          name: 'Provavelmente não se aplicam nesta página (1)',
+        }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByText(/A ferramenta não achou na página o que estes itens pedem/),
+      ).toBeVisible()
+
+      // indício e exemplos na descrição, antes do "conferir"; seletor vazio não vira <code>
+      const nove = screen.getByRole('checkbox', { name: /^1\.9, Não abrir novas instâncias$/ })
+      expect(nove).toHaveAccessibleDescription(
+        'Indício: 2 links abrem em nova aba ou janela sem aviso no texto. Onde achamos: footer > a <a target="_blank"><b>X</b></a> <a target="_blank">Y</a> Confira os links.',
+      )
+      const painel = screen.getByRole('tabpanel')
+      expect(painel.querySelectorAll('code')).toHaveLength(3)
+      expect(painel.querySelector('b')).toBeNull() // o trecho é só texto
+
+      // o motivo do grupo é a descrição da caixa
+      const seis = screen.getByRole('checkbox', { name: /^1\.6, Tabelas$/ })
+      expect(seis).toHaveAccessibleDescription(
+        'Não achamos tabela (<table>) na página. Confira as tabelas.',
+      )
+
+      // marcar um do grupo grava, mas não muda o "K de T"
+      fireEvent.click(seis)
+      await waitFor(() =>
+        expect(enviados['/api/avaliacoes/a1/revisao']).toEqual({ numero: '1.6', feita: true }),
+      )
+      expect(seis).toBeChecked()
+      expect(screen.getByText(/1 de 3 itens conferidos/)).toBeInTheDocument()
+    })
+
+    it('sem grupo nem indício, a aba fica como antes', async () => {
+      simularApi({ ...logada, '/api/avaliacoes/a1': resposta(concluida) })
+      abrir('/avaliacoes/a1')
+      fireEvent.click(await screen.findByRole('tab', { name: 'Revisão humana (2)' }))
+
+      expect(screen.queryByText(/Provavelmente não se aplicam/)).not.toBeInTheDocument()
+      expect(screen.queryByText(/Indício/)).not.toBeInTheDocument()
     })
 
     it('enquanto o pedido roda, outro clique no mesmo item é ignorado', async () => {
