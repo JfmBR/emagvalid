@@ -11,7 +11,8 @@ type JanelaComAxe = Window & {
     _tree?: unknown
     setup?: (raiz: Document) => unknown
     teardown?: () => void
-    utils?: { getSelector?: (el: Element) => string }
+    // dentro de shadow root, o caminho vem como lista (um trecho por raiz)
+    utils?: { getSelector?: (el: Element) => string | string[] }
   }
 }
 
@@ -25,7 +26,9 @@ export function caminhoDoIframe(iframe: Node): string {
       axe.setup(document)
       montou = true
     }
-    return axe?.utils?.getSelector?.(iframe as Element) ?? ''
+    const caminho: unknown = axe?.utils?.getSelector?.(iframe as Element)
+    if (Array.isArray(caminho)) return caminho.filter((p) => typeof p === 'string').join(' ')
+    return typeof caminho === 'string' ? caminho : ''
   } catch {
     return ''
   } finally {
@@ -64,7 +67,7 @@ export function lerFrame() {
     'input:not([type="hidden"])',
     'select',
     'textarea',
-    '[contenteditable]:not([contenteditable="false"])',
+    '[contenteditable]:not([contenteditable="false" i])',
     ...PAPEIS.map((papel) => `[role="${papel}"]`),
   ].join(',')
 
@@ -192,7 +195,10 @@ export function lerFrame() {
     exemplos: indicio.elementos.map((el) => {
       let seletor = ''
       try {
-        seletor = axe?.utils?.getSelector?.(el) ?? ''
+        const caminho: unknown = axe?.utils?.getSelector?.(el)
+        if (Array.isArray(caminho)) {
+          seletor = caminho.filter((p) => typeof p === 'string').join(' ')
+        } else if (typeof caminho === 'string') seletor = caminho
       } catch {
         // caminho vazio
       }

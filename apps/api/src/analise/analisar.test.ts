@@ -77,7 +77,7 @@ beforeAll(async () => {
         )
         return
       case '/sombra':
-        // web component com campo e vídeo dentro de shadow root aberto
+        // web component com campo, vídeo e link de nova aba dentro de shadow root aberto
         res.setHeader('content-type', 'text/html')
         res.end(
           html.replace(
@@ -86,7 +86,8 @@ beforeAll(async () => {
   customElements.define('x-busca', class extends HTMLElement {
     constructor() {
       super()
-      this.attachShadow({ mode: 'open' }).innerHTML = '<input aria-label="Busca"><video></video>'
+      this.attachShadow({ mode: 'open' }).innerHTML =
+        '<input aria-label="Busca"><video></video><a href="/x" target="_blank">x</a>'
     }
   })
 </script>`,
@@ -127,7 +128,12 @@ beforeAll(async () => {
         return
       case '/editavel-falso':
         res.setHeader('content-type', 'text/html')
-        res.end(html.replace('<img src="x.png">', '<div contenteditable="false">Texto</div>'))
+        res.end(
+          html.replace(
+            '<img src="x.png">',
+            '<div contenteditable="false">Texto</div><div contenteditable="FALSE">Outro</div>',
+          ),
+        )
         return
       case '/so-captcha':
         res.setHeader('content-type', 'text/html')
@@ -585,9 +591,13 @@ describe('analisar', { timeout: 20_000 }, () => {
     expect(sabotada.revisaoAutomatica.naoAplicaveis).toEqual([]) // erro no frame: nada afirmado
   })
 
-  it('campo e vídeo dentro de shadow root aberto contam', async () => {
+  it('campo, vídeo e indício dentro de shadow root aberto contam', async () => {
     const { revisaoAutomatica } = await analisar(`${url}/sombra`, { conferirEndereco: soLocal })
     expect(revisaoAutomatica.naoAplicaveis).toEqual(['1.6', '3.8', '5.2'])
+    // no shadow root o axe devolve o caminho como lista; o exemplo não pode se perder
+    const [exemplo] = revisaoAutomatica.indicios.find((i) => i.numero === '1.9')?.exemplos ?? []
+    expect(exemplo?.trecho).toContain('target="_blank"')
+    expect(exemplo?.seletor).toMatch(/^x-busca .*a/)
   })
 
   it('25 iframes que não carregaram não passam do limite de 20 frames', async () => {
@@ -614,7 +624,7 @@ describe('analisar', { timeout: 20_000 }, () => {
     ])
   })
 
-  it('contenteditable="false" não é campo', async () => {
+  it('contenteditable="false" (em qualquer caixa) não é campo', async () => {
     const { revisaoAutomatica } = await analisar(`${url}/editavel-falso`, {
       conferirEndereco: soLocal,
     })
