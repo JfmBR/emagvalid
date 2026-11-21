@@ -65,6 +65,11 @@ model Avaliacao {
   requisitosEmDuvida   String[] @default([])
   // itens da revisão humana que o auditor marcou como conferidos (RF09; o PDF do Passo 9 usa)
   revisados            String[] @default([])
+  // revisão automática (RF09), lida no HTML da página; não entra na nota
+  // itens que provavelmente não se aplicam (ex.: "6.5" sem formulário): grupo à parte na revisão humana
+  requisitosNaoAplicaveis String[] @default([])
+  // indícios: [{ numero, total, exemplos: [{ seletor, trecho }] }], validados antes de gravar
+  indicios             Json     @default("[]")
   falhas      Falha[]
 
   @@index([usuarioId, criadaEm])
